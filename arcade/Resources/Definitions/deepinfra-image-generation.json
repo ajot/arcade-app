@@ -1,0 +1,119 @@
+{
+  "schema_version": 1,
+  "id": "deepinfra-image-generation",
+  "provider": "deepinfra",
+  "provider_display_name": "DeepInfra",
+  "provider_url": "deepinfra.com",
+  "name": "DeepInfra Image Generation",
+  "description": "Text-to-image generation via DeepInfra (FLUX, Stable Diffusion, Seedream, and more)",
+  "auth": {
+    "type": "header",
+    "header": "Authorization",
+    "prefix": "Bearer ",
+    "env_key": "DEEPINFRA_API_KEY",
+    "validation_url": "https://api.deepinfra.com/v1/openai/models"
+  },
+  "request": {
+    "method": "POST",
+    "url": "https://api.deepinfra.com/v1/openai/images/generations",
+    "content_type": "application/json",
+    "body_template": {
+      "response_format": "url"
+    },
+    "params": [
+      {
+        "name": "model",
+        "type": "enum",
+        "options": [
+          "black-forest-labs/FLUX-1-schnell",
+          "black-forest-labs/FLUX-1-dev",
+          "black-forest-labs/FLUX-2-dev",
+          "black-forest-labs/FLUX-pro",
+          "black-forest-labs/FLUX-1.1-pro",
+          "black-forest-labs/FLUX-2-max",
+          "black-forest-labs/FLUX-2-klein-4b",
+          "ByteDance/Seedream-4",
+          "ByteDance/Seedream-4.5",
+          "stabilityai/sdxl-turbo",
+          "stabilityai/sd3.5",
+          "run-diffusion/Juggernaut-Flux",
+          "run-diffusion/Juggernaut-Lightning-Flux"
+        ],
+        "default": "black-forest-labs/FLUX-1-schnell",
+        "ui": "dropdown",
+        "required": true
+      },
+      {
+        "name": "prompt",
+        "type": "string",
+        "ui": "textarea",
+        "required": true,
+        "placeholder": "A cat astronaut floating in space..."
+      },
+      {
+        "name": "size",
+        "type": "enum",
+        "options": [
+          "512x512",
+          "768x768",
+          "1024x1024",
+          "1024x768",
+          "768x1024"
+        ],
+        "default": "1024x1024",
+        "ui": "dropdown"
+      },
+      {
+        "name": "n",
+        "type": "integer",
+        "min": 1,
+        "max": 4,
+        "default": 1,
+        "ui": "slider",
+        "group": "advanced"
+      }
+    ]
+  },
+  "interaction": {
+    "pattern": "sync"
+  },
+  "examples": [
+    {
+      "label": "Space cat",
+      "params": {
+        "prompt": "A cat astronaut floating in space, photorealistic, 8k, dramatic lighting",
+        "model": "black-forest-labs/FLUX-1-schnell",
+        "size": "1024x1024"
+      }
+    },
+    {
+      "label": "Mountain sunset",
+      "params": {
+        "prompt": "A mountain landscape at sunset, oil painting style, vibrant colors",
+        "model": "black-forest-labs/FLUX-1-schnell",
+        "size": "1024x1024"
+      }
+    },
+    {
+      "label": "Cyberpunk city",
+      "params": {
+        "prompt": "A futuristic cyberpunk city at night, neon signs, rain-soaked streets, blade runner style",
+        "model": "black-forest-labs/FLUX-2-dev",
+        "size": "1024x768"
+      }
+    }
+  ],
+  "response": {
+    "outputs": [
+      {
+        "path": "$.data[0].url",
+        "type": "image",
+        "source": "url",
+        "downloadable": true
+      }
+    ],
+    "error": {
+      "path": "$.error.message"
+    }
+  }
+}

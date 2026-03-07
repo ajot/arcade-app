@@ -1,17 +1,15 @@
-//
-//  arcadeApp.swift
-//  arcade
-//
-//  Created by Amit Jotwani on 3/7/26.
-//
-
 import SwiftUI
 
 @main
-struct arcadeApp: App {
+struct ArcadeApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+        }
+        .windowToolbarStyle(.unified(showsTitle: false))
+        .defaultSize(width: 900, height: 700)
+        .commands {
+            CommandGroup(replacing: .newItem) {}
         }
     }
 }

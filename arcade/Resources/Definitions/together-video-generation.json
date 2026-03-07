@@ -1,0 +1,122 @@
+{
+  "schema_version": 1,
+  "id": "together-video-generation",
+  "provider": "together",
+  "provider_display_name": "Together AI",
+  "provider_url": "together.ai",
+  "name": "Together AI Video Generation",
+  "description": "Text-to-video generation via Together AI (Sora, Veo, Kling, and more)",
+  "auth": {
+    "type": "header",
+    "header": "Authorization",
+    "prefix": "Bearer ",
+    "env_key": "TOGETHER_API_KEY",
+    "validation_url": "https://api.together.xyz/v1/models"
+  },
+  "request": {
+    "method": "POST",
+    "url": "https://api.together.xyz/v2/videos",
+    "content_type": "application/json",
+    "body_template": {},
+    "params": [
+      {
+        "name": "model",
+        "type": "enum",
+        "options": [
+          "google/veo-2.0",
+          "google/veo-3.0",
+          "google/veo-3.0-audio",
+          "google/veo-3.0-fast",
+          "google/veo-3.0-fast-audio",
+          "openai/sora-2",
+          "openai/sora-2-pro",
+          "kwaivgI/kling-1.6-pro",
+          "kwaivgI/kling-1.6-standard",
+          "kwaivgI/kling-2.0-master",
+          "kwaivgI/kling-2.1-master",
+          "kwaivgI/kling-2.1-pro",
+          "kwaivgI/kling-2.1-standard",
+          "ByteDance/Seedance-1.0-lite",
+          "ByteDance/Seedance-1.0-pro",
+          "Wan-AI/Wan2.2-I2V-A14B",
+          "Wan-AI/Wan2.2-T2V-A14B",
+          "minimax/hailuo-02",
+          "minimax/video-01-director",
+          "pixverse/pixverse-v5",
+          "vidu/vidu-2.0",
+          "vidu/vidu-q1"
+        ],
+        "default": "google/veo-3.0-fast",
+        "ui": "dropdown",
+        "required": true
+      },
+      {
+        "name": "prompt",
+        "type": "string",
+        "ui": "textarea",
+        "required": true,
+        "placeholder": "A serene sunset over the ocean with gentle waves..."
+      }
+    ]
+  },
+  "interaction": {
+    "pattern": "polling",
+    "status_url": "https://api.together.xyz/v2/videos/{request_id}",
+    "result_url": "https://api.together.xyz/v2/videos/{request_id}",
+    "request_id_path": "$.id",
+    "poll_interval_ms": 5000,
+    "done_when": {
+      "path": "$.status",
+      "equals": "completed"
+    },
+    "failed_when": {
+      "path": "$.status",
+      "in": [
+        "failed"
+      ]
+    }
+  },
+  "examples": [
+    {
+      "label": "Ocean sunset",
+      "params": {
+        "prompt": "A serene sunset over the ocean with gentle waves lapping at a sandy beach",
+        "model": "google/veo-3.0-fast"
+      }
+    },
+    {
+      "label": "City timelapse",
+      "params": {
+        "prompt": "Timelapse of a bustling city street transitioning from day to night, lights turning on",
+        "model": "google/veo-3.0-fast"
+      }
+    },
+    {
+      "label": "Nature macro",
+      "params": {
+        "prompt": "Macro shot of a dewdrop rolling off a green leaf in slow motion, morning light",
+        "model": "google/veo-3.0-fast"
+      }
+    },
+    {
+      "label": "Space journey",
+      "params": {
+        "prompt": "Camera flying through a colorful nebula in deep space, stars streaming past",
+        "model": "google/veo-3.0-fast"
+      }
+    }
+  ],
+  "response": {
+    "outputs": [
+      {
+        "path": "$.outputs.video_url",
+        "type": "video",
+        "source": "url",
+        "downloadable": true
+      }
+    ],
+    "error": {
+      "path": "$.error.message"
+    }
+  }
+}

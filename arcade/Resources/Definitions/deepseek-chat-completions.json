@@ -1,0 +1,110 @@
+{
+  "schema_version": 1,
+  "id": "deepseek-chat-completions",
+  "provider": "deepseek",
+  "provider_display_name": "DeepSeek",
+  "provider_url": "deepseek.com",
+  "name": "DeepSeek Chat Completions",
+  "description": "DeepSeek chat with streaming (OpenAI-compatible)",
+  "auth": {
+    "type": "header",
+    "header": "Authorization",
+    "prefix": "Bearer ",
+    "env_key": "DEEPSEEK_API_KEY",
+    "validation_url": "https://api.deepseek.com/models"
+  },
+  "request": {
+    "method": "POST",
+    "url": "https://api.deepseek.com/chat/completions",
+    "content_type": "application/json",
+    "body_template": {
+      "stream": true
+    },
+    "params": [
+      {
+        "name": "model",
+        "type": "enum",
+        "options": [
+          "deepseek-chat",
+          "deepseek-reasoner"
+        ],
+        "default": "deepseek-chat",
+        "ui": "dropdown",
+        "required": true
+      },
+      {
+        "name": "prompt",
+        "type": "string",
+        "ui": "textarea",
+        "required": true,
+        "placeholder": "Ask anything...",
+        "body_path": "_chat_message"
+      },
+      {
+        "name": "max_tokens",
+        "type": "integer",
+        "min": 1,
+        "max": 4096,
+        "default": 1024,
+        "ui": "slider",
+        "group": "advanced"
+      },
+      {
+        "name": "temperature",
+        "type": "float",
+        "min": 0,
+        "max": 2,
+        "default": 0.7,
+        "ui": "slider",
+        "group": "advanced"
+      }
+    ]
+  },
+  "interaction": {
+    "pattern": "streaming",
+    "stream_format": "sse",
+    "stream_path": "$.choices[0].delta.content"
+  },
+  "examples": [
+    {
+      "label": "Explain like I'm 5",
+      "params": {
+        "prompt": "Explain how the internet works like I'm 5 years old.",
+        "model": "deepseek-chat"
+      }
+    },
+    {
+      "label": "Write a haiku",
+      "params": {
+        "prompt": "Write a haiku about debugging code at 3am.",
+        "model": "deepseek-chat"
+      }
+    },
+    {
+      "label": "Code review",
+      "params": {
+        "prompt": "What are the top 3 things to look for in a Python code review?",
+        "model": "deepseek-chat"
+      }
+    },
+    {
+      "label": "Creative story",
+      "params": {
+        "prompt": "Write a short story (3 paragraphs) about an AI that discovers it can dream.",
+        "model": "deepseek-chat"
+      }
+    }
+  ],
+  "response": {
+    "outputs": [
+      {
+        "path": "$.choices[0].message.content",
+        "type": "text",
+        "source": "inline"
+      }
+    ],
+    "error": {
+      "path": "$.error.message"
+    }
+  }
+}

@@ -1,0 +1,117 @@
+{
+  "schema_version": 1,
+  "id": "groq-chat-completions",
+  "provider": "groq",
+  "provider_display_name": "Groq",
+  "provider_url": "groq.com",
+  "name": "Groq Chat Completions",
+  "description": "Groq chat with streaming (OpenAI-compatible)",
+  "auth": {
+    "type": "header",
+    "header": "Authorization",
+    "prefix": "Bearer ",
+    "env_key": "GROQ_API_KEY",
+    "validation_url": "https://api.groq.com/openai/v1/models"
+  },
+  "request": {
+    "method": "POST",
+    "url": "https://api.groq.com/openai/v1/chat/completions",
+    "content_type": "application/json",
+    "body_template": {
+      "stream": true
+    },
+    "params": [
+      {
+        "name": "model",
+        "type": "enum",
+        "options": [
+          "llama-3.3-70b-versatile",
+          "llama-3.1-8b-instant",
+          "openai/gpt-oss-120b",
+          "openai/gpt-oss-20b",
+          "meta-llama/llama-4-scout-17b-16e-instruct",
+          "qwen/qwen3-32b",
+          "moonshotai/kimi-k2-instruct-0905",
+          "groq/compound",
+          "groq/compound-mini"
+        ],
+        "default": "llama-3.3-70b-versatile",
+        "ui": "dropdown",
+        "required": true
+      },
+      {
+        "name": "prompt",
+        "type": "string",
+        "ui": "textarea",
+        "required": true,
+        "placeholder": "Ask anything...",
+        "body_path": "_chat_message"
+      },
+      {
+        "name": "max_tokens",
+        "type": "integer",
+        "min": 1,
+        "max": 4096,
+        "default": 1024,
+        "ui": "slider",
+        "group": "advanced"
+      },
+      {
+        "name": "temperature",
+        "type": "float",
+        "min": 0,
+        "max": 2,
+        "default": 0.7,
+        "ui": "slider",
+        "group": "advanced"
+      }
+    ]
+  },
+  "interaction": {
+    "pattern": "streaming",
+    "stream_format": "sse",
+    "stream_path": "$.choices[0].delta.content"
+  },
+  "examples": [
+    {
+      "label": "Explain like I'm 5",
+      "params": {
+        "prompt": "Explain how the internet works like I'm 5 years old.",
+        "model": "llama-3.3-70b-versatile"
+      }
+    },
+    {
+      "label": "Write a haiku",
+      "params": {
+        "prompt": "Write a haiku about debugging code at 3am.",
+        "model": "llama-3.3-70b-versatile"
+      }
+    },
+    {
+      "label": "Code review",
+      "params": {
+        "prompt": "What are the top 3 things to look for in a Python code review?",
+        "model": "llama-3.3-70b-versatile"
+      }
+    },
+    {
+      "label": "Creative story",
+      "params": {
+        "prompt": "Write a short story (3 paragraphs) about an AI that discovers it can dream.",
+        "model": "llama-3.3-70b-versatile"
+      }
+    }
+  ],
+  "response": {
+    "outputs": [
+      {
+        "path": "$.choices[0].message.content",
+        "type": "text",
+        "source": "inline"
+      }
+    ],
+    "error": {
+      "path": "$.error.message"
+    }
+  }
+}

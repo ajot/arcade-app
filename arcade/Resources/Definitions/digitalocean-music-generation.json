@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "id": "do-music-generation",
+  "provider": "digitalocean",
+  "provider_display_name": "DigitalOcean",
+  "provider_url": "digitalocean.com",
+  "name": "DigitalOcean Music Generation",
+  "description": "Stable Audio 2.5 music generation via DigitalOcean GenAI",
+  "auth": {
+    "type": "header",
+    "header": "Authorization",
+    "prefix": "Bearer ",
+    "env_key": "DIGITALOCEAN_API_KEY",
+    "validation_url": "https://inference.do-ai.run/v1/models"
+  },
+  "request": {
+    "method": "POST",
+    "url": "https://inference.do-ai.run/v1/async-invoke",
+    "content_type": "application/json",
+    "body_template": {
+      "model_id": "fal-ai/stable-audio-25/text-to-audio",
+      "input": {}
+    },
+    "params": [
+      {
+        "name": "prompt",
+        "type": "string",
+        "ui": "textarea",
+        "body_path": "input.prompt",
+        "placeholder": "Describe the music you want to generate...",
+        "required": true
+      },
+      {
+        "name": "duration",
+        "type": "float",
+        "ui": "slider",
+        "body_path": "input.duration",
+        "min": 1,
+        "max": 180,
+        "default": 10
+      }
+    ]
+  },
+  "interaction": {
+    "pattern": "polling",
+    "status_url": "https://inference.do-ai.run/v1/async-invoke/{request_id}/status",
+    "result_url": "https://inference.do-ai.run/v1/async-invoke/{request_id}",
+    "request_id_path": "$.request_id",
+    "poll_interval_ms": 5000,
+    "done_when": {
+      "path": "$.status",
+      "equals": "COMPLETED"
+    },
+    "failed_when": {
+      "path": "$.status",
+      "in": [
+        "FAILED",
+        "ERROR"
+      ]
+    }
+  },
+  "examples": [
+    {
+      "label": "Synth wave",
+      "params": {
+        "prompt": "Upbeat synthwave track with retro 80s vibes, pulsing bass, and shimmering arpeggios"
+      }
+    },
+    {
+      "label": "Jazz piano",
+      "params": {
+        "prompt": "Smooth jazz piano trio, upright bass, brushed drums, late night club atmosphere"
+      }
+    }
+  ],
+  "response": {
+    "outputs": [
+      {
+        "path": "$..url",
+        "type": "audio",
+        "source": "url",
+        "downloadable": true
+      }
+    ],
+    "error": {
+      "path": "$.error.message"
+    }
+  }
+}

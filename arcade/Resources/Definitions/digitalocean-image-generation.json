@@ -1,0 +1,107 @@
+{
+  "schema_version": 1,
+  "id": "do-image-generation",
+  "provider": "digitalocean",
+  "provider_display_name": "DigitalOcean",
+  "provider_url": "digitalocean.com",
+  "name": "DigitalOcean Image Generation",
+  "description": "Text-to-image generation via DigitalOcean GenAI",
+  "auth": {
+    "type": "header",
+    "header": "Authorization",
+    "prefix": "Bearer ",
+    "env_key": "DIGITALOCEAN_API_KEY",
+    "validation_url": "https://inference.do-ai.run/v1/models"
+  },
+  "request": {
+    "method": "POST",
+    "url": "https://inference.do-ai.run/v1/async-invoke",
+    "content_type": "application/json",
+    "body_template": {
+      "input": {}
+    },
+    "params": [
+      {
+        "name": "model",
+        "type": "enum",
+        "options": [
+          "fal-ai/flux/schnell",
+          "fal-ai/fast-sdxl"
+        ],
+        "default": "fal-ai/flux/schnell",
+        "ui": "dropdown",
+        "body_path": "model_id",
+        "required": true
+      },
+      {
+        "name": "prompt",
+        "type": "string",
+        "ui": "textarea",
+        "required": true,
+        "body_path": "input.prompt",
+        "placeholder": "A cat astronaut floating in space..."
+      }
+    ]
+  },
+  "interaction": {
+    "pattern": "polling",
+    "status_url": "https://inference.do-ai.run/v1/async-invoke/{request_id}/status",
+    "result_url": "https://inference.do-ai.run/v1/async-invoke/{request_id}",
+    "request_id_path": "$.request_id",
+    "poll_interval_ms": 2000,
+    "done_when": {
+      "path": "$.status",
+      "equals": "COMPLETED"
+    },
+    "failed_when": {
+      "path": "$.status",
+      "in": [
+        "FAILED",
+        "ERROR"
+      ]
+    }
+  },
+  "examples": [
+    {
+      "label": "Space cat",
+      "params": {
+        "prompt": "A cat astronaut floating in space, photorealistic, 8k, dramatic lighting",
+        "model": "fal-ai/flux/schnell"
+      }
+    },
+    {
+      "label": "Mountain sunset",
+      "params": {
+        "prompt": "A mountain landscape at sunset, oil painting style, vibrant colors",
+        "model": "fal-ai/flux/schnell"
+      }
+    },
+    {
+      "label": "Cyberpunk city",
+      "params": {
+        "prompt": "A futuristic cyberpunk city at night, neon signs, rain-soaked streets, blade runner style",
+        "model": "fal-ai/fast-sdxl"
+      }
+    },
+    {
+      "label": "Studio portrait",
+      "params": {
+        "prompt": "Professional studio portrait of a golden retriever wearing reading glasses, soft lighting",
+        "model": "fal-ai/fast-sdxl"
+      }
+    }
+  ],
+  "response": {
+    "outputs": [
+      {
+        "path": "$..url",
+        "type": "image",
+        "source": "url",
+        "downloadable": true
+      }
+    ],
+    "error": {
+      "path": "$.error.message"
+    }
+  }
+}

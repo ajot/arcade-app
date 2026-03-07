@@ -1,0 +1,118 @@
+{
+  "schema_version": 1,
+  "id": "mistral-chat-completions",
+  "provider": "mistral",
+  "provider_display_name": "Mistral",
+  "provider_url": "mistral.ai",
+  "name": "Mistral AI Chat Completions",
+  "description": "Mistral AI chat with streaming (OpenAI-compatible)",
+  "auth": {
+    "type": "header",
+    "header": "Authorization",
+    "prefix": "Bearer ",
+    "env_key": "MISTRAL_API_KEY",
+    "validation_url": "https://api.mistral.ai/v1/models"
+  },
+  "request": {
+    "method": "POST",
+    "url": "https://api.mistral.ai/v1/chat/completions",
+    "content_type": "application/json",
+    "body_template": {
+      "stream": true
+    },
+    "params": [
+      {
+        "name": "model",
+        "type": "enum",
+        "options": [
+          "mistral-large-latest",
+          "mistral-medium-latest",
+          "mistral-small-latest",
+          "pixtral-large-latest",
+          "magistral-medium-latest",
+          "magistral-small-latest",
+          "ministral-3-8b-25-12",
+          "ministral-3-3b-25-12",
+          "mistral-saba-latest",
+          "codestral-latest"
+        ],
+        "default": "mistral-large-latest",
+        "ui": "dropdown",
+        "required": true
+      },
+      {
+        "name": "prompt",
+        "type": "string",
+        "ui": "textarea",
+        "required": true,
+        "placeholder": "Ask anything...",
+        "body_path": "_chat_message"
+      },
+      {
+        "name": "max_tokens",
+        "type": "integer",
+        "min": 1,
+        "max": 4096,
+        "default": 1024,
+        "ui": "slider",
+        "group": "advanced"
+      },
+      {
+        "name": "temperature",
+        "type": "float",
+        "min": 0,
+        "max": 2,
+        "default": 0.7,
+        "ui": "slider",
+        "group": "advanced"
+      }
+    ]
+  },
+  "interaction": {
+    "pattern": "streaming",
+    "stream_format": "sse",
+    "stream_path": "$.choices[0].delta.content"
+  },
+  "examples": [
+    {
+      "label": "Explain like I'm 5",
+      "params": {
+        "prompt": "Explain how the internet works like I'm 5 years old.",
+        "model": "mistral-large-latest"
+      }
+    },
+    {
+      "label": "Write a haiku",
+      "params": {
+        "prompt": "Write a haiku about debugging code at 3am.",
+        "model": "mistral-large-latest"
+      }
+    },
+    {
+      "label": "Code review",
+      "params": {
+        "prompt": "What are the top 3 things to look for in a Python code review?",
+        "model": "mistral-large-latest"
+      }
+    },
+    {
+      "label": "Creative story",
+      "params": {
+        "prompt": "Write a short story (3 paragraphs) about an AI that discovers it can dream.",
+        "model": "mistral-large-latest"
+      }
+    }
+  ],
+  "response": {
+    "outputs": [
+      {
+        "path": "$.choices[0].message.content",
+        "type": "text",
+        "source": "inline"
+      }
+    ],
+    "error": {
+      "path": "$.error.message"
+    }
+  }
+}

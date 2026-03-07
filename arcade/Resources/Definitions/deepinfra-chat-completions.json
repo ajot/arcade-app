@@ -1,0 +1,138 @@
+{
+  "schema_version": 1,
+  "id": "deepinfra-chat-completions",
+  "provider": "deepinfra",
+  "provider_display_name": "DeepInfra",
+  "provider_url": "deepinfra.com",
+  "name": "DeepInfra Chat Completions",
+  "description": "DeepInfra chat with streaming (OpenAI-compatible)",
+  "auth": {
+    "type": "header",
+    "header": "Authorization",
+    "prefix": "Bearer ",
+    "env_key": "DEEPINFRA_API_KEY",
+    "validation_url": "https://api.deepinfra.com/v1/openai/models"
+  },
+  "request": {
+    "method": "POST",
+    "url": "https://api.deepinfra.com/v1/openai/chat/completions",
+    "content_type": "application/json",
+    "body_template": {
+      "stream": true
+    },
+    "params": [
+      {
+        "name": "model",
+        "type": "enum",
+        "options": [
+          "deepseek-ai/DeepSeek-V3.2",
+          "deepseek-ai/DeepSeek-V3.1",
+          "deepseek-ai/DeepSeek-V3-0324",
+          "deepseek-ai/DeepSeek-R1-0528",
+          "deepseek-ai/DeepSeek-R1-Distill-Llama-70B",
+          "meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8",
+          "meta-llama/Llama-4-Scout-17B-16E-Instruct",
+          "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+          "meta-llama/Meta-Llama-3.1-70B-Instruct",
+          "meta-llama/Meta-Llama-3.1-8B-Instruct",
+          "Qwen/Qwen3-235B-A22B-Instruct-2507",
+          "Qwen/Qwen3-32B",
+          "Qwen/Qwen3-30B-A3B",
+          "Qwen/Qwen3-14B",
+          "Qwen/Qwen2.5-72B-Instruct",
+          "google/gemma-3-27b-it",
+          "google/gemma-3-12b-it",
+          "google/gemma-3-4b-it",
+          "mistralai/Mistral-Small-3.2-24B-Instruct-2506",
+          "mistralai/Mistral-Small-24B-Instruct-2501",
+          "mistralai/Mistral-Nemo-Instruct-2407",
+          "nvidia/Llama-3.3-Nemotron-Super-49B-v1.5",
+          "nvidia/Nemotron-3-Nano-30B-A3B",
+          "moonshotai/Kimi-K2-Instruct-0905",
+          "microsoft/phi-4",
+          "openai/gpt-oss-120b",
+          "openai/gpt-oss-20b",
+          "ByteDance/Seed-2.0-mini",
+          "MiniMaxAI/MiniMax-M2.5",
+          "zai-org/GLM-4.7"
+        ],
+        "default": "deepseek-ai/DeepSeek-V3.2",
+        "ui": "dropdown",
+        "required": true
+      },
+      {
+        "name": "prompt",
+        "type": "string",
+        "ui": "textarea",
+        "required": true,
+        "placeholder": "Ask anything...",
+        "body_path": "_chat_message"
+      },
+      {
+        "name": "max_tokens",
+        "type": "integer",
+        "min": 1,
+        "max": 4096,
+        "default": 1024,
+        "ui": "slider",
+        "group": "advanced"
+      },
+      {
+        "name": "temperature",
+        "type": "float",
+        "min": 0,
+        "max": 2,
+        "default": 0.7,
+        "ui": "slider",
+        "group": "advanced"
+      }
+    ]
+  },
+  "interaction": {
+    "pattern": "streaming",
+    "stream_format": "sse",
+    "stream_path": "$.choices[0].delta.content"
+  },
+  "examples": [
+    {
+      "label": "Explain like I'm 5",
+      "params": {
+        "prompt": "Explain how the internet works like I'm 5 years old.",
+        "model": "deepseek-ai/DeepSeek-V3.2"
+      }
+    },
+    {
+      "label": "Write a haiku",
+      "params": {
+        "prompt": "Write a haiku about debugging code at 3am.",
+        "model": "deepseek-ai/DeepSeek-V3.2"
+      }
+    },
+    {
+      "label": "Code review",
+      "params": {
+        "prompt": "What are the top 3 things to look for in a Python code review?",
+        "model": "deepseek-ai/DeepSeek-V3.2"
+      }
+    },
+    {
+      "label": "Creative story",
+      "params": {
+        "prompt": "Write a short story (3 paragraphs) about an AI that discovers it can dream.",
+        "model": "deepseek-ai/DeepSeek-V3.2"
+      }
+    }
+  ],
+  "response": {
+    "outputs": [
+      {
+        "path": "$.choices[0].message.content",
+        "type": "text",
+        "source": "inline"
+      }
+    ],
+    "error": {
+      "path": "$.error.message"
+    }
+  }
+}

@@ -1,0 +1,131 @@
+{
+  "schema_version": 1,
+  "id": "do-text-to-speech",
+  "provider": "digitalocean",
+  "provider_display_name": "DigitalOcean",
+  "provider_url": "digitalocean.com",
+  "name": "DigitalOcean Text-to-Speech",
+  "description": "ElevenLabs multilingual TTS via DigitalOcean GenAI",
+  "auth": {
+    "type": "header",
+    "header": "Authorization",
+    "prefix": "Bearer ",
+    "env_key": "DIGITALOCEAN_API_KEY",
+    "validation_url": "https://inference.do-ai.run/v1/models"
+  },
+  "request": {
+    "method": "POST",
+    "url": "https://inference.do-ai.run/v1/async-invoke",
+    "content_type": "application/json",
+    "body_template": {
+      "model_id": "fal-ai/elevenlabs/tts/multilingual-v2",
+      "input": {}
+    },
+    "params": [
+      {
+        "name": "text",
+        "type": "string",
+        "ui": "textarea",
+        "body_path": "input.text",
+        "placeholder": "Text to speak...",
+        "required": true
+      },
+      {
+        "name": "voice",
+        "type": "enum",
+        "options": [
+          "Rachel",
+          "Aria",
+          "Roger",
+          "Sarah",
+          "Laura",
+          "Charlie",
+          "George",
+          "Callum",
+          "River",
+          "Liam",
+          "Charlotte",
+          "Alice",
+          "Matilda",
+          "Will",
+          "Jessica",
+          "Eric",
+          "Chris",
+          "Brian",
+          "Daniel",
+          "Lily",
+          "Bill"
+        ],
+        "default": "Rachel",
+        "ui": "dropdown"
+      },
+      {
+        "name": "language",
+        "type": "enum",
+        "options": [
+          "en",
+          "es",
+          "fr",
+          "de",
+          "it",
+          "pt",
+          "pl",
+          "hi",
+          "ja",
+          "zh"
+        ],
+        "default": "en",
+        "ui": "dropdown"
+      }
+    ]
+  },
+  "interaction": {
+    "pattern": "polling",
+    "status_url": "https://inference.do-ai.run/v1/async-invoke/{request_id}/status",
+    "result_url": "https://inference.do-ai.run/v1/async-invoke/{request_id}",
+    "request_id_path": "$.request_id",
+    "poll_interval_ms": 2000,
+    "done_when": {
+      "path": "$.status",
+      "equals": "COMPLETED"
+    },
+    "failed_when": {
+      "path": "$.status",
+      "in": [
+        "FAILED",
+        "ERROR"
+      ]
+    }
+  },
+  "examples": [
+    {
+      "label": "Welcome message",
+      "params": {
+        "text": "Welcome to arcade, the universal AI playground. Pick any endpoint, and the UI builds itself.",
+        "voice": "Rachel",
+        "language": "en"
+      }
+    },
+    {
+      "label": "News anchor",
+      "params": {
+        "text": "Breaking news tonight. Scientists have discovered a new species of deep-sea fish that communicates using bioluminescent patterns.",
+        "voice": "Roger",
+        "language": "en"
+      }
+    }
+  ],
+  "response": {
+    "outputs": [
+      {
+        "path": "$..url",
+        "type": "audio",
+        "source": "url",
+        "downloadable": true
+      }
+    ],
+    "error": {
+      "path": "$.error.message"
+    }
+  }
+}

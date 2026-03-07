@@ -1,0 +1,94 @@
+{
+  "schema_version": 1,
+  "id": "openrouter-image-generation",
+  "provider": "openrouter",
+  "provider_display_name": "OpenRouter",
+  "provider_url": "openrouter.ai",
+  "name": "OpenRouter Image Generation",
+  "description": "Image generation via OpenRouter (GPT Image, Gemini Image, FLUX, Seedream, Riverflow)",
+  "auth": {
+    "type": "header",
+    "header": "Authorization",
+    "prefix": "Bearer ",
+    "env_key": "OPENROUTER_API_KEY",
+    "validation_url": "https://openrouter.ai/api/v1/auth/key"
+  },
+  "request": {
+    "method": "POST",
+    "url": "https://openrouter.ai/api/v1/chat/completions",
+    "content_type": "application/json",
+    "body_template": {
+      "stream": false
+    },
+    "params": [
+      {
+        "name": "model",
+        "type": "enum",
+        "options": [
+          "google/gemini-2.5-flash-image",
+          "google/gemini-3-pro-image-preview",
+          "openai/gpt-5-image",
+          "openai/gpt-5-image-mini",
+          "black-forest-labs/flux.2-pro",
+          "black-forest-labs/flux.2-max",
+          "black-forest-labs/flux.2-flex",
+          "black-forest-labs/flux.2-klein-4b",
+          "bytedance-seed/seedream-4.5",
+          "sourceful/riverflow-v2-pro",
+          "sourceful/riverflow-v2-fast",
+          "sourceful/riverflow-v2-standard-preview"
+        ],
+        "default": "google/gemini-2.5-flash-image",
+        "ui": "dropdown",
+        "required": true
+      },
+      {
+        "name": "prompt",
+        "type": "string",
+        "ui": "textarea",
+        "required": true,
+        "placeholder": "Describe the image you want to generate...",
+        "body_path": "_chat_message"
+      }
+    ]
+  },
+  "interaction": {
+    "pattern": "sync"
+  },
+  "examples": [
+    {
+      "label": "Sunset landscape",
+      "params": {
+        "prompt": "Generate an image of a serene sunset over mountains with a lake reflection",
+        "model": "google/gemini-2.5-flash-image"
+      }
+    },
+    {
+      "label": "Cute robot",
+      "params": {
+        "prompt": "Generate an image of a cute cartoon robot holding a flower in a garden",
+        "model": "google/gemini-2.5-flash-image"
+      }
+    },
+    {
+      "label": "Abstract art",
+      "params": {
+        "prompt": "Generate an abstract art piece with vibrant blues and golds, fluid shapes",
+        "model": "google/gemini-2.5-flash-image"
+      }
+    }
+  ],
+  "response": {
+    "outputs": [
+      {
+        "path": "$..url",
+        "type": "image",
+        "source": "url",
+        "downloadable": true
+      }
+    ],
+    "error": {
+      "path": "$.error.message"
+    }
+  }
+}

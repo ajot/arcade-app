@@ -1,0 +1,120 @@
+{
+  "schema_version": 1,
+  "id": "sambanova-chat-completions",
+  "provider": "sambanova",
+  "provider_display_name": "SambaNova",
+  "provider_url": "sambanova.ai",
+  "name": "SambaNova Chat Completions",
+  "description": "SambaNova chat with streaming (OpenAI-compatible)",
+  "auth": {
+    "type": "header",
+    "header": "Authorization",
+    "prefix": "Bearer ",
+    "env_key": "SAMBANOVA_API_KEY",
+    "validation_url": "https://api.sambanova.ai/v1/models"
+  },
+  "request": {
+    "method": "POST",
+    "url": "https://api.sambanova.ai/v1/chat/completions",
+    "content_type": "application/json",
+    "body_template": {
+      "stream": true
+    },
+    "params": [
+      {
+        "name": "model",
+        "type": "enum",
+        "options": [
+          "DeepSeek-R1-0528",
+          "DeepSeek-V3.1",
+          "DeepSeek-V3-0324",
+          "DeepSeek-R1-Distill-Llama-70B",
+          "Meta-Llama-3.3-70B-Instruct",
+          "Meta-Llama-3.1-8B-Instruct",
+          "Llama-4-Maverick-17B-128E-Instruct",
+          "Llama-4-Scout-17B-16E-Instruct",
+          "Qwen3-235B-A22B-Instruct-2507",
+          "Qwen3-32B",
+          "gpt-oss-120b",
+          "Llama-3.3-Swallow-70B-Instruct-v0.4"
+        ],
+        "default": "DeepSeek-V3.1",
+        "ui": "dropdown",
+        "required": true
+      },
+      {
+        "name": "prompt",
+        "type": "string",
+        "ui": "textarea",
+        "required": true,
+        "placeholder": "Ask anything...",
+        "body_path": "_chat_message"
+      },
+      {
+        "name": "max_tokens",
+        "type": "integer",
+        "min": 1,
+        "max": 4096,
+        "default": 1024,
+        "ui": "slider",
+        "group": "advanced"
+      },
+      {
+        "name": "temperature",
+        "type": "float",
+        "min": 0,
+        "max": 2,
+        "default": 0.7,
+        "ui": "slider",
+        "group": "advanced"
+      }
+    ]
+  },
+  "interaction": {
+    "pattern": "streaming",
+    "stream_format": "sse",
+    "stream_path": "$.choices[0].delta.content"
+  },
+  "examples": [
+    {
+      "label": "Explain like I'm 5",
+      "params": {
+        "prompt": "Explain how the internet works like I'm 5 years old.",
+        "model": "DeepSeek-V3.1"
+      }
+    },
+    {
+      "label": "Write a haiku",
+      "params": {
+        "prompt": "Write a haiku about debugging code at 3am.",
+        "model": "DeepSeek-V3.1"
+      }
+    },
+    {
+      "label": "Code review",
+      "params": {
+        "prompt": "What are the top 3 things to look for in a Python code review?",
+        "model": "DeepSeek-V3.1"
+      }
+    },
+    {
+      "label": "Creative story",
+      "params": {
+        "prompt": "Write a short story (3 paragraphs) about an AI that discovers it can dream.",
+        "model": "DeepSeek-V3.1"
+      }
+    }
+  ],
+  "response": {
+    "outputs": [
+      {
+        "path": "$.choices[0].message.content",
+        "type": "text",
+        "source": "inline"
+      }
+    ],
+    "error": {
+      "path": "$.error.message"
+    }
+  }
+}

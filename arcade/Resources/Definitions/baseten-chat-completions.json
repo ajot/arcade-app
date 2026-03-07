@@ -1,0 +1,121 @@
+{
+  "schema_version": 1,
+  "id": "baseten-chat-completions",
+  "provider": "baseten",
+  "provider_display_name": "Baseten",
+  "provider_url": "baseten.co",
+  "name": "Baseten Chat Completions",
+  "description": "Baseten Model APIs \u2014 OpenAI-compatible inference for open-source LLMs",
+  "auth": {
+    "type": "header",
+    "header": "Authorization",
+    "prefix": "Api-Key ",
+    "env_key": "BASETEN_API_KEY",
+    "validation_url": "https://inference.baseten.co/v1/models"
+  },
+  "request": {
+    "method": "POST",
+    "url": "https://inference.baseten.co/v1/chat/completions",
+    "content_type": "application/json",
+    "body_template": {
+      "stream": true
+    },
+    "params": [
+      {
+        "name": "model",
+        "type": "enum",
+        "options": [
+          "deepseek-ai/DeepSeek-V3.2",
+          "deepseek-ai/DeepSeek-V3.1",
+          "deepseek-ai/DeepSeek-V3-0324",
+          "deepseek-ai/DeepSeek-R1-0528",
+          "moonshotai/Kimi-K2-Instruct-0905",
+          "moonshotai/Kimi-K2-Thinking",
+          "moonshotai/Kimi-K2.5",
+          "MiniMaxAI/MiniMax-M2.5",
+          "openai/gpt-oss-120b",
+          "Qwen/Qwen3-Coder-480B-A35B-Instruct",
+          "zai-org/GLM-4.6",
+          "zai-org/GLM-4.7",
+          "zai-org/GLM-5"
+        ],
+        "default": "deepseek-ai/DeepSeek-V3.1",
+        "ui": "dropdown",
+        "required": true
+      },
+      {
+        "name": "prompt",
+        "type": "string",
+        "ui": "textarea",
+        "required": true,
+        "placeholder": "Ask anything...",
+        "body_path": "_chat_message"
+      },
+      {
+        "name": "max_tokens",
+        "type": "integer",
+        "min": 1,
+        "max": 4096,
+        "default": 1024,
+        "ui": "slider",
+        "group": "advanced"
+      },
+      {
+        "name": "temperature",
+        "type": "float",
+        "min": 0,
+        "max": 2,
+        "default": 0.7,
+        "ui": "slider",
+        "group": "advanced"
+      }
+    ]
+  },
+  "interaction": {
+    "pattern": "streaming",
+    "stream_format": "sse",
+    "stream_path": "$.choices[0].delta.content"
+  },
+  "examples": [
+    {
+      "label": "Explain like I'm 5",
+      "params": {
+        "prompt": "Explain how the internet works like I'm 5 years old.",
+        "model": "deepseek-ai/DeepSeek-V3.1"
+      }
+    },
+    {
+      "label": "Write a haiku",
+      "params": {
+        "prompt": "Write a haiku about debugging code at 3am.",
+        "model": "moonshotai/Kimi-K2.5"
+      }
+    },
+    {
+      "label": "Code review",
+      "params": {
+        "prompt": "What are the top 3 things to look for in a Python code review?",
+        "model": "openai/gpt-oss-120b"
+      }
+    },
+    {
+      "label": "Creative story",
+      "params": {
+        "prompt": "Write a short story (3 paragraphs) about an AI that discovers it can dream.",
+        "model": "zai-org/GLM-5"
+      }
+    }
+  ],
+  "response": {
+    "outputs": [
+      {
+        "path": "$.choices[0].message.content",
+        "type": "text",
+        "source": "inline"
+      }
+    ],
+    "error": {
+      "path": "$.error.message"
+    }
+  }
+}

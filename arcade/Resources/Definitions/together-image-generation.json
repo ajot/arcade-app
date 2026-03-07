@@ -1,0 +1,144 @@
+{
+  "schema_version": 1,
+  "id": "together-image-generation",
+  "provider": "together",
+  "provider_display_name": "Together AI",
+  "provider_url": "together.ai",
+  "name": "Together AI Image Generation",
+  "description": "Text-to-image generation via Together AI (FLUX, Stable Diffusion, and more)",
+  "auth": {
+    "type": "header",
+    "header": "Authorization",
+    "prefix": "Bearer ",
+    "env_key": "TOGETHER_API_KEY",
+    "validation_url": "https://api.together.xyz/v1/models"
+  },
+  "request": {
+    "method": "POST",
+    "url": "https://api.together.xyz/v1/images/generations",
+    "content_type": "application/json",
+    "body_template": {},
+    "params": [
+      {
+        "name": "model",
+        "type": "enum",
+        "options": [
+          "black-forest-labs/FLUX.1-schnell-Free",
+          "black-forest-labs/FLUX.1-schnell",
+          "black-forest-labs/FLUX.1-dev",
+          "black-forest-labs/FLUX.1-dev-lora",
+          "black-forest-labs/FLUX.1-pro",
+          "black-forest-labs/FLUX.1.1-pro",
+          "black-forest-labs/FLUX.1-kontext-dev",
+          "black-forest-labs/FLUX.1-kontext-max",
+          "black-forest-labs/FLUX.1-kontext-pro",
+          "black-forest-labs/FLUX.1-krea-dev",
+          "black-forest-labs/FLUX.2-dev",
+          "black-forest-labs/FLUX.2-flex",
+          "black-forest-labs/FLUX.2-pro",
+          "google/flash-image-2.5",
+          "google/gemini-3-pro-image",
+          "google/imagen-4.0-fast",
+          "google/imagen-4.0-preview",
+          "google/imagen-4.0-ultra",
+          "ideogram/ideogram-3.0",
+          "ByteDance-Seed/Seedream-3.0",
+          "ByteDance-Seed/Seedream-4.0",
+          "HiDream-ai/HiDream-I1-Dev",
+          "HiDream-ai/HiDream-I1-Fast",
+          "HiDream-ai/HiDream-I1-Full",
+          "Lykon/DreamShaper",
+          "Qwen/Qwen-Image",
+          "RunDiffusion/Juggernaut-pro-flux",
+          "Rundiffusion/Juggernaut-Lightning-Flux",
+          "stabilityai/stable-diffusion-3-medium",
+          "stabilityai/stable-diffusion-xl-base-1.0"
+        ],
+        "default": "black-forest-labs/FLUX.1-schnell",
+        "ui": "dropdown",
+        "required": true
+      },
+      {
+        "name": "prompt",
+        "type": "string",
+        "ui": "textarea",
+        "required": true,
+        "placeholder": "A cat astronaut floating in space..."
+      },
+      {
+        "name": "steps",
+        "type": "integer",
+        "min": 1,
+        "max": 50,
+        "default": 4,
+        "ui": "slider"
+      },
+      {
+        "name": "width",
+        "type": "integer",
+        "min": 256,
+        "max": 1440,
+        "default": 1024,
+        "ui": "slider"
+      },
+      {
+        "name": "height",
+        "type": "integer",
+        "min": 256,
+        "max": 1440,
+        "default": 1024,
+        "ui": "slider"
+      }
+    ]
+  },
+  "interaction": {
+    "pattern": "sync"
+  },
+  "examples": [
+    {
+      "label": "Space cat",
+      "params": {
+        "prompt": "A cat astronaut floating in space, photorealistic, 8k, dramatic lighting",
+        "model": "black-forest-labs/FLUX.1-schnell",
+        "steps": 4
+      }
+    },
+    {
+      "label": "Mountain sunset",
+      "params": {
+        "prompt": "A mountain landscape at sunset, oil painting style, vibrant colors",
+        "model": "black-forest-labs/FLUX.1-schnell",
+        "steps": 4
+      }
+    },
+    {
+      "label": "Cyberpunk city",
+      "params": {
+        "prompt": "A futuristic cyberpunk city at night, neon signs, rain-soaked streets, blade runner style",
+        "model": "black-forest-labs/FLUX.1-schnell",
+        "steps": 4
+      }
+    },
+    {
+      "label": "Studio portrait",
+      "params": {
+        "prompt": "Professional studio portrait of a golden retriever wearing reading glasses, soft lighting",
+        "model": "black-forest-labs/FLUX.1-schnell",
+        "steps": 4
+      }
+    }
+  ],
+  "response": {
+    "outputs": [
+      {
+        "path": "$.data[0].url",
+        "type": "image",
+        "source": "url",
+        "downloadable": true
+      }
+    ],
+    "error": {
+      "path": "$.error.message"
+    }
+  }
+}

@@ -1,0 +1,105 @@
+{
+  "schema_version": 1,
+  "id": "together-text-to-speech",
+  "provider": "together",
+  "provider_display_name": "Together AI",
+  "provider_url": "together.ai",
+  "name": "Together AI Text to Speech",
+  "description": "Text-to-speech via Together AI (Orpheus, Kokoro, Cartesia Sonic)",
+  "auth": {
+    "type": "header",
+    "header": "Authorization",
+    "prefix": "Bearer ",
+    "env_key": "TOGETHER_API_KEY",
+    "validation_url": "https://api.together.xyz/v1/models"
+  },
+  "request": {
+    "method": "POST",
+    "url": "https://api.together.xyz/v1/audio/speech",
+    "content_type": "application/json",
+    "body_template": {
+      "response_format": "mp3"
+    },
+    "params": [
+      {
+        "name": "model",
+        "type": "enum",
+        "options": [
+          "canopylabs/orpheus-3b-0.1-ft",
+          "cartesia/sonic",
+          "cartesia/sonic-2",
+          "cartesia/sonic-3",
+          "hexgrad/Kokoro-82M"
+        ],
+        "default": "canopylabs/orpheus-3b-0.1-ft",
+        "ui": "dropdown",
+        "required": true
+      },
+      {
+        "name": "input",
+        "type": "string",
+        "ui": "textarea",
+        "required": true,
+        "placeholder": "Hello, welcome to arcade..."
+      },
+      {
+        "name": "voice",
+        "type": "string",
+        "ui": "text",
+        "required": false,
+        "placeholder": "tara (Orpheus: tara, leah, jess, leo)"
+      }
+    ]
+  },
+  "interaction": {
+    "pattern": "sync",
+    "response_type": "binary_audio"
+  },
+  "examples": [
+    {
+      "label": "Welcome message",
+      "params": {
+        "input": "Welcome to arcade, the universal AI playground. Pick any endpoint, and the UI builds itself.",
+        "model": "canopylabs/orpheus-3b-0.1-ft",
+        "voice": "tara"
+      }
+    },
+    {
+      "label": "News anchor",
+      "params": {
+        "input": "Breaking news tonight. Scientists have discovered a new species of deep-sea fish that communicates using bioluminescent patterns.",
+        "model": "canopylabs/orpheus-3b-0.1-ft",
+        "voice": "leo"
+      }
+    },
+    {
+      "label": "Storyteller",
+      "params": {
+        "input": "Once upon a time, in a land where code came alive at midnight, a small Python script dreamed of becoming a full application.",
+        "model": "canopylabs/orpheus-3b-0.1-ft",
+        "voice": "leah"
+      }
+    },
+    {
+      "label": "Tech explainer",
+      "params": {
+        "input": "Machine learning is a subset of artificial intelligence that enables systems to learn from data without being explicitly programmed.",
+        "model": "canopylabs/orpheus-3b-0.1-ft",
+        "voice": "jess"
+      }
+    }
+  ],
+  "response": {
+    "outputs": [
+      {
+        "path": "$.audio_url",
+        "type": "audio",
+        "source": "url",
+        "downloadable": true
+      }
+    ],
+    "error": {
+      "path": "$.error.message"
+    }
+  }
+}

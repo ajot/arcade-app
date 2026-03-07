@@ -1,0 +1,273 @@
+import Foundation
+import SwiftUI
+
+/// Central app state managing mode, selections, and generation.
+@Observable
+final class AppState {
+    // MARK: - Dependencies
+    let definitionLoader = DefinitionLoader()
+    let networkService = NetworkService()
+
+    // MARK: - Navigation
+    enum Mode: Equatable {
+        case welcome
+        case play
+        case compare
+    }
+
+    var mode: Mode = .welcome
+    var showCommandPalette = false
+
+    // MARK: - Play Mode State
+    var currentDefinition: Definition?
+    var currentModel: String?
+    var formValues: [String: String] = [:]
+    var systemPrompt: String = ""
+
+    // MARK: - Generation State
+    enum GenerationState: Equatable {
+        case idle
+        case generating
+        case streaming
+        case polling(String) // status message
+        case completed
+        case error(String)
+    }
+
+    var generationState: GenerationState = .idle
+    var streamedText: String = ""
+    var generationResult: GenerationResult?
+    var streamingMetrics: StreamingResult?
+    var currentTask: Task<Void, Never>?
+
+    // MARK: - API Key Status
+    var keyStatus: [String: KeyStatus] = [:]
+
+    enum KeyStatus: Equatable {
+        case valid
+        case invalid
+        case noKey
+        case unknown
+        case checking
+    }
+
+    // MARK: - Actions
+
+    func selectEndpoint(_ definition: Definition, model: String? = nil) {
+        currentDefinition = definition
+        currentModel = model ?? definition.defaultModel
+        mode = .play
+        showCommandPalette = false
+
+        // Initialize form values with defaults
+        formValues = [:]
+        for param in definition.request.params {
+            if param.name == "model" { continue }
+            if let defaultStr = param.defaultDisplayString {
+                formValues[param.name] = defaultStr
+            }
+        }
+        systemPrompt = ""
+
+        // Reset generation
+        cancelGeneration()
+        generationState = .idle
+        streamedText = ""
+        generationResult = nil
+        streamingMetrics = nil
+    }
+
+    func selectModel(_ model: String) {
+        currentModel = model
+    }
+
+    func fillExample(_ example: Example) {
+        for (key, value) in example.params {
+            if key == "model" {
+                if let s = value.stringValue {
+                    currentModel = s
+                }
+                continue
+            }
+            switch value {
+            case .string(let s): formValues[key] = s
+            case .int(let i): formValues[key] = "\(i)"
+            case .double(let d): formValues[key] = "\(d)"
+            default: break
+            }
+        }
+    }
+
+    func goHome() {
+        cancelGeneration()
+        mode = .welcome
+        currentDefinition = nil
+        currentModel = nil
+        formValues = [:]
+        systemPrompt = ""
+        generationState = .idle
+        streamedText = ""
+        generationResult = nil
+        streamingMetrics = nil
+    }
+
+    // MARK: - Generation
+
+    func generate() {
+        guard let definition = currentDefinition else { return }
+        guard let apiKey = KeychainService.getKey(for: definition.provider) else {
+            generationState = .error("No API key for \(definition.providerDisplayName)")
+            return
+        }
+
+        // Build params including model
+        var params = formValues
+        if let model = currentModel {
+            params["model"] = model
+        }
+        if !systemPrompt.isEmpty {
+            params["_system_prompt"] = systemPrompt
+        }
+
+        cancelGeneration()
+        streamedText = ""
+        generationResult = nil
+        streamingMetrics = nil
+
+        switch definition.interaction.pattern {
+        case .streaming:
+            generationState = .streaming
+            currentTask = Task { @MainActor in
+                do {
+                    let metrics = try await networkService.sendStreaming(
+                        definition: definition,
+                        params: params,
+                        apiKey: apiKey
+                    ) { [weak self] token in
+                        Task { @MainActor in
+                            self?.streamedText += token
+                        }
+                    }
+                    self.streamingMetrics = metrics
+                    self.generationState = .completed
+                } catch is CancellationError {
+                    self.generationState = .idle
+                } catch {
+                    self.generationState = .error(error.localizedDescription)
+                }
+            }
+
+        case .sync:
+            generationState = .generating
+            currentTask = Task { @MainActor in
+                do {
+                    let result = try await networkService.sendSync(
+                        definition: definition,
+                        params: params,
+                        apiKey: apiKey
+                    )
+                    self.generationResult = result
+                    // For text outputs, also populate streamedText for display
+                    if let textOutput = result.outputs.first(where: { $0.type == .text }),
+                       let text = textOutput.values.first {
+                        self.streamedText = text
+                    }
+                    self.generationState = .completed
+                } catch is CancellationError {
+                    self.generationState = .idle
+                } catch {
+                    self.generationState = .error(error.localizedDescription)
+                }
+            }
+
+        case .polling:
+            generationState = .polling("Submitting...")
+            currentTask = Task { @MainActor in
+                do {
+                    let result = try await networkService.sendPolling(
+                        definition: definition,
+                        params: params,
+                        apiKey: apiKey
+                    ) { [weak self] status in
+                        Task { @MainActor in
+                            self?.generationState = .polling(status)
+                        }
+                    }
+                    self.generationResult = result
+                    self.generationState = .completed
+                } catch is CancellationError {
+                    self.generationState = .idle
+                } catch {
+                    self.generationState = .error(error.localizedDescription)
+                }
+            }
+        }
+    }
+
+    func cancelGeneration() {
+        currentTask?.cancel()
+        currentTask = nil
+    }
+
+    // MARK: - Key Validation
+
+    func validateAllKeys() {
+        let providers = definitionLoader.providers
+        for (slug, _) in providers {
+            if KeychainService.getKey(for: slug) != nil {
+                keyStatus[slug] = .checking
+            } else {
+                keyStatus[slug] = .noKey
+            }
+        }
+
+        Task {
+            await withTaskGroup(of: (String, KeyStatus).self) { group in
+                for (slug, _) in providers {
+                    guard let apiKey = KeychainService.getKey(for: slug) else { continue }
+                    let defs = definitionLoader.sortedDefinitions.filter { $0.provider == slug }
+                    guard let definition = defs.first,
+                          let validationUrl = definition.auth.validationUrl,
+                          let url = URL(string: validationUrl) else {
+                        group.addTask { (slug, .unknown) }
+                        continue
+                    }
+
+                    let auth = definition.auth
+                    group.addTask {
+                        var request = URLRequest(url: url)
+                        request.timeoutInterval = 5
+                        request.setValue(
+                            "\(auth.prefix)\(apiKey)",
+                            forHTTPHeaderField: auth.header
+                        )
+
+                        do {
+                            let (_, response) = try await URLSession.shared.data(for: request)
+                            let status = (response as? HTTPURLResponse)?.statusCode ?? 0
+                            switch status {
+                            case 200: return (slug, .valid)
+                            case 401, 403: return (slug, .invalid)
+                            default: return (slug, .unknown)
+                            }
+                        } catch {
+                            return (slug, .unknown)
+                        }
+                    }
+                }
+
+                for await (provider, status) in group {
+                    await MainActor.run {
+                        self.keyStatus[provider] = status
+                    }
+                }
+            }
+        }
+    }
+
+    /// Whether the current endpoint has a valid API key.
+    var hasValidKey: Bool {
+        guard let provider = currentDefinition?.provider else { return false }
+        return KeychainService.getKey(for: provider) != nil
+    }
+}

@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "id": "openrouter-audio-generation",
+  "provider": "openrouter",
+  "provider_display_name": "OpenRouter",
+  "provider_url": "openrouter.ai",
+  "name": "OpenRouter Audio Generation",
+  "description": "Audio output via OpenRouter (GPT Audio models)",
+  "auth": {
+    "type": "header",
+    "header": "Authorization",
+    "prefix": "Bearer ",
+    "env_key": "OPENROUTER_API_KEY",
+    "validation_url": "https://openrouter.ai/api/v1/auth/key"
+  },
+  "request": {
+    "method": "POST",
+    "url": "https://openrouter.ai/api/v1/chat/completions",
+    "content_type": "application/json",
+    "body_template": {
+      "stream": false,
+      "modalities": [
+        "text",
+        "audio"
+      ],
+      "audio": {
+        "voice": "alloy",
+        "format": "wav"
+      }
+    },
+    "params": [
+      {
+        "name": "model",
+        "type": "enum",
+        "options": [
+          "openai/gpt-audio",
+          "openai/gpt-audio-mini",
+          "openai/gpt-4o-audio-preview"
+        ],
+        "default": "openai/gpt-audio",
+        "ui": "dropdown",
+        "required": true
+      },
+      {
+        "name": "prompt",
+        "type": "string",
+        "ui": "textarea",
+        "required": true,
+        "placeholder": "What should the AI say?",
+        "body_path": "_chat_message"
+      }
+    ]
+  },
+  "interaction": {
+    "pattern": "sync"
+  },
+  "examples": [
+    {
+      "label": "Greeting",
+      "params": {
+        "prompt": "Say hello and introduce yourself in a friendly tone.",
+        "model": "openai/gpt-audio"
+      }
+    },
+    {
+      "label": "Story time",
+      "params": {
+        "prompt": "Tell a very short bedtime story about a brave little star.",
+        "model": "openai/gpt-audio"
+      }
+    }
+  ],
+  "response": {
+    "outputs": [
+      {
+        "path": "$.choices[0].message.audio.data",
+        "type": "audio",
+        "source": "base64",
+        "downloadable": true
+      }
+    ],
+    "error": {
+      "path": "$.error.message"
+    }
+  }
+}

@@ -1,0 +1,115 @@
+{
+  "schema_version": 1,
+  "id": "openai-image-generation",
+  "provider": "openai",
+  "provider_display_name": "OpenAI",
+  "provider_url": "openai.com",
+  "name": "OpenAI Image Generation",
+  "description": "Image generation via OpenAI (DALL-E 3, GPT Image)",
+  "auth": {
+    "type": "header",
+    "header": "Authorization",
+    "prefix": "Bearer ",
+    "env_key": "OPENAI_API_KEY",
+    "validation_url": "https://api.openai.com/v1/models"
+  },
+  "request": {
+    "method": "POST",
+    "url": "https://api.openai.com/v1/images/generations",
+    "content_type": "application/json",
+    "body_template": {
+      "response_format": "url"
+    },
+    "params": [
+      {
+        "name": "model",
+        "type": "enum",
+        "options": [
+          "gpt-image-1",
+          "dall-e-3",
+          "dall-e-2"
+        ],
+        "default": "dall-e-3",
+        "ui": "dropdown",
+        "required": true
+      },
+      {
+        "name": "prompt",
+        "type": "string",
+        "ui": "textarea",
+        "required": true,
+        "placeholder": "A cat astronaut floating in space..."
+      },
+      {
+        "name": "size",
+        "type": "enum",
+        "options": [
+          "1024x1024",
+          "1024x1536",
+          "1536x1024",
+          "1792x1024",
+          "1024x1792"
+        ],
+        "default": "1024x1024",
+        "ui": "dropdown"
+      },
+      {
+        "name": "quality",
+        "type": "enum",
+        "options": [
+          "auto",
+          "high",
+          "medium",
+          "low",
+          "hd",
+          "standard"
+        ],
+        "default": "auto",
+        "ui": "dropdown",
+        "group": "advanced"
+      }
+    ]
+  },
+  "interaction": {
+    "pattern": "sync"
+  },
+  "examples": [
+    {
+      "label": "Space cat",
+      "params": {
+        "prompt": "A cat astronaut floating in space, photorealistic, 8k, dramatic lighting",
+        "model": "dall-e-3",
+        "size": "1024x1024"
+      }
+    },
+    {
+      "label": "Mountain sunset",
+      "params": {
+        "prompt": "A mountain landscape at sunset, oil painting style, vibrant colors",
+        "model": "dall-e-3",
+        "size": "1792x1024"
+      }
+    },
+    {
+      "label": "Cyberpunk city",
+      "params": {
+        "prompt": "A futuristic cyberpunk city at night, neon signs, rain-soaked streets, blade runner style",
+        "model": "gpt-image-1",
+        "size": "1536x1024"
+      }
+    }
+  ],
+  "response": {
+    "outputs": [
+      {
+        "path": "$.data[0].url",
+        "type": "image",
+        "source": "url",
+        "downloadable": true
+      }
+    ],
+    "error": {
+      "path": "$.error.message"
+    }
+  }
+}

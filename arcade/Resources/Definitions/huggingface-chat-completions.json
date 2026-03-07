@@ -1,0 +1,125 @@
+{
+  "schema_version": 1,
+  "id": "huggingface-chat-completions",
+  "provider": "huggingface",
+  "provider_display_name": "Hugging Face",
+  "provider_url": "huggingface.co",
+  "name": "Hugging Face Chat Completions",
+  "description": "Hugging Face chat with streaming (OpenAI-compatible)",
+  "auth": {
+    "type": "header",
+    "header": "Authorization",
+    "prefix": "Bearer ",
+    "env_key": "HUGGINGFACE_API_KEY",
+    "validation_url": "https://huggingface.co/api/whoami-v2"
+  },
+  "request": {
+    "method": "POST",
+    "url": "https://router.huggingface.co/v1/chat/completions",
+    "content_type": "application/json",
+    "body_template": {
+      "stream": true
+    },
+    "params": [
+      {
+        "name": "model",
+        "type": "enum",
+        "options": [
+          "deepseek-ai/DeepSeek-R1",
+          "deepseek-ai/DeepSeek-V3.2",
+          "Qwen/Qwen3-Coder-480B-A35B-Instruct",
+          "Qwen/Qwen3-32B",
+          "Qwen/Qwen3-8B",
+          "Qwen/QwQ-32B",
+          "Qwen/Qwen2.5-Coder-32B-Instruct",
+          "Qwen/Qwen2.5-72B-Instruct",
+          "openai/gpt-oss-120b",
+          "meta-llama/Llama-4-Maverick-17B-128E-Instruct",
+          "meta-llama/Llama-3.3-70B-Instruct",
+          "meta-llama/Llama-3.1-8B-Instruct",
+          "google/gemma-3-27b-it",
+          "mistralai/Mistral-7B-Instruct-v0.2",
+          "nvidia/NVIDIA-Nemotron-Nano-9B-v2",
+          "moonshotai/Kimi-K2-Instruct",
+          "zai-org/GLM-4.5"
+        ],
+        "default": "deepseek-ai/DeepSeek-V3.2",
+        "ui": "dropdown",
+        "required": true
+      },
+      {
+        "name": "prompt",
+        "type": "string",
+        "ui": "textarea",
+        "required": true,
+        "placeholder": "Ask anything...",
+        "body_path": "_chat_message"
+      },
+      {
+        "name": "max_tokens",
+        "type": "integer",
+        "min": 1,
+        "max": 4096,
+        "default": 1024,
+        "ui": "slider",
+        "group": "advanced"
+      },
+      {
+        "name": "temperature",
+        "type": "float",
+        "min": 0,
+        "max": 2,
+        "default": 0.7,
+        "ui": "slider",
+        "group": "advanced"
+      }
+    ]
+  },
+  "interaction": {
+    "pattern": "streaming",
+    "stream_format": "sse",
+    "stream_path": "$.choices[0].delta.content"
+  },
+  "examples": [
+    {
+      "label": "Explain like I'm 5",
+      "params": {
+        "prompt": "Explain how the internet works like I'm 5 years old.",
+        "model": "meta-llama/Llama-3.3-70B-Instruct"
+      }
+    },
+    {
+      "label": "Write a haiku",
+      "params": {
+        "prompt": "Write a haiku about debugging code at 3am.",
+        "model": "meta-llama/Llama-3.3-70B-Instruct"
+      }
+    },
+    {
+      "label": "Code review",
+      "params": {
+        "prompt": "What are the top 3 things to look for in a Python code review?",
+        "model": "meta-llama/Llama-3.3-70B-Instruct"
+      }
+    },
+    {
+      "label": "Creative story",
+      "params": {
+        "prompt": "Write a short story (3 paragraphs) about an AI that discovers it can dream.",
+        "model": "meta-llama/Llama-3.3-70B-Instruct"
+      }
+    }
+  ],
+  "response": {
+    "outputs": [
+      {
+        "path": "$.choices[0].message.content",
+        "type": "text",
+        "source": "inline"
+      }
+    ],
+    "error": {
+      "path": "$.error.message"
+    }
+  }
+}
