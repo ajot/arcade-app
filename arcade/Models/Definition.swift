@@ -106,10 +106,8 @@ struct ParamDefinition: Codable, Identifiable, Sendable {
 
     private enum CodingKeys: String, CodingKey {
         case name, type, required, ui, placeholder, group
-        case min, max, options
+        case min, max, options, bodyPath, urlPath
         case defaultValue = "default"
-        case bodyPath = "body_path"
-        case urlPath = "url_path"
     }
 }
 

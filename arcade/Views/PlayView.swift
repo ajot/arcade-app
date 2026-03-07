@@ -393,32 +393,47 @@ struct PlayView: View {
     private func resultArea(_ definition: Definition) -> some View {
         switch state.generationState {
         case .completed, .streaming:
-            VStack(alignment: .leading, spacing: 12) {
-                // Text output
-                if !state.streamedText.isEmpty {
-                    textResult
+            VStack(alignment: .leading, spacing: 0) {
+                // Result toolbar
+                if state.generationState == .completed {
+                    HStack {
+                        Spacer()
+                        copyButton
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.top, 10)
+                    .padding(.bottom, 4)
                 }
 
-                // Media outputs
-                if let result = state.generationResult {
-                    ForEach(result.outputs) { output in
-                        switch output.type {
-                        case .image:
-                            imageResult(output)
-                        case .audio:
-                            audioResult(output)
-                        case .video:
-                            videoResult(output)
-                        case .text:
-                            EmptyView() // handled by streamedText
+                VStack(alignment: .leading, spacing: 12) {
+                    // Text output
+                    if !state.streamedText.isEmpty {
+                        textResult
+                    }
+
+                    // Media outputs
+                    if let result = state.generationResult {
+                        ForEach(result.outputs) { output in
+                            switch output.type {
+                            case .image:
+                                imageResult(output)
+                            case .audio:
+                                audioResult(output)
+                            case .video:
+                                videoResult(output)
+                            case .text:
+                                EmptyView() // handled by streamedText
+                            }
                         }
                     }
-                }
 
-                // Metrics
-                metricsBar
+                    // Metrics
+                    metricsBar
+                }
+                .padding(.horizontal, 16)
+                .padding(.bottom, 16)
+                .padding(.top, state.generationState == .completed ? 4 : 16)
             }
-            .padding(16)
             .background(Color.bg900.opacity(0.4))
             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             .transition(.opacity.combined(with: .move(edge: .bottom)))
@@ -461,6 +476,34 @@ struct PlayView: View {
     }
 
     @State private var blinkOpacity: Double = 1.0
+    @State private var showCopied = false
+
+    private var copyButton: some View {
+        Button {
+            NSPasteboard.general.clearContents()
+            NSPasteboard.general.setString(state.streamedText, forType: .string)
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                showCopied = true
+            }
+            NSSound(named: "Tink")?.play()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                withAnimation { showCopied = false }
+            }
+        } label: {
+            HStack(spacing: 4) {
+                Image(systemName: showCopied ? "checkmark" : "doc.on.doc")
+                    .font(.system(size: 10))
+                Text(showCopied ? "Copied" : "Copy")
+                    .font(.system(size: 11))
+            }
+            .foregroundStyle(showCopied ? Color.success : Color.textTertiary)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(Color.bg800.opacity(0.5))
+            .clipShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
+        }
+        .buttonStyle(.plain)
+    }
 
     @ViewBuilder
     private func imageResult(_ output: ExtractedOutput) -> some View {
