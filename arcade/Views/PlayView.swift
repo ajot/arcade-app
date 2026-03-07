@@ -43,9 +43,10 @@ struct PlayView: View {
                 .padding(.horizontal, 32)
                 .padding(.top, 16)
                 .padding(.bottom, 80)
+                .frame(maxWidth: 720)
+                .frame(maxWidth: .infinity)
+                .contentShape(Rectangle())
             }
-            .frame(maxWidth: 720)
-            .frame(maxWidth: .infinity)
             .opacity(appeared ? 1 : 0)
             .offset(y: appeared ? 0 : 8)
             .onAppear {
