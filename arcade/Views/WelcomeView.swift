@@ -116,6 +116,6 @@ struct WelcomeView: View {
     }
 
     private func playBounceSound() {
-        NSSound(named: "Pop")?.play()
+        SoundService.fidget()
     }
 }

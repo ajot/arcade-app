@@ -1,8 +1,7 @@
 import SwiftUI
 
 struct ContentView: View {
-    @State private var state = AppState()
-    @State private var showSettings = false
+    @Bindable var state: AppState
     @State private var keyMonitor: Any?
 
     var body: some View {
@@ -110,24 +109,9 @@ struct ContentView: View {
                 NSEvent.removeMonitor(monitor)
             }
         }
-        .sheet(isPresented: $showSettings) {
-            APIKeySettingsView(state: state)
-        }
-        .toolbar {
-            ToolbarItem(placement: .primaryAction) {
-                Button {
-                    showSettings = true
-                } label: {
-                    Image(systemName: "key")
-                        .font(.system(size: 12))
-                        .foregroundStyle(Color.textTertiary)
-                }
-                .help("API Key Settings")
-            }
-        }
     }
 }
 
 #Preview {
-    ContentView()
+    ContentView(state: AppState())
 }

@@ -141,7 +141,7 @@ private class AudioPlayerModel {
                 withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                     showSaved = true
                 }
-                NSSound(named: "Tink")?.play()
+                SoundService.confirm()
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
                     withAnimation { self.showSaved = false }
                 }

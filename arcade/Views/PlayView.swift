@@ -109,7 +109,7 @@ struct PlayView: View {
                         withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                             state.fillExample(example)
                         }
-                        NSSound(named: "Tink")?.play()
+                        SoundService.confirm()
                     }
                     .buttonStyle(ChipStyle())
                 }
@@ -438,7 +438,7 @@ struct PlayView: View {
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                         curlCopied = true
                     }
-                    NSSound(named: "Tink")?.play()
+                    SoundService.confirm()
                     DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
                         withAnimation { curlCopied = false }
                     }
@@ -562,7 +562,7 @@ struct PlayView: View {
             withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                 showCopied = true
             }
-            NSSound(named: "Tink")?.play()
+            SoundService.confirm()
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
                 withAnimation { showCopied = false }
             }
@@ -627,7 +627,7 @@ struct PlayView: View {
                 withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                     showSaved = true
                 }
-                NSSound(named: "Tink")?.play()
+                SoundService.confirm()
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
                     withAnimation { showSaved = false }
                 }

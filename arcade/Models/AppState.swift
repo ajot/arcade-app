@@ -7,6 +7,7 @@ final class AppState {
     // MARK: - Dependencies
     let definitionLoader = DefinitionLoader()
     let networkService = NetworkService()
+    let bookmarkStore = BookmarkStore()
 
     // MARK: - Navigation
     enum Mode: Equatable {
@@ -140,6 +141,33 @@ final class AppState {
         streamingMetrics = nil
     }
 
+    // MARK: - Bookmarks
+
+    func saveBookmark(label: String) {
+        guard let definition = currentDefinition else { return }
+        let bookmark = Bookmark(
+            definitionId: definition.id,
+            model: currentModel,
+            label: label,
+            formValues: formValues,
+            systemPrompt: systemPrompt
+        )
+        bookmarkStore.save(bookmark)
+        SoundService.bookmark()
+    }
+
+    func loadBookmark(_ bookmark: Bookmark) {
+        guard let definition = definitionLoader.sortedDefinitions.first(where: { $0.id == bookmark.definitionId }) else { return }
+        selectEndpoint(definition, model: bookmark.model)
+        formValues = bookmark.formValues
+        systemPrompt = bookmark.systemPrompt
+        SoundService.select()
+    }
+
+    func deleteBookmark(_ bookmark: Bookmark) {
+        bookmarkStore.delete(id: bookmark.id)
+    }
+
     // MARK: - Generation
 
     func generate() {
@@ -162,6 +190,7 @@ final class AppState {
         streamedText = ""
         generationResult = nil
         streamingMetrics = nil
+        SoundService.generate()
 
         // Build curl string for log
         let curlDetail = try? RequestBuilder.buildCurlString(
@@ -189,12 +218,14 @@ final class AppState {
                     self.streamingMetrics = metrics
                     self.generationState = .completed
                     self.log(.success, "Completed — \(metrics.tokenCount) tokens in \(String(format: "%.2fs", metrics.totalDuration))")
+                    SoundService.complete()
                 } catch is CancellationError {
                     self.generationState = .idle
                     self.log(.error, "Cancelled")
                 } catch {
                     self.generationState = .error(error.localizedDescription)
                     self.log(.error, error.localizedDescription)
+                    SoundService.error()
                 }
             }
 
@@ -214,12 +245,14 @@ final class AppState {
                     }
                     self.generationState = .completed
                     self.log(.response, "\(result.statusCode) — \(String(format: "%.2fs", result.duration))")
+                    SoundService.complete()
                 } catch is CancellationError {
                     self.generationState = .idle
                     self.log(.error, "Cancelled")
                 } catch {
                     self.generationState = .error(error.localizedDescription)
                     self.log(.error, error.localizedDescription)
+                    SoundService.error()
                 }
             }
 
@@ -240,12 +273,14 @@ final class AppState {
                     self.generationResult = result
                     self.generationState = .completed
                     self.log(.success, "Completed — \(result.pollCount) polls, \(String(format: "%.2fs", result.duration))")
+                    SoundService.complete()
                 } catch is CancellationError {
                     self.generationState = .idle
                     self.log(.error, "Cancelled")
                 } catch {
                     self.generationState = .error(error.localizedDescription)
                     self.log(.error, error.localizedDescription)
+                    SoundService.error()
                 }
             }
         }

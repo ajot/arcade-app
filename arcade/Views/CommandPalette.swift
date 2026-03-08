@@ -137,6 +137,7 @@ struct CommandPalette: View {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                 isSearchFocused = true
             }
+            SoundService.paletteOpen()
         }
         .onKeyPress(.upArrow) {
             moveHighlight(-1)
@@ -384,14 +385,17 @@ struct CommandPalette: View {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
                 isSearchFocused = true
             }
+            SoundService.select()
         } else {
             state.selectEndpoint(definition)
+            SoundService.select()
         }
     }
 
     private func selectModel(_ model: String) {
         if let def = selectedDefinition {
             state.selectEndpoint(def, model: model)
+            SoundService.select()
         }
     }
 

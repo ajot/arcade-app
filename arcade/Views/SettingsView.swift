@@ -1,6 +1,62 @@
 import SwiftUI
 
-struct APIKeySettingsView: View {
+struct SettingsView: View {
+    @Bindable var state: AppState
+
+    var body: some View {
+        TabView {
+            GeneralSettingsTab()
+                .tabItem {
+                    Label("General", systemImage: "gearshape")
+                }
+
+            APIKeysSettingsTab(state: state)
+                .tabItem {
+                    Label("API Keys", systemImage: "key")
+                }
+        }
+        .frame(width: 480, height: 420)
+    }
+}
+
+// MARK: - General Settings
+
+private struct GeneralSettingsTab: View {
+    @State private var isMuted = SoundService.isMuted
+
+    var body: some View {
+        Form {
+            Section("Sound") {
+                Toggle(isOn: $isMuted) {
+                    HStack(spacing: 10) {
+                        Image(systemName: isMuted ? "speaker.slash.fill" : "speaker.wave.2.fill")
+                            .font(.system(size: 14))
+                            .foregroundStyle(isMuted ? Color.secondary : Color.accentColor)
+                            .frame(width: 20)
+                            .contentTransition(.symbolEffect(.replace))
+
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Mute all sounds")
+
+                            Text("Disable UI feedback sounds throughout the app")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+                .onChange(of: isMuted) { _, newValue in
+                    SoundService.isMuted = newValue
+                }
+            }
+        }
+        .formStyle(.grouped)
+        .scrollDisabled(true)
+    }
+}
+
+// MARK: - API Keys Settings
+
+private struct APIKeysSettingsTab: View {
     @Bindable var state: AppState
     @State private var editingProvider: String?
     @State private var keyInput: String = ""
@@ -8,26 +64,24 @@ struct APIKeySettingsView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Header
             HStack {
-                Text("API Keys")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(Color.textPrimary)
+                Text("Manage your API keys for each provider")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
 
                 Spacer()
 
                 Button("Validate All") {
                     state.validateAllKeys()
                 }
-                .font(.system(size: 12))
-                .foregroundStyle(Color.textTertiary)
+                .font(.subheadline)
                 .buttonStyle(.plain)
+                .foregroundStyle(.secondary)
             }
             .padding(.horizontal, 20)
-            .padding(.vertical, 16)
+            .padding(.vertical, 12)
 
             Divider()
-                .background(Color.border700)
 
             ScrollView {
                 VStack(spacing: 1) {
@@ -38,8 +92,6 @@ struct APIKeySettingsView: View {
                 .padding(.vertical, 8)
             }
         }
-        .frame(width: 440, height: 500)
-        .background(Color.bg900)
     }
 
     private func providerRow(slug: String, displayName: String) -> some View {
@@ -49,39 +101,36 @@ struct APIKeySettingsView: View {
 
         return VStack(spacing: 0) {
             HStack(spacing: 10) {
-                // Status icon
                 Image(systemName: status.iconName)
                     .font(.system(size: 12))
                     .foregroundStyle(status.color)
                     .frame(width: 16)
 
-                // Provider name
                 Text(displayName)
                     .font(.system(size: 13))
-                    .foregroundStyle(Color.textPrimary)
 
                 Spacer()
 
                 if saveConfirmation == slug {
                     Image(systemName: "checkmark")
                         .font(.system(size: 11))
-                        .foregroundStyle(Color.success)
+                        .foregroundStyle(.green)
                         .transition(.scale.combined(with: .opacity))
                 } else if isEditing {
-                    // Save/Cancel buttons shown below
+                    // Save/Cancel shown below
                 } else if hasKey {
                     HStack(spacing: 8) {
                         Text("\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}")
                             .font(.system(size: 10))
-                            .foregroundStyle(Color.textMuted)
+                            .foregroundStyle(.tertiary)
 
                         Button("Edit") {
                             editingProvider = slug
                             keyInput = ""
                         }
                         .font(.system(size: 11))
-                        .foregroundStyle(Color.textTertiary)
                         .buttonStyle(.plain)
+                        .foregroundStyle(.secondary)
 
                         Button {
                             KeychainService.deleteKey(for: slug)
@@ -89,7 +138,7 @@ struct APIKeySettingsView: View {
                         } label: {
                             Image(systemName: "trash")
                                 .font(.system(size: 11))
-                                .foregroundStyle(Color.textMuted)
+                                .foregroundStyle(.tertiary)
                         }
                         .buttonStyle(.plain)
                     }
@@ -99,8 +148,8 @@ struct APIKeySettingsView: View {
                         keyInput = ""
                     }
                     .font(.system(size: 11))
-                    .foregroundStyle(Color.accent)
                     .buttonStyle(.plain)
+                    .foregroundStyle(.tint)
                 }
             }
             .padding(.horizontal, 20)
@@ -109,28 +158,22 @@ struct APIKeySettingsView: View {
             if isEditing {
                 HStack(spacing: 8) {
                     TextField("Paste API key...", text: $keyInput)
-                        .textFieldStyle(.plain)
+                        .textFieldStyle(.roundedBorder)
                         .font(.system(size: 12, design: .monospaced))
-                        .inputFieldStyle()
 
                     Button("Save") {
                         saveKey(provider: slug)
                     }
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundStyle(Color.bg950)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(Color.accent)
-                    .clipShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
-                    .buttonStyle(.plain)
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.small)
 
                     Button("Cancel") {
                         editingProvider = nil
                         keyInput = ""
                     }
-                    .font(.system(size: 11))
-                    .foregroundStyle(Color.textMuted)
                     .buttonStyle(.plain)
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
                 }
                 .padding(.horizontal, 46)
                 .padding(.bottom, 10)
@@ -158,7 +201,7 @@ struct APIKeySettingsView: View {
 
             SoundService.keySaved()
         } catch {
-            // Key save failed — silent for now
+            // Key save failed
         }
     }
 }
