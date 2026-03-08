@@ -40,19 +40,40 @@ struct TopBar: View {
                         .padding(.horizontal, 10)
                         .transition(.opacity)
 
-                    Picker("", selection: Binding(
-                        get: { state.currentModel ?? "" },
-                        set: { state.selectModel($0) }
-                    )) {
+                    Menu {
                         ForEach(options, id: \.self) { model in
-                            Text(model)
-                                .font(.system(size: 12))
-                                .tag(model)
+                            Button {
+                                state.selectModel(model)
+                            } label: {
+                                if model == state.currentModel {
+                                    Label(model, systemImage: "checkmark")
+                                } else {
+                                    Text(model)
+                                }
+                            }
                         }
+                    } label: {
+                        HStack(spacing: 5) {
+                            Text(state.currentModel ?? "")
+                                .font(.system(size: 12))
+                                .foregroundStyle(Color.textSecondary)
+                                .lineLimit(1)
+                            Image(systemName: "chevron.up.chevron.down")
+                                .font(.system(size: 8, weight: .medium))
+                                .foregroundStyle(Color.textMuted)
+                        }
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
+                        .background(Color.bg800.opacity(0.6))
+                        .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 6, style: .continuous)
+                                .strokeBorder(Color.border700.opacity(0.4), lineWidth: 0.5)
+                        )
                     }
-                    .pickerStyle(.menu)
-                    .labelsHidden()
-                    .frame(maxWidth: 200)
+                    .menuStyle(.borderlessButton)
+                    .menuIndicator(.hidden)
+                    .fixedSize()
                     .transition(.opacity)
                 }
 

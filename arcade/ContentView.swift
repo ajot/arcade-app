@@ -2,7 +2,6 @@ import SwiftUI
 
 struct ContentView: View {
     @Bindable var state: AppState
-    @State private var keyMonitor: Any?
 
     var body: some View {
         ZStack {
@@ -11,9 +10,6 @@ struct ContentView: View {
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {
-                // Top bar
-                TopBar(state: state)
-
                 // Main content
                 switch state.mode {
                 case .welcome:
@@ -88,43 +84,115 @@ struct ContentView: View {
         }
         .frame(minWidth: 800, minHeight: 600)
         .preferredColorScheme(.dark)
+        .toolbar {
+            ToolbarItem(placement: .navigation) {
+                toolbarContent
+            }
+        }
+        .animation(.easeOut(duration: 0.25), value: state.mode)
         .onAppear {
             state.validateAllKeys()
-            keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
-                if event.modifierFlags.contains(.command) && event.charactersIgnoringModifiers == "k" {
-                    withAnimation(.easeOut(duration: 0.15)) {
-                        state.showCommandPalette.toggle()
-                    }
-                    return nil
+        }
+    }
+
+    // MARK: - Toolbar
+
+    private var toolbarContent: some View {
+        HStack(spacing: 0) {
+            // Brand / Home
+            Button {
+                withAnimation(.easeOut(duration: 0.25)) {
+                    state.goHome()
                 }
-                if event.modifierFlags.contains(.command) && event.charactersIgnoringModifiers == "l" {
-                    withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-                        state.showLogPanel.toggle()
-                    }
-                    return nil
-                }
-                if event.modifierFlags.contains(.command) && event.charactersIgnoringModifiers == "i" {
-                    if state.mode == .play {
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-                            state.showInspector.toggle()
+            } label: {
+                Text("arcade")
+                    .font(.brand)
+                    .fontWeight(.bold)
+                    .foregroundStyle(Color.textPrimary)
+            }
+            .buttonStyle(.plain)
+
+            if state.mode == .play, let definition = state.currentDefinition {
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 9))
+                    .foregroundStyle(Color.textMuted)
+                    .padding(.horizontal, 10)
+
+                Text(definition.name)
+                    .font(.system(size: 13))
+                    .foregroundStyle(Color.textSecondary)
+
+                if let modelParam = definition.modelParam, let options = modelParam.options {
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 9))
+                        .foregroundStyle(Color.textMuted)
+                        .padding(.horizontal, 10)
+
+                    Menu {
+                        ForEach(options, id: \.self) { model in
+                            Button {
+                                state.selectModel(model)
+                            } label: {
+                                if model == state.currentModel {
+                                    Label(model, systemImage: "checkmark")
+                                } else {
+                                    Text(model)
+                                }
+                            }
                         }
+                    } label: {
+                        HStack(spacing: 5) {
+                            Text(state.currentModel ?? "")
+                                .font(.system(size: 12))
+                                .foregroundStyle(Color.textSecondary)
+                                .lineLimit(1)
+                            Image(systemName: "chevron.up.chevron.down")
+                                .font(.system(size: 8, weight: .medium))
+                                .foregroundStyle(Color.textMuted)
+                        }
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
+                        .background(Color.bg800.opacity(0.6))
+                        .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 6, style: .continuous)
+                                .strokeBorder(Color.border700.opacity(0.4), lineWidth: 0.5)
+                        )
                     }
-                    return nil
+                    .menuStyle(.borderlessButton)
+                    .menuIndicator(.hidden)
+                    .fixedSize()
                 }
-                if event.modifierFlags.contains(.command) && event.charactersIgnoringModifiers == "d" {
-                    if state.mode == .play {
-                        state.showBookmarkPopover = true
+
+                Spacer()
+
+                // Key status indicator
+                let keyStatus = state.keyStatus[definition.provider] ?? .noKey
+                HStack(spacing: 4) {
+                    Image(systemName: keyStatus.iconName)
+                        .font(.system(size: 10))
+                        .foregroundStyle(keyStatus.color)
+                    Text(definition.providerDisplayName)
+                        .font(.system(size: 11))
+                        .foregroundStyle(Color.textMuted)
+                }
+                .padding(.trailing, 12)
+
+                // Inspector toggle
+                Button {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                        state.showInspector.toggle()
                     }
-                    return nil
+                } label: {
+                    Image(systemName: "sidebar.trailing")
+                        .font(.system(size: 12))
+                        .foregroundStyle(state.showInspector ? Color.accent : Color.textMuted)
                 }
-                return event
+                .buttonStyle(.plain)
+                .help("Toggle Inspector (\u{2318}I)")
             }
         }
-        .onDisappear {
-            if let monitor = keyMonitor {
-                NSEvent.removeMonitor(monitor)
-            }
-        }
+        .frame(maxWidth: .infinity)
     }
 }
 

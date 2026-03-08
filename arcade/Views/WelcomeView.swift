@@ -105,13 +105,13 @@ struct WelcomeView: View {
                     .opacity(appeared ? 1 : 0)
                     .offset(y: appeared ? 0 : 4)
 
-                // Recent bookmarks
-                if !state.bookmarkStore.recentBookmarks.isEmpty {
-                    recentBookmarks
-                        .padding(.top, 12)
-                        .opacity(appeared ? 1 : 0)
-                        .offset(y: appeared ? 0 : 4)
-                }
+                // Recent bookmarks (hidden for now — distracting)
+                // if !state.bookmarkStore.recentBookmarks.isEmpty {
+                //     recentBookmarks
+                //         .padding(.top, 12)
+                //         .opacity(appeared ? 1 : 0)
+                //         .offset(y: appeared ? 0 : 4)
+                // }
             }
 
             Spacer()
