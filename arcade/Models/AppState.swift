@@ -90,7 +90,6 @@ final class AppState {
     func selectEndpoint(_ definition: Definition, model: String? = nil) {
         currentDefinition = definition
         currentModel = model ?? definition.defaultModel
-        mode = .play
         showCommandPalette = false
 
         // Initialize form values with defaults
@@ -134,7 +133,6 @@ final class AppState {
 
     func goHome() {
         cancelGeneration()
-        mode = .welcome
         currentDefinition = nil
         currentModel = nil
         formValues = [:]

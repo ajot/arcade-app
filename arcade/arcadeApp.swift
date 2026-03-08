@@ -8,8 +8,8 @@ struct ArcadeApp: App {
         WindowGroup {
             ContentView(state: state)
         }
-        .windowToolbarStyle(.unified(showsTitle: false))
-        .defaultSize(width: 900, height: 700)
+        .windowToolbarStyle(.unified)
+        .defaultSize(width: 1000, height: 700)
         .commands {
             CommandGroup(replacing: .newItem) {}
 
@@ -36,17 +36,17 @@ struct ArcadeApp: App {
                     }
                 }
                 .keyboardShortcut("i", modifiers: .command)
-                .disabled(state.mode != .play)
+                .disabled(state.currentDefinition == nil)
 
                 Divider()
 
                 Button("Save Bookmark") {
-                    if state.mode == .play {
+                    if state.currentDefinition != nil {
                         state.showBookmarkPopover = true
                     }
                 }
                 .keyboardShortcut("d", modifiers: .command)
-                .disabled(state.mode != .play)
+                .disabled(state.currentDefinition == nil)
             }
         }
 
