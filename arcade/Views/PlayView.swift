@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct PlayView: View {
     @Bindable var state: AppState
@@ -410,7 +411,12 @@ struct PlayView: View {
                 if state.generationState == .completed {
                     HStack {
                         Spacer()
-                        copyButton
+                        if hasImageOutput {
+                            saveImageButton
+                        }
+                        if !state.streamedText.isEmpty {
+                            copyButton
+                        }
                     }
                     .padding(.horizontal, 12)
                     .padding(.top, 10)
@@ -451,17 +457,7 @@ struct PlayView: View {
             .transition(.opacity.combined(with: .move(edge: .bottom)))
 
         case .error(let message):
-            HStack(spacing: 8) {
-                Image(systemName: "exclamationmark.triangle.fill")
-                    .foregroundStyle(Color.error)
-                Text(message)
-                    .font(.system(size: 13))
-                    .foregroundStyle(Color.error)
-            }
-            .padding(16)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color.error.opacity(0.1))
-            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+            errorCard(message: message)
 
         default:
             EmptyView()
@@ -478,6 +474,8 @@ struct PlayView: View {
         }
     }
     @State private var showCopied = false
+    @State private var errorExpanded = false
+    @State private var showSaved = false
 
     private var copyButton: some View {
         Button {
@@ -506,6 +504,174 @@ struct PlayView: View {
         .buttonStyle(.plain)
     }
 
+    private var hasImageOutput: Bool {
+        state.generationResult?.outputs.contains(where: { $0.type == .image }) ?? false
+    }
+
+    private var saveImageButton: some View {
+        Button {
+            saveImage()
+        } label: {
+            HStack(spacing: 4) {
+                Image(systemName: showSaved ? "checkmark" : "arrow.down.circle")
+                    .font(.system(size: 10))
+                Text(showSaved ? "Saved" : "Save")
+                    .font(.system(size: 11))
+            }
+            .foregroundStyle(showSaved ? Color.success : Color.textTertiary)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(Color.bg800.opacity(0.5))
+            .clipShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func saveImage() {
+        guard let result = state.generationResult,
+              let imageOutput = result.outputs.first(where: { $0.type == .image }),
+              let value = imageOutput.values.first else { return }
+
+        Task {
+            let imageData = await loadImageData(from: value)
+            guard let data = imageData,
+                  let nsImage = NSImage(data: data),
+                  let tiff = nsImage.tiffRepresentation,
+                  let bitmap = NSBitmapImageRep(data: tiff),
+                  let pngData = bitmap.representation(using: .png, properties: [:]) else { return }
+
+            let panel = NSSavePanel()
+            panel.allowedContentTypes = [.png]
+            panel.nameFieldStringValue = "arcade-image-\(Int(Date().timeIntervalSince1970)).png"
+
+            if panel.runModal() == .OK, let url = panel.url {
+                try? pngData.write(to: url)
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                    showSaved = true
+                }
+                NSSound(named: "Tink")?.play()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    withAnimation { showSaved = false }
+                }
+            }
+        }
+    }
+
+    private func loadImageData(from value: String) async -> Data? {
+        if value.hasPrefix("data:") {
+            return dataFromDataURL(value)
+        } else if let url = URL(string: value) {
+            return try? await URLSession.shared.data(from: url).0
+        }
+        return nil
+    }
+
+    private func errorCard(message: String) -> some View {
+        let summary = errorSummary(message)
+        let hasDetails = message.count > 80 || message.contains("\n")
+
+        return HStack(alignment: .top, spacing: 0) {
+            // Error accent bar
+            RoundedRectangle(cornerRadius: 1)
+                .fill(Color.error)
+                .frame(width: 2)
+                .padding(.vertical, 6)
+
+            VStack(alignment: .leading, spacing: 10) {
+                // Summary row
+                HStack(alignment: .top, spacing: 8) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .font(.system(size: 12))
+                        .foregroundStyle(Color.error)
+                        .padding(.top, 1)
+
+                    Text(summary)
+                        .font(.system(size: 13))
+                        .foregroundStyle(Color.error)
+                        .lineLimit(errorExpanded ? nil : 2)
+
+                    Spacer()
+
+                    Button {
+                        state.generate()
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "arrow.clockwise")
+                                .font(.system(size: 11))
+                            Text("Retry")
+                                .font(.system(size: 12, weight: .medium))
+                        }
+                        .foregroundStyle(Color.error)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
+                        .background(Color.error.opacity(0.1))
+                        .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 6, style: .continuous)
+                                .strokeBorder(Color.error.opacity(0.3), lineWidth: 0.5)
+                        )
+                    }
+                    .buttonStyle(.plain)
+                }
+
+                // Expandable details
+                if hasDetails {
+                    Button {
+                        withAnimation(.easeOut(duration: 0.2)) {
+                            errorExpanded.toggle()
+                        }
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 9, weight: .semibold))
+                                .rotationEffect(.degrees(errorExpanded ? 90 : 0))
+                            Text(errorExpanded ? "Hide details" : "Show details")
+                                .font(.system(size: 11))
+                        }
+                        .foregroundStyle(Color.textMuted)
+                    }
+                    .buttonStyle(.plain)
+
+                    if errorExpanded {
+                        ScrollView {
+                            Text(message)
+                                .font(.codeOutput)
+                                .foregroundStyle(Color.textTertiary)
+                                .textSelection(.enabled)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        .frame(maxHeight: 200)
+                        .padding(10)
+                        .background(Color.bg900)
+                        .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 6, style: .continuous)
+                                .strokeBorder(Color.border700, lineWidth: 0.5)
+                        )
+                        .transition(.opacity.combined(with: .move(edge: .top)))
+                    }
+                }
+            }
+            .padding(.leading, 12)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.error.opacity(0.06))
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .strokeBorder(Color.error.opacity(0.15), lineWidth: 0.5)
+        )
+    }
+
+    private func errorSummary(_ message: String) -> String {
+        let firstLine = message.components(separatedBy: "\n").first ?? message
+        if firstLine.count > 120 {
+            return String(firstLine.prefix(120)) + "..."
+        }
+        return firstLine
+    }
+
     @ViewBuilder
     private func imageResult(_ output: ExtractedOutput) -> some View {
         ForEach(output.values, id: \.self) { value in
@@ -517,6 +683,10 @@ struct PlayView: View {
                         .resizable()
                         .aspectRatio(contentMode: .fit)
                         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                        .onTapGesture { state.zoomedImageValue = value }
+                        .onHover { hovering in
+                            if hovering { NSCursor.pointingHand.push() } else { NSCursor.pop() }
+                        }
                 }
             } else if let url = URL(string: value) {
                 AsyncImage(url: url) { phase in
@@ -526,6 +696,10 @@ struct PlayView: View {
                             .resizable()
                             .aspectRatio(contentMode: .fit)
                             .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                            .onTapGesture { state.zoomedImageValue = value }
+                            .onHover { hovering in
+                                if hovering { NSCursor.pointingHand.push() } else { NSCursor.pop() }
+                            }
                     case .failure:
                         Label("Failed to load image", systemImage: "photo")
                             .foregroundStyle(Color.textMuted)

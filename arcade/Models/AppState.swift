@@ -17,6 +17,7 @@ final class AppState {
 
     var mode: Mode = .welcome
     var showCommandPalette = false
+    var zoomedImageValue: String?
 
     // MARK: - Play Mode State
     var currentDefinition: Definition?

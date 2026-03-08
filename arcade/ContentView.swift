@@ -34,6 +34,12 @@ struct ContentView: View {
                 CommandPalette(state: state)
                     .transition(.opacity)
             }
+
+            // Image zoom overlay
+            if state.zoomedImageValue != nil {
+                ImageZoomOverlay(state: state)
+                    .transition(.opacity)
+            }
         }
         .frame(minWidth: 800, minHeight: 600)
         .preferredColorScheme(.dark)
