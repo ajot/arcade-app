@@ -5,6 +5,9 @@ struct PlayView: View {
     @Bindable var state: AppState
     @State private var appeared = false
     @State private var settingsExpanded = false
+    @State private var showCurlPopover = false
+    @State private var curlShowKey = false
+    @State private var curlCopied = false
 
     var body: some View {
         guard let definition = state.currentDefinition else {
@@ -333,7 +336,7 @@ struct PlayView: View {
 
             // Curl preview button
             Button {
-                // TODO: Phase 6 — curl preview
+                showCurlPopover.toggle()
             } label: {
                 HStack(spacing: 4) {
                     Image(systemName: "terminal")
@@ -352,6 +355,9 @@ struct PlayView: View {
                 )
             }
             .buttonStyle(.plain)
+            .popover(isPresented: $showCurlPopover, arrowEdge: .bottom) {
+                curlPopoverContent(definition)
+            }
 
             // Generate button
             let isGenerating = state.generationState != .idle && state.generationState != .completed && state.generationState != .error("")
@@ -398,6 +404,78 @@ struct PlayView: View {
         case .generating, .streaming, .polling: return true
         default: return false
         }
+    }
+
+    // MARK: - Curl Popover
+
+    private func curlPopoverContent(_ definition: Definition) -> some View {
+        let apiKey = KeychainService.getKey(for: definition.provider)
+        var params = state.formValues
+        if let model = state.currentModel { params["model"] = model }
+        if !state.systemPrompt.isEmpty { params["_system_prompt"] = state.systemPrompt }
+
+        let curlString = (try? RequestBuilder.buildCurlString(
+            definition: definition, params: params,
+            includeKey: curlShowKey, apiKey: apiKey
+        )) ?? "# Could not build curl command"
+
+        return VStack(alignment: .leading, spacing: 0) {
+            // Toolbar
+            HStack(spacing: 12) {
+                Toggle(isOn: $curlShowKey) {
+                    Text("Show API key")
+                        .font(.system(size: 11))
+                        .foregroundStyle(Color.textTertiary)
+                }
+                .toggleStyle(.switch)
+                .controlSize(.small)
+
+                Spacer()
+
+                Button {
+                    NSPasteboard.general.clearContents()
+                    NSPasteboard.general.setString(curlString, forType: .string)
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                        curlCopied = true
+                    }
+                    NSSound(named: "Tink")?.play()
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                        withAnimation { curlCopied = false }
+                    }
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: curlCopied ? "checkmark" : "doc.on.doc")
+                            .font(.system(size: 10))
+                        Text(curlCopied ? "Copied" : "Copy")
+                            .font(.system(size: 11))
+                    }
+                    .foregroundStyle(curlCopied ? Color.success : Color.textTertiary)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Color.bg800.opacity(0.5))
+                    .clipShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.horizontal, 14)
+            .padding(.top, 12)
+            .padding(.bottom, 8)
+
+            Divider()
+
+            // Curl command
+            ScrollView([.horizontal, .vertical]) {
+                Text(curlString)
+                    .font(.system(size: 11, design: .monospaced))
+                    .foregroundStyle(Color.textSecondary)
+                    .textSelection(.enabled)
+                    .lineSpacing(3)
+                    .padding(14)
+            }
+            .frame(maxHeight: 300)
+        }
+        .frame(width: 520)
+        .background(Color.bg900)
     }
 
     // MARK: - Results

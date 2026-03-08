@@ -41,6 +41,34 @@ final class AppState {
     var streamingMetrics: StreamingResult?
     var currentTask: Task<Void, Never>?
 
+    // MARK: - Log Panel
+    var showLogPanel = false
+    var logEntries: [LogEntry] = []
+
+    struct LogEntry: Identifiable {
+        let id = UUID()
+        let timestamp = Date()
+        let kind: Kind
+        let message: String
+        var detail: String?
+
+        enum Kind {
+            case request
+            case response
+            case polling
+            case success
+            case error
+        }
+    }
+
+    func log(_ kind: LogEntry.Kind, _ message: String, detail: String? = nil) {
+        logEntries.append(LogEntry(kind: kind, message: message, detail: detail))
+    }
+
+    func clearLog() {
+        logEntries.removeAll()
+    }
+
     // MARK: - API Key Status
     var keyStatus: [String: KeyStatus] = [:]
 
@@ -135,7 +163,16 @@ final class AppState {
         generationResult = nil
         streamingMetrics = nil
 
-        switch definition.interaction.pattern {
+        // Build curl string for log
+        let curlDetail = try? RequestBuilder.buildCurlString(
+            definition: definition, params: params,
+            includeKey: false, apiKey: nil
+        )
+
+        let pattern = definition.interaction.pattern
+        log(.request, "\(definition.request.method) \(definition.request.url) (\(pattern.rawValue))", detail: curlDetail)
+
+        switch pattern {
         case .streaming:
             generationState = .streaming
             currentTask = Task { @MainActor in
@@ -151,10 +188,13 @@ final class AppState {
                     }
                     self.streamingMetrics = metrics
                     self.generationState = .completed
+                    self.log(.success, "Completed — \(metrics.tokenCount) tokens in \(String(format: "%.2fs", metrics.totalDuration))")
                 } catch is CancellationError {
                     self.generationState = .idle
+                    self.log(.error, "Cancelled")
                 } catch {
                     self.generationState = .error(error.localizedDescription)
+                    self.log(.error, error.localizedDescription)
                 }
             }
 
@@ -168,16 +208,18 @@ final class AppState {
                         apiKey: apiKey
                     )
                     self.generationResult = result
-                    // For text outputs, also populate streamedText for display
                     if let textOutput = result.outputs.first(where: { $0.type == .text }),
                        let text = textOutput.values.first {
                         self.streamedText = text
                     }
                     self.generationState = .completed
+                    self.log(.response, "\(result.statusCode) — \(String(format: "%.2fs", result.duration))")
                 } catch is CancellationError {
                     self.generationState = .idle
+                    self.log(.error, "Cancelled")
                 } catch {
                     self.generationState = .error(error.localizedDescription)
+                    self.log(.error, error.localizedDescription)
                 }
             }
 
@@ -192,14 +234,18 @@ final class AppState {
                     ) { [weak self] status in
                         Task { @MainActor in
                             self?.generationState = .polling(status)
+                            self?.log(.polling, status)
                         }
                     }
                     self.generationResult = result
                     self.generationState = .completed
+                    self.log(.success, "Completed — \(result.pollCount) polls, \(String(format: "%.2fs", result.duration))")
                 } catch is CancellationError {
                     self.generationState = .idle
+                    self.log(.error, "Cancelled")
                 } catch {
                     self.generationState = .error(error.localizedDescription)
+                    self.log(.error, error.localizedDescription)
                 }
             }
         }

@@ -1,0 +1,212 @@
+import SwiftUI
+
+struct LogPanel: View {
+    @Bindable var state: AppState
+    @State private var panelHeight: CGFloat = 200
+    @State private var expandedEntries: Set<UUID> = []
+
+    private let minHeight: CGFloat = 120
+    private let maxHeight: CGFloat = 500
+
+    var body: some View {
+        VStack(spacing: 0) {
+            // Resize handle
+            resizeHandle
+
+            // Header
+            HStack(spacing: 8) {
+                Image(systemName: "text.line.last.and.arrowtriangle.forward")
+                    .font(.system(size: 11))
+                    .foregroundStyle(Color.textMuted)
+                Text("Log")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(Color.textTertiary)
+
+                Spacer()
+
+                if !state.logEntries.isEmpty {
+                    Text("\(state.logEntries.count)")
+                        .font(.system(size: 10, design: .monospaced))
+                        .foregroundStyle(Color.textMuted)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Color.bg800)
+                        .clipShape(Capsule())
+
+                    Button {
+                        withAnimation(.easeOut(duration: 0.2)) {
+                            state.clearLog()
+                            expandedEntries.removeAll()
+                        }
+                    } label: {
+                        Image(systemName: "trash")
+                            .font(.system(size: 10))
+                            .foregroundStyle(Color.textMuted)
+                    }
+                    .buttonStyle(.plain)
+                    .help("Clear log")
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+
+            Divider()
+                .background(Color.border700)
+
+            // Log entries
+            if state.logEntries.isEmpty {
+                VStack {
+                    Spacer()
+                    Text("No log entries yet")
+                        .font(.system(size: 12))
+                        .foregroundStyle(Color.textMuted)
+                    Spacer()
+                }
+                .frame(maxWidth: .infinity)
+            } else {
+                ScrollViewReader { proxy in
+                    ScrollView {
+                        LazyVStack(alignment: .leading, spacing: 0) {
+                            ForEach(state.logEntries) { entry in
+                                logRow(entry)
+                                    .id(entry.id)
+                            }
+                        }
+                        .padding(.vertical, 4)
+                    }
+                    .onChange(of: state.logEntries.count) {
+                        if let last = state.logEntries.last {
+                            withAnimation(.easeOut(duration: 0.15)) {
+                                proxy.scrollTo(last.id, anchor: .bottom)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        .frame(height: panelHeight)
+        .background(Color.bg950)
+    }
+
+    // MARK: - Resize Handle
+
+    private var resizeHandle: some View {
+        Rectangle()
+            .fill(Color.border700)
+            .frame(height: 1)
+            .overlay(
+                RoundedRectangle(cornerRadius: 2)
+                    .fill(Color.border600)
+                    .frame(width: 36, height: 4)
+                    .offset(y: -1)
+            )
+            .contentShape(Rectangle().size(width: 10000, height: 12))
+            .gesture(
+                DragGesture()
+                    .onChanged { value in
+                        let newHeight = panelHeight - value.translation.height
+                        panelHeight = max(minHeight, min(maxHeight, newHeight))
+                    }
+            )
+            .onHover { hovering in
+                if hovering {
+                    NSCursor.resizeUpDown.push()
+                } else {
+                    NSCursor.pop()
+                }
+            }
+    }
+
+    // MARK: - Log Row
+
+    private func logRow(_ entry: AppState.LogEntry) -> some View {
+        let isExpanded = expandedEntries.contains(entry.id)
+        let hasDetail = entry.detail != nil
+
+        return VStack(alignment: .leading, spacing: 0) {
+            HStack(alignment: .top, spacing: 8) {
+                // Icon
+                Text(entry.kind.symbol)
+                    .font(.system(size: 11))
+                    .frame(width: 14)
+
+                // Timestamp
+                Text(formatTimestamp(entry.timestamp))
+                    .font(.system(size: 10, design: .monospaced))
+                    .foregroundStyle(Color.textMuted)
+
+                // Message
+                Text(entry.message)
+                    .font(.system(size: 11, design: .monospaced))
+                    .foregroundStyle(entry.kind.color)
+                    .lineLimit(isExpanded ? nil : 1)
+
+                Spacer()
+
+                if hasDetail {
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 8, weight: .semibold))
+                        .foregroundStyle(Color.textMuted)
+                        .rotationEffect(.degrees(isExpanded ? 90 : 0))
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 5)
+            .contentShape(Rectangle())
+            .onTapGesture {
+                guard hasDetail else { return }
+                withAnimation(.easeOut(duration: 0.15)) {
+                    if isExpanded {
+                        expandedEntries.remove(entry.id)
+                    } else {
+                        expandedEntries.insert(entry.id)
+                    }
+                }
+            }
+
+            if isExpanded, let detail = entry.detail {
+                Text(detail)
+                    .font(.system(size: 10, design: .monospaced))
+                    .foregroundStyle(Color.textMuted)
+                    .textSelection(.enabled)
+                    .lineSpacing(3)
+                    .padding(.horizontal, 38)
+                    .padding(.vertical, 6)
+                    .padding(.bottom, 4)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color.bg900.opacity(0.5))
+                    .transition(.opacity.combined(with: .move(edge: .top)))
+            }
+        }
+    }
+
+    private func formatTimestamp(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm:ss"
+        return formatter.string(from: date)
+    }
+}
+
+// MARK: - LogEntry Kind Extensions
+
+extension AppState.LogEntry.Kind {
+    var symbol: String {
+        switch self {
+        case .request: return "→"
+        case .response: return "←"
+        case .polling: return "⟳"
+        case .success: return "✓"
+        case .error: return "✗"
+        }
+    }
+
+    var color: Color {
+        switch self {
+        case .request: return .logRequest
+        case .response: return .logResponse
+        case .polling: return .textTertiary
+        case .success: return .logResponse
+        case .error: return .logError
+        }
+    }
+}

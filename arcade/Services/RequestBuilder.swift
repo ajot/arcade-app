@@ -76,6 +76,14 @@ enum RequestBuilder {
             }
         }
 
+        // Debug: print the body being sent
+        if let bodyData = try? JSONSerialization.data(
+            withJSONObject: bodyValue.toFoundation,
+            options: [.prettyPrinted, .sortedKeys]
+        ), let bodyString = String(data: bodyData, encoding: .utf8) {
+            print("[Arcade] Request body: \(bodyString)")
+        }
+
         guard let url = URL(string: urlString) else {
             throw BuildError.invalidURL(urlString)
         }
