@@ -103,6 +103,14 @@ struct WelcomeView: View {
                     .foregroundStyle(Color.textMuted)
                     .opacity(appeared ? 1 : 0)
                     .offset(y: appeared ? 0 : 4)
+
+                // Recent bookmarks
+                if !state.bookmarkStore.recentBookmarks.isEmpty {
+                    recentBookmarks
+                        .padding(.top, 12)
+                        .opacity(appeared ? 1 : 0)
+                        .offset(y: appeared ? 0 : 4)
+                }
             }
 
             Spacer()
@@ -113,6 +121,92 @@ struct WelcomeView: View {
                 appeared = true
             }
         }
+    }
+
+    // MARK: - Recent Bookmarks
+
+    @State private var hoveredBookmark: UUID?
+
+    private var recentBookmarks: some View {
+        VStack(spacing: 8) {
+            Text("Recent Bookmarks")
+                .font(.system(size: 10, weight: .medium))
+                .foregroundStyle(Color.textMuted)
+                .textCase(.uppercase)
+                .tracking(0.5)
+
+            HStack(spacing: 10) {
+                ForEach(Array(state.bookmarkStore.recentBookmarks.enumerated()), id: \.element.id) { index, bookmark in
+                    let isHovered = hoveredBookmark == bookmark.id
+                    let tilt = cardTilt(for: index)
+                    let definition = state.definitionLoader.sortedDefinitions.first { $0.id == bookmark.definitionId }
+
+                    Button {
+                        state.loadBookmark(bookmark)
+                    } label: {
+                        VStack(alignment: .leading, spacing: 6) {
+                            HStack(spacing: 5) {
+                                Image(systemName: definition?.outputType.iconName ?? "text.alignleft")
+                                    .font(.system(size: 10))
+                                    .foregroundStyle(Color.accent)
+                                Text(bookmark.label)
+                                    .font(.system(size: 11, weight: .medium))
+                                    .foregroundStyle(Color.textPrimary)
+                                    .lineLimit(1)
+                            }
+
+                            if let def = definition {
+                                Text(def.providerDisplayName)
+                                    .font(.system(size: 10))
+                                    .foregroundStyle(Color.textMuted)
+                                    .lineLimit(1)
+                            }
+
+                            Text(timeAgo(bookmark.createdAt))
+                                .font(.system(size: 9))
+                                .foregroundStyle(Color.textMuted.opacity(0.7))
+                        }
+                        .frame(width: 130, alignment: .leading)
+                        .padding(10)
+                        .background(Color.bg900)
+                        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                .strokeBorder(isHovered ? Color.accent.opacity(0.4) : Color.border700.opacity(0.5), lineWidth: 0.5)
+                        )
+                        .shadow(color: .black.opacity(isHovered ? 0.3 : 0.1), radius: isHovered ? 8 : 2, y: isHovered ? 4 : 1)
+                        .rotationEffect(.degrees(isHovered ? 0 : tilt))
+                        .scaleEffect(isHovered ? 1.05 : 1.0)
+                        .offset(y: isHovered ? -3 : 0)
+                    }
+                    .buttonStyle(.plain)
+                    .onHover { hovering in
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+                            hoveredBookmark = hovering ? bookmark.id : nil
+                        }
+                    }
+                    .transition(.scale.combined(with: .opacity))
+                }
+            }
+        }
+    }
+
+    private func cardTilt(for index: Int) -> Double {
+        let tilts = [-2.0, 1.5, -1.0]
+        return tilts[index % tilts.count]
+    }
+
+    private func timeAgo(_ date: Date) -> String {
+        let seconds = Int(-date.timeIntervalSinceNow)
+        if seconds < 60 { return "just now" }
+        let minutes = seconds / 60
+        if minutes < 60 { return "\(minutes)m ago" }
+        let hours = minutes / 60
+        if hours < 24 { return "\(hours)h ago" }
+        let days = hours / 24
+        if days == 1 { return "yesterday" }
+        if days < 30 { return "\(days)d ago" }
+        return "\(days / 30)mo ago"
     }
 
     private func playBounceSound() {

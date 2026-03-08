@@ -8,6 +8,9 @@ struct PlayView: View {
     @State private var showCurlPopover = false
     @State private var curlShowKey = false
     @State private var curlCopied = false
+    @State private var showBookmarkPopover = false
+    @State private var bookmarkLabel = ""
+    @State private var bookmarkSaved = false
 
     var body: some View {
         guard let definition = state.currentDefinition else {
@@ -73,6 +76,12 @@ struct PlayView: View {
                 appeared = false
                 withAnimation(.easeOut(duration: 0.35)) {
                     appeared = true
+                }
+            }
+            .onChange(of: state.showBookmarkPopover) { _, show in
+                if show {
+                    showBookmarkPopover = true
+                    state.showBookmarkPopover = false
                 }
             }
         )
@@ -359,6 +368,35 @@ struct PlayView: View {
                 curlPopoverContent(definition)
             }
 
+            // Bookmark button
+            Button {
+                bookmarkLabel = suggestedBookmarkLabel(definition)
+                showBookmarkPopover = true
+            } label: {
+                Image(systemName: bookmarkSaved ? "bookmark.fill" : "bookmark")
+                    .font(.system(size: 13))
+                    .foregroundStyle(bookmarkSaved ? Color.accent : Color.textTertiary)
+                    .contentTransition(.symbolEffect(.replace))
+                    .frame(width: 32, height: 32)
+                    .background(Color.bg800.opacity(0.5))
+                    .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 6, style: .continuous)
+                            .strokeBorder(Color.border700.opacity(0.5), lineWidth: 0.5)
+                    )
+                    .scaleEffect(bookmarkSaved ? 1.15 : 1.0)
+            }
+            .buttonStyle(.plain)
+            .help("Save Bookmark (\u{2318}D)")
+            .onChange(of: showBookmarkPopover) { _, show in
+                if show {
+                    bookmarkLabel = suggestedBookmarkLabel(definition)
+                }
+            }
+            .popover(isPresented: $showBookmarkPopover, arrowEdge: .bottom) {
+                bookmarkPopoverContent
+            }
+
             // Generate button
             let isGenerating = state.generationState != .idle && state.generationState != .completed && state.generationState != .error("")
 
@@ -476,6 +514,87 @@ struct PlayView: View {
         }
         .frame(width: 520)
         .background(Color.bg900)
+    }
+
+    // MARK: - Bookmark Popover
+
+    private var bookmarkPopoverContent: some View {
+        VStack(spacing: 12) {
+            HStack {
+                Image(systemName: "bookmark.fill")
+                    .font(.system(size: 12))
+                    .foregroundStyle(Color.accent)
+                Text("Save Bookmark")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(Color.textPrimary)
+                Spacer()
+            }
+
+            TextField("Label", text: $bookmarkLabel)
+                .textFieldStyle(.plain)
+                .font(.system(size: 13))
+                .padding(.horizontal, 10)
+                .padding(.vertical, 8)
+                .background(Color.bg800)
+                .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .strokeBorder(Color.border700, lineWidth: 0.5)
+                )
+
+            HStack {
+                Spacer()
+                Button("Cancel") {
+                    showBookmarkPopover = false
+                }
+                .buttonStyle(.plain)
+                .font(.system(size: 12))
+                .foregroundStyle(Color.textMuted)
+
+                Button {
+                    saveBookmark()
+                } label: {
+                    Text("Save")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(Color.bg950)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 5)
+                        .background(Color.accent)
+                        .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(14)
+        .frame(width: 280)
+        .background(Color.bg900)
+        .onSubmit {
+            saveBookmark()
+        }
+    }
+
+    private func saveBookmark() {
+        let label = bookmarkLabel.trimmingCharacters(in: .whitespaces)
+        guard !label.isEmpty else { return }
+        state.saveBookmark(label: label)
+        showBookmarkPopover = false
+        withAnimation(.spring(response: 0.35, dampingFraction: 0.5)) {
+            bookmarkSaved = true
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+            withAnimation(.easeOut(duration: 0.3)) {
+                bookmarkSaved = false
+            }
+        }
+    }
+
+    private func suggestedBookmarkLabel(_ definition: Definition) -> String {
+        let model = state.currentModel ?? ""
+        let shortModel = model.split(separator: "/").last.map(String.init) ?? model
+        if shortModel.isEmpty {
+            return definition.name
+        }
+        return "\(definition.name) — \(shortModel)"
     }
 
     // MARK: - Results

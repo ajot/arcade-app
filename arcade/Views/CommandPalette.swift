@@ -9,9 +9,12 @@ struct CommandPalette: View {
     @State private var appeared = false
     @FocusState private var isSearchFocused: Bool
 
+    @State private var hoveredBookmarkId: UUID?
+
     enum PaletteStep {
         case endpoints
         case models
+        case bookmarks
     }
 
     // Flattened list item for stable identities
@@ -72,7 +75,7 @@ struct CommandPalette: View {
                         .font(.system(size: 14))
                         .foregroundStyle(Color.textMuted)
                     TextField(
-                        step == .endpoints ? "Search endpoints..." : "Search models...",
+                        searchPlaceholder,
                         text: $searchText
                     )
                     .textFieldStyle(.plain)
@@ -97,6 +100,8 @@ struct CommandPalette: View {
                             endpointList
                         case .models:
                             modelList
+                        case .bookmarks:
+                            bookmarkList
                         }
                     }
                     .padding(.vertical, 4)
@@ -108,9 +113,29 @@ struct CommandPalette: View {
                     .background(Color.border700)
 
                 HStack(spacing: 16) {
+                    if step != .models {
+                        // Tab toggle pill
+                        HStack(spacing: 0) {
+                            tabPill("Endpoints", isActive: step == .endpoints) {
+                                switchToEndpoints()
+                            }
+                            tabPill("Bookmarks", isActive: step == .bookmarks) {
+                                switchToBookmarks()
+                            }
+                        }
+                        .background(Color.bg800.opacity(0.5))
+                        .clipShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 5, style: .continuous)
+                                .strokeBorder(Color.border700.opacity(0.3), lineWidth: 0.5)
+                        )
+
+                        hintLabel(key: "Tab", text: "Switch")
+                    }
+
                     hintLabel(key: "\u{21B5}", text: "Select")
-                    if step == .endpoints && state.mode == .play {
-                        hintLabel(key: "\u{21E7}\u{21B5}", text: "Compare")
+                    if step == .bookmarks {
+                        hintLabel(key: "\u{232B}", text: "Delete")
                     }
                     hintLabel(key: "Esc", text: "Close")
                     Spacer()
@@ -150,6 +175,21 @@ struct CommandPalette: View {
         .onKeyPress(.return) {
             selectHighlighted()
             return .handled
+        }
+        .onKeyPress(.tab) {
+            if step == .endpoints {
+                switchToBookmarks()
+            } else if step == .bookmarks {
+                switchToEndpoints()
+            }
+            return .handled
+        }
+        .onKeyPress(.delete) {
+            if step == .bookmarks {
+                deleteHighlightedBookmark()
+                return .handled
+            }
+            return .ignored
         }
         .onKeyPress(.escape) {
             if step == .models {
@@ -345,7 +385,12 @@ struct CommandPalette: View {
     // MARK: - Navigation
 
     private func moveHighlight(_ delta: Int) {
-        let count = step == .endpoints ? totalFilteredCount : filteredModels.count
+        let count: Int
+        switch step {
+        case .endpoints: count = totalFilteredCount
+        case .models: count = filteredModels.count
+        case .bookmarks: count = filteredBookmarks.count
+        }
         guard count > 0 else { return }
         highlightedIndex = (highlightedIndex + delta + count) % count
     }
@@ -370,6 +415,12 @@ struct CommandPalette: View {
             let models = filteredModels
             if highlightedIndex < models.count {
                 selectModel(models[highlightedIndex])
+            }
+        case .bookmarks:
+            let bookmarks = filteredBookmarks
+            if highlightedIndex < bookmarks.count {
+                state.loadBookmark(bookmarks[highlightedIndex])
+                dismiss()
             }
         }
     }
@@ -406,6 +457,207 @@ struct CommandPalette: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
             state.showCommandPalette = false
         }
+    }
+
+    // MARK: - Bookmark List
+
+    @ViewBuilder
+    private var bookmarkList: some View {
+        let bookmarks = filteredBookmarks
+        if bookmarks.isEmpty {
+            VStack(spacing: 8) {
+                Image(systemName: "bookmark")
+                    .font(.system(size: 24))
+                    .foregroundStyle(Color.textMuted.opacity(0.4))
+                Text(searchText.isEmpty ? "No bookmarks yet" : "No matching bookmarks")
+                    .font(.system(size: 13))
+                    .foregroundStyle(Color.textMuted)
+                if searchText.isEmpty {
+                    Text("Save one with \u{2318}D")
+                        .font(.system(size: 11))
+                        .foregroundStyle(Color.textMuted.opacity(0.6))
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 32)
+        } else {
+            ForEach(Array(bookmarks.enumerated()), id: \.element.id) { index, bookmark in
+                let definition = state.definitionLoader.sortedDefinitions.first { $0.id == bookmark.definitionId }
+                let isHovered = hoveredBookmarkId == bookmark.id
+
+                Button {
+                    state.loadBookmark(bookmark)
+                    SoundService.select()
+                    dismiss()
+                } label: {
+                    HStack(spacing: 0) {
+                        // Output type accent bar
+                        RoundedRectangle(cornerRadius: 1.5)
+                            .fill(outputTypeColor(definition?.outputType))
+                            .frame(width: 3, height: 24)
+                            .padding(.trailing, 10)
+
+                        // Bookmark icon
+                        Image(systemName: "bookmark.fill")
+                            .font(.system(size: 10))
+                            .foregroundStyle(Color.accent.opacity(0.7))
+                            .frame(width: 16)
+                            .padding(.trailing, 6)
+
+                        // Label + endpoint info
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(bookmark.label)
+                                .font(.system(size: 13))
+                                .foregroundStyle(Color.textPrimary)
+                                .lineLimit(1)
+
+                            HStack(spacing: 4) {
+                                if let def = definition {
+                                    Text(def.providerDisplayName)
+                                        .foregroundStyle(Color.textMuted)
+                                    if let model = bookmark.model {
+                                        Text("\u{00B7}")
+                                            .foregroundStyle(Color.textMuted.opacity(0.5))
+                                        Text(model.split(separator: "/").last.map(String.init) ?? model)
+                                            .foregroundStyle(Color.textTertiary)
+                                    }
+                                }
+                            }
+                            .font(.system(size: 10))
+                            .lineLimit(1)
+                        }
+
+                        Spacer()
+
+                        // Time ago
+                        Text(timeAgo(bookmark.createdAt))
+                            .font(.system(size: 10))
+                            .foregroundStyle(Color.textMuted)
+
+                        // Delete button (hover reveal)
+                        if isHovered {
+                            Button {
+                                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                    state.deleteBookmark(bookmark)
+                                }
+                            } label: {
+                                Image(systemName: "trash")
+                                    .font(.system(size: 10))
+                                    .foregroundStyle(Color.textMuted)
+                                    .frame(width: 24, height: 24)
+                            }
+                            .buttonStyle(.plain)
+                            .transition(.opacity)
+                            .padding(.leading, 4)
+                        }
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                    .background(
+                        index == highlightedIndex
+                            ? Color.accentSubtle
+                            : Color.clear
+                    )
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .onHover { hovering in
+                    withAnimation(.easeOut(duration: 0.12)) {
+                        hoveredBookmarkId = hovering ? bookmark.id : nil
+                    }
+                }
+            }
+        }
+    }
+
+    private var filteredBookmarks: [Bookmark] {
+        let all = state.bookmarkStore.bookmarks
+        if searchText.isEmpty { return all }
+        let query = searchText.lowercased()
+        return all.filter {
+            $0.label.lowercased().contains(query) ||
+            $0.definitionId.lowercased().contains(query) ||
+            ($0.model?.lowercased().contains(query) ?? false)
+        }
+    }
+
+    private func switchToBookmarks() {
+        withAnimation(.easeOut(duration: 0.15)) {
+            step = .bookmarks
+            searchText = ""
+            highlightedIndex = 0
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+            isSearchFocused = true
+        }
+    }
+
+    private func switchToEndpoints() {
+        withAnimation(.easeOut(duration: 0.15)) {
+            step = .endpoints
+            searchText = ""
+            highlightedIndex = 0
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+            isSearchFocused = true
+        }
+    }
+
+    private func deleteHighlightedBookmark() {
+        let bookmarks = filteredBookmarks
+        guard highlightedIndex < bookmarks.count else { return }
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+            state.deleteBookmark(bookmarks[highlightedIndex])
+        }
+        if highlightedIndex >= filteredBookmarks.count {
+            highlightedIndex = max(0, filteredBookmarks.count - 1)
+        }
+    }
+
+    private var searchPlaceholder: String {
+        switch step {
+        case .endpoints: return "Search endpoints..."
+        case .models: return "Search models..."
+        case .bookmarks: return "Search bookmarks..."
+        }
+    }
+
+    private func outputTypeColor(_ type: OutputType?) -> Color {
+        switch type {
+        case .text: return .blue
+        case .image: return .purple
+        case .audio: return Color.accent
+        case .video: return .green
+        case .none: return .gray
+        }
+    }
+
+    private func timeAgo(_ date: Date) -> String {
+        let seconds = Int(-date.timeIntervalSinceNow)
+        if seconds < 60 { return "just now" }
+        let minutes = seconds / 60
+        if minutes < 60 { return "\(minutes)m ago" }
+        let hours = minutes / 60
+        if hours < 24 { return "\(hours)h ago" }
+        let days = hours / 24
+        if days == 1 { return "yesterday" }
+        if days < 30 { return "\(days)d ago" }
+        return "\(days / 30)mo ago"
+    }
+
+    // MARK: - Tab Pill
+
+    private func tabPill(_ label: String, isActive: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(label)
+                .font(.system(size: 10, weight: isActive ? .semibold : .regular))
+                .foregroundStyle(isActive ? Color.textPrimary : Color.textMuted)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 3)
+                .background(isActive ? Color.bg800 : Color.clear)
+                .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Hint Label

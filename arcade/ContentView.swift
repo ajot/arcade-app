@@ -101,6 +101,12 @@ struct ContentView: View {
                     }
                     return nil
                 }
+                if event.modifierFlags.contains(.command) && event.charactersIgnoringModifiers == "d" {
+                    if state.mode == .play {
+                        state.showBookmarkPopover = true
+                    }
+                    return nil
+                }
                 return event
             }
         }
