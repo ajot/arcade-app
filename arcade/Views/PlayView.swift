@@ -11,6 +11,12 @@ struct PlayView: View {
     @State private var showBookmarkPopover = false
     @State private var bookmarkLabel = ""
     @State private var bookmarkSaved = false
+    @State private var glowIntensity: Double = 0
+    @State private var errorShakeCount: Int = 0
+    @State private var showRequestJSON = false
+    @State private var showResponseJSON = false
+    @State private var requestJSONCopied = false
+    @State private var responseJSONCopied = false
 
     var body: some View {
         guard let definition = state.currentDefinition else {
@@ -104,6 +110,8 @@ struct PlayView: View {
 
     // MARK: - Examples
 
+    @State private var chipsAppeared = false
+
     private func exampleChips(_ definition: Definition) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Examples")
@@ -113,7 +121,7 @@ struct PlayView: View {
                 .tracking(0.5)
 
             FlowLayout(spacing: 6) {
-                ForEach(definition.examples) { example in
+                ForEach(Array(definition.examples.enumerated()), id: \.element.id) { index, example in
                     Button(example.label) {
                         withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                             state.fillExample(example)
@@ -121,7 +129,24 @@ struct PlayView: View {
                         SoundService.confirm()
                     }
                     .buttonStyle(ChipStyle())
+                    .opacity(chipsAppeared ? 1 : 0)
+                    .offset(y: chipsAppeared ? 0 : 6)
+                    .animation(
+                        .spring(response: 0.5, dampingFraction: 0.65).delay(Double(index) * 0.08),
+                        value: chipsAppeared
+                    )
                 }
+            }
+        }
+        .onAppear {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                chipsAppeared = true
+            }
+        }
+        .onChange(of: state.currentDefinition?.id) {
+            chipsAppeared = false
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                chipsAppeared = true
             }
         }
     }
@@ -230,14 +255,16 @@ struct PlayView: View {
         )
 
         return HStack(spacing: 12) {
-            Slider(value: binding, in: minVal...maxVal, step: step)
-                .tint(Color.accent)
+            CustomSlider(value: binding, range: minVal...maxVal, step: step)
+                .frame(width: 200)
 
             Text(state.formValues[param.name] ?? param.defaultDisplayString ?? "")
                 .font(.system(size: 12, design: .monospaced))
                 .foregroundStyle(Color.textSecondary)
                 .frame(width: 40, alignment: .trailing)
                 .monospacedDigit()
+
+            Spacer()
         }
     }
 
@@ -423,8 +450,25 @@ struct PlayView: View {
                     }
                 }
             }
-            .buttonStyle(PrimaryButtonStyle(isGenerating: isActive(state.generationState)))
+            .buttonStyle(PrimaryButtonStyle(isGenerating: isActive(state.generationState), glowIntensity: glowIntensity))
             .disabled(!state.hasValidKey && !isActive(state.generationState))
+            .onChange(of: state.generationState) { _, newState in
+                switch newState {
+                case .generating, .streaming, .polling:
+                    withAnimation(.easeInOut(duration: 1.2).repeatForever(autoreverses: true)) {
+                        glowIntensity = 1.0
+                    }
+                case .completed:
+                    withAnimation(.easeOut(duration: 0.15)) { glowIntensity = 1.5 }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        withAnimation(.easeOut(duration: 0.6)) { glowIntensity = 0 }
+                    }
+                case .error:
+                    withAnimation(.easeOut(duration: 0.1)) { glowIntensity = 0 }
+                case .idle:
+                    glowIntensity = 0
+                }
+            }
         }
     }
 
@@ -644,6 +688,11 @@ struct PlayView: View {
 
                     // Metrics
                     metricsBar
+
+                    // Request/Response JSON
+                    if state.generationState == .completed {
+                        requestResponseSection
+                    }
                 }
                 .padding(.horizontal, 16)
                 .padding(.bottom, 16)
@@ -655,6 +704,12 @@ struct PlayView: View {
 
         case .error(let message):
             errorCard(message: message)
+                .modifier(ShakeEffect(shakes: errorShakeCount))
+                .onAppear {
+                    withAnimation(.linear(duration: 0.4)) {
+                        errorShakeCount += 3
+                    }
+                }
 
         default:
             EmptyView()
@@ -957,6 +1012,144 @@ struct PlayView: View {
         }
     }
 
+    // MARK: - Request/Response JSON
+
+    @ViewBuilder
+    private var requestResponseSection: some View {
+        VStack(spacing: 0) {
+            // Request
+            if let requestBody = state.lastRequestBody, let definition = state.currentDefinition {
+                jsonDisclosure(
+                    title: "Request",
+                    subtitle: "\(definition.request.method) \(definition.request.url)",
+                    json: requestBody,
+                    isExpanded: $showRequestJSON,
+                    isCopied: $requestJSONCopied
+                )
+            }
+
+            // Response
+            if let responseBody = state.lastResponseBody {
+                let statusLabel: String = {
+                    if let result = state.generationResult {
+                        return "\(result.statusCode) \u{00B7} \(String(format: "%.2fs", result.duration))"
+                    }
+                    return ""
+                }()
+
+                jsonDisclosure(
+                    title: "Response",
+                    subtitle: statusLabel,
+                    json: responseBody,
+                    isExpanded: $showResponseJSON,
+                    isCopied: $responseJSONCopied
+                )
+            } else if state.streamingMetrics != nil {
+                // Streaming endpoints don't have a single JSON response
+                let metrics = state.streamingMetrics!
+                let streamNote = """
+                // Streamed response (SSE)
+                // \(metrics.tokenCount) tokens in \(String(format: "%.2fs", metrics.totalDuration))
+                // \(String(format: "%.1f", metrics.tokensPerSecond)) tokens/sec
+                // See rendered output above
+                """
+                jsonDisclosure(
+                    title: "Response",
+                    subtitle: "streamed",
+                    json: streamNote,
+                    isExpanded: $showResponseJSON,
+                    isCopied: $responseJSONCopied
+                )
+            }
+        }
+        .padding(.top, 8)
+    }
+
+    private func jsonDisclosure(
+        title: String,
+        subtitle: String,
+        json: String,
+        isExpanded: Binding<Bool>,
+        isCopied: Binding<Bool>
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            // Header
+            HStack(spacing: 8) {
+                Button {
+                    withAnimation(.easeOut(duration: 0.2)) {
+                        isExpanded.wrappedValue.toggle()
+                    }
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 9, weight: .semibold))
+                            .rotationEffect(.degrees(isExpanded.wrappedValue ? 90 : 0))
+                            .foregroundStyle(Color.textMuted)
+
+                        Text(title)
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundStyle(Color.textTertiary)
+
+                        if !subtitle.isEmpty {
+                            Text(subtitle)
+                                .font(.system(size: 10))
+                                .foregroundStyle(Color.textMuted)
+                                .lineLimit(1)
+                        }
+                    }
+                }
+                .buttonStyle(.plain)
+
+                Spacer()
+
+                if isExpanded.wrappedValue {
+                    Button {
+                        NSPasteboard.general.clearContents()
+                        NSPasteboard.general.setString(json, forType: .string)
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                            isCopied.wrappedValue = true
+                        }
+                        SoundService.confirm()
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                            withAnimation { isCopied.wrappedValue = false }
+                        }
+                    } label: {
+                        HStack(spacing: 3) {
+                            Image(systemName: isCopied.wrappedValue ? "checkmark" : "doc.on.doc")
+                                .font(.system(size: 9))
+                            Text(isCopied.wrappedValue ? "Copied" : "Copy")
+                                .font(.system(size: 10))
+                        }
+                        .foregroundStyle(isCopied.wrappedValue ? Color.success : Color.textMuted)
+                    }
+                    .buttonStyle(.plain)
+                    .transition(.opacity)
+                }
+            }
+            .padding(.vertical, 8)
+
+            // JSON body
+            if isExpanded.wrappedValue {
+                ScrollView([.horizontal, .vertical]) {
+                    Text(json)
+                        .font(.system(size: 11, design: .monospaced))
+                        .foregroundStyle(Color.textSecondary)
+                        .textSelection(.enabled)
+                        .lineSpacing(3)
+                        .padding(12)
+                }
+                .frame(maxHeight: 300)
+                .background(Color.bg950.opacity(0.6))
+                .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .strokeBorder(Color.border700.opacity(0.3), lineWidth: 0.5)
+                )
+                .transition(.opacity.combined(with: .move(edge: .top)))
+            }
+        }
+    }
+
     // MARK: - Helpers
 
     private func dataFromDataURL(_ dataURL: String) -> Data? {
@@ -985,6 +1178,68 @@ private struct StreamingCursor: View {
 }
 
 // MARK: - Flow Layout
+
+// MARK: - Shake Effect
+
+struct ShakeEffect: GeometryEffect {
+    var shakes: Int
+    var animatableData: CGFloat {
+        get { CGFloat(shakes) }
+        set { shakes = Int(newValue) }
+    }
+
+    func effectValue(size: CGSize) -> ProjectionTransform {
+        let translation = sin(animatableData * .pi * 2) * 10
+        return ProjectionTransform(CGAffineTransform(translationX: translation, y: 0))
+    }
+}
+
+// MARK: - Flow Layout
+
+// MARK: - Custom Slider
+
+struct CustomSlider: View {
+    @Binding var value: Double
+    let range: ClosedRange<Double>
+    let step: Double
+
+    var body: some View {
+        GeometryReader { geo in
+            let fraction = (value - range.lowerBound) / (range.upperBound - range.lowerBound)
+            let thumbX = fraction * geo.size.width
+
+            ZStack(alignment: .leading) {
+                // Track background
+                Capsule()
+                    .fill(Color.bg800)
+                    .frame(height: 4)
+
+                // Filled track
+                Capsule()
+                    .fill(Color.accent)
+                    .frame(width: max(4, thumbX), height: 4)
+
+                // Thumb
+                Circle()
+                    .fill(Color.white)
+                    .frame(width: 14, height: 14)
+                    .shadow(color: .black.opacity(0.25), radius: 2, y: 1)
+                    .offset(x: thumbX - 7)
+            }
+            .frame(maxHeight: .infinity)
+            .contentShape(Rectangle())
+            .gesture(
+                DragGesture(minimumDistance: 0)
+                    .onChanged { drag in
+                        let frac = max(0, min(1, drag.location.x / geo.size.width))
+                        let raw = range.lowerBound + frac * (range.upperBound - range.lowerBound)
+                        value = (raw / step).rounded() * step
+                    }
+            )
+        }
+        .frame(height: 20)
+    }
+}
 
 struct FlowLayout: Layout {
     var spacing: CGFloat = 6

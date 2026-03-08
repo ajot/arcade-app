@@ -6,6 +6,7 @@ struct WelcomeView: View {
     @State private var letterOffsets: [CGSize] = Array(repeating: .zero, count: 6)
     @State private var letterVelocities: [CGSize] = Array(repeating: .zero, count: 6)
     @State private var hoveredLetter: Int?
+    @State private var waveTriggered = false
 
     private let letters = Array("arcade")
     private let springResponse: Double = 0.4
@@ -119,6 +120,22 @@ struct WelcomeView: View {
         .onAppear {
             withAnimation(.easeOut(duration: 0.5).delay(0.1)) {
                 appeared = true
+            }
+            // Wave animation after fade-in
+            if !waveTriggered {
+                waveTriggered = true
+                for i in 0..<letters.count {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.7 + Double(i) * 0.08) {
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.4)) {
+                            letterOffsets[i] = CGSize(width: 0, height: -12)
+                        }
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                            withAnimation(.spring(response: springResponse, dampingFraction: springDamping)) {
+                                letterOffsets[i] = .zero
+                            }
+                        }
+                    }
+                }
             }
         }
     }

@@ -81,6 +81,7 @@ struct InputFieldStyle: ViewModifier {
 
 struct PrimaryButtonStyle: ButtonStyle {
     var isGenerating: Bool = false
+    var glowIntensity: Double = 0
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
@@ -89,7 +90,20 @@ struct PrimaryButtonStyle: ButtonStyle {
             .padding(.horizontal, 20)
             .padding(.vertical, 10)
             .background(isGenerating ? Color.bg800 : Color.accent)
+            .overlay(
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .fill(Color.white.opacity(glowIntensity * 0.15))
+            )
             .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .strokeBorder(
+                        isGenerating
+                            ? Color.accent.opacity(glowIntensity * 0.8)
+                            : Color.white.opacity(glowIntensity * 0.4),
+                        lineWidth: 1.5
+                    )
+            )
             .scaleEffect(configuration.isPressed ? 0.97 : 1.0)
             .animation(.spring(response: 0.2, dampingFraction: 0.7), value: configuration.isPressed)
     }

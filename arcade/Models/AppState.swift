@@ -42,6 +42,8 @@ final class AppState {
     var generationResult: GenerationResult?
     var streamingMetrics: StreamingResult?
     var currentTask: Task<Void, Never>?
+    var lastRequestBody: String?
+    var lastResponseBody: String?
 
     // MARK: - Log Panel
     var showLogPanel = false
@@ -191,7 +193,16 @@ final class AppState {
         streamedText = ""
         generationResult = nil
         streamingMetrics = nil
+        lastResponseBody = nil
         SoundService.generate()
+
+        // Build request body JSON for display
+        if let built = try? RequestBuilder.buildRequest(definition: definition, params: params, apiKey: apiKey),
+           let body = built.body,
+           let jsonData = try? JSONSerialization.data(withJSONObject: body, options: [.prettyPrinted, .sortedKeys]),
+           let jsonString = String(data: jsonData, encoding: .utf8) {
+            lastRequestBody = jsonString
+        }
 
         // Build curl string for log
         let curlDetail = try? RequestBuilder.buildCurlString(
@@ -240,6 +251,7 @@ final class AppState {
                         apiKey: apiKey
                     )
                     self.generationResult = result
+                    self.lastResponseBody = self.prettyJSON(result.rawResponse)
                     if let textOutput = result.outputs.first(where: { $0.type == .text }),
                        let text = textOutput.values.first {
                         self.streamedText = text
@@ -272,6 +284,7 @@ final class AppState {
                         }
                     }
                     self.generationResult = result
+                    self.lastResponseBody = self.prettyJSON(result.rawResponse)
                     self.generationState = .completed
                     self.log(.success, "Completed — \(result.pollCount) polls, \(String(format: "%.2fs", result.duration))")
                     SoundService.complete()
@@ -346,6 +359,12 @@ final class AppState {
                 }
             }
         }
+    }
+
+    private func prettyJSON(_ dict: [String: Any]) -> String? {
+        guard let data = try? JSONSerialization.data(withJSONObject: dict, options: [.prettyPrinted, .sortedKeys]),
+              let string = String(data: data, encoding: .utf8) else { return nil }
+        return string
     }
 
     /// Whether the current endpoint has a valid API key.

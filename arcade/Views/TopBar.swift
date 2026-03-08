@@ -24,11 +24,13 @@ struct TopBar: View {
                     .font(.system(size: 9))
                     .foregroundStyle(Color.textMuted)
                     .padding(.horizontal, 10)
+                    .transition(.opacity)
 
                 // Endpoint name
                 Text(definition.name)
                     .font(.system(size: 13))
                     .foregroundStyle(Color.textSecondary)
+                    .transition(.move(edge: .leading).combined(with: .opacity))
 
                 // Model picker
                 if let modelParam = definition.modelParam, let options = modelParam.options {
@@ -36,6 +38,7 @@ struct TopBar: View {
                         .font(.system(size: 9))
                         .foregroundStyle(Color.textMuted)
                         .padding(.horizontal, 10)
+                        .transition(.opacity)
 
                     Picker("", selection: Binding(
                         get: { state.currentModel ?? "" },
@@ -50,6 +53,7 @@ struct TopBar: View {
                     .pickerStyle(.menu)
                     .labelsHidden()
                     .frame(maxWidth: 200)
+                    .transition(.opacity)
                 }
 
                 Spacer()
@@ -64,6 +68,7 @@ struct TopBar: View {
                         .font(.system(size: 11))
                         .foregroundStyle(Color.textMuted)
                 }
+                .transition(.move(edge: .trailing).combined(with: .opacity))
             } else {
                 Spacer()
             }
@@ -75,5 +80,6 @@ struct TopBar: View {
         .overlay(alignment: .bottom) {
             Divider().background(Color.border700.opacity(0.5))
         }
+        .animation(.easeOut(duration: 0.25), value: state.mode)
     }
 }
