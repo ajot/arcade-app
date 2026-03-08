@@ -92,6 +92,13 @@ struct ParamDefinition: Codable, Identifiable, Sendable {
 
     var isRequired: Bool { required ?? false }
 
+    /// Human-readable label: converts snake_case/camelCase to "Title Case".
+    var displayName: String {
+        name.replacingOccurrences(of: "_", with: " ")
+            .replacingOccurrences(of: "([a-z])([A-Z])", with: "$1 $2", options: .regularExpression)
+            .capitalized
+    }
+
     /// The default as a display string.
     var defaultDisplayString: String? {
         guard let dv = defaultValue else { return nil }

@@ -56,7 +56,8 @@
         ],
         "default": "1:1",
         "ui": "dropdown",
-        "body_path": "parameters.aspectRatio"
+        "body_path": "parameters.aspectRatio",
+        "group": "advanced"
       },
       {
         "name": "sampleCount",

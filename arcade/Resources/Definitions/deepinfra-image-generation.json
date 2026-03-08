@@ -61,7 +61,8 @@
           "768x1024"
         ],
         "default": "1024x1024",
-        "ui": "dropdown"
+        "ui": "dropdown",
+        "group": "advanced"
       },
       {
         "name": "n",

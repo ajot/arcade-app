@@ -4,7 +4,7 @@ import UniformTypeIdentifiers
 struct PlayView: View {
     @Bindable var state: AppState
     @State private var appeared = false
-    @State private var settingsExpanded = false
+    // showInspector lives on AppState for Cmd+I shortcut access
     @State private var showCurlPopover = false
     @State private var curlShowKey = false
     @State private var curlCopied = false
@@ -24,53 +24,58 @@ struct PlayView: View {
         }
 
         return AnyView(
-            ScrollViewReader { proxy in
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 0) {
-                        // Endpoint header
-                        endpointHeader(definition)
-                            .padding(.bottom, 20)
+            VStack(spacing: 0) {
+                ScrollViewReader { proxy in
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 0) {
+                            // Endpoint header
+                            endpointHeader(definition)
+                                .padding(.bottom, 14)
 
-                        // Examples
-                        if !definition.examples.isEmpty {
-                            exampleChips(definition)
-                                .padding(.bottom, 20)
+                            // Examples
+                            if !definition.examples.isEmpty {
+                                exampleChips(definition)
+                                    .padding(.bottom, 14)
+                            }
+
+                            // Form fields
+                            formFields(definition)
+                                .padding(.bottom, 12)
+
+                            // Results
+                            resultArea(definition)
+
+                            Color.clear
+                                .frame(height: 1)
+                                .id("bottom")
                         }
-
-                        // Form fields
-                        formFields(definition)
-                            .padding(.bottom, 16)
-
-                        // Settings section
-                        if !definition.advancedParams.isEmpty || definition.isChatEndpoint {
-                            settingsSection(definition)
-                                .padding(.bottom, 20)
-                        }
-
-                        // Generate bar
-                        generateBar(definition)
-                            .padding(.bottom, 24)
-
-                        // Results
-                        resultArea(definition)
-
-                        Color.clear
-                            .frame(height: 1)
-                            .id("bottom")
+                        .padding(.horizontal, 32)
+                        .padding(.top, 16)
+                        .padding(.bottom, 40)
+                        .frame(maxWidth: 720)
+                        .frame(maxWidth: .infinity)
+                        .contentShape(Rectangle())
                     }
-                    .padding(.horizontal, 32)
-                    .padding(.top, 16)
-                    .padding(.bottom, 80)
-                    .frame(maxWidth: 720)
-                    .frame(maxWidth: .infinity)
-                    .contentShape(Rectangle())
-                }
-                .onChange(of: state.streamedText) {
-                    withAnimation(.easeOut(duration: 0.15)) {
-                        proxy.scrollTo("bottom", anchor: .bottom)
+                    .onChange(of: state.streamedText) {
+                        withAnimation(.easeOut(duration: 0.15)) {
+                            proxy.scrollTo("bottom", anchor: .bottom)
+                        }
                     }
                 }
+
+                // Fixed bottom bar
+                generateBar(definition)
+                    .padding(.horizontal, 24)
+                    .padding(.vertical, 10)
+                    .background(Color.bg950)
+                    .overlay(alignment: .top) {
+                        Divider().background(Color.border700.opacity(0.5))
+                    }
             }
+            .inspector(isPresented: $state.showInspector) {
+                inspectorContent(definition)
+            }
+            .inspectorColumnWidth(min: 220, ideal: 260, max: 320)
             .opacity(appeared ? 1 : 0)
             .offset(y: appeared ? 0 : 8)
             .onAppear {
@@ -101,10 +106,22 @@ struct PlayView: View {
                 .font(.system(size: 13))
                 .foregroundStyle(Color.textTertiary)
 
-            Text(definition.request.url)
-                .font(.brandSmall)
+            HStack(spacing: 8) {
+                HStack(spacing: 4) {
+                    Image(systemName: definition.outputType.iconName)
+                        .font(.system(size: 10))
+                    Text(definition.outputType.rawValue)
+                        .font(.system(size: 10))
+                }
                 .foregroundStyle(Color.textMuted)
-                .textSelection(.enabled)
+
+                Text("·")
+                    .foregroundStyle(Color.textMuted.opacity(0.5))
+
+                Text(definition.interaction.pattern.rawValue)
+                    .font(.system(size: 10))
+                    .foregroundStyle(Color.textMuted)
+            }
         }
     }
 
@@ -114,11 +131,9 @@ struct PlayView: View {
 
     private func exampleChips(_ definition: Definition) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Examples")
+            Text("examples")
                 .font(.system(size: 11, weight: .medium))
                 .foregroundStyle(Color.textMuted)
-                .textCase(.uppercase)
-                .tracking(0.5)
 
             FlowLayout(spacing: 6) {
                 ForEach(Array(definition.examples.enumerated()), id: \.element.id) { index, example in
@@ -199,7 +214,7 @@ struct PlayView: View {
             .font(.system(size: 13))
             .foregroundStyle(Color.textPrimary)
             .scrollContentBackground(.hidden)
-            .frame(minHeight: isPrimary ? 80 : 60)
+            .frame(minHeight: isPrimary ? 48 : 36)
             .padding(10)
             .background(isPrimary ? Color.bg900.opacity(0.8) : Color.bg900)
             .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
@@ -279,95 +294,127 @@ struct PlayView: View {
             .inputFieldStyle()
     }
 
-    // MARK: - Settings
+    // MARK: - Inspector
 
-    private func settingsSection(_ definition: Definition) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
-            // Toggle header
-            Button {
-                withAnimation(.easeOut(duration: 0.2)) {
-                    settingsExpanded.toggle()
-                }
-            } label: {
-                HStack(spacing: 8) {
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 10, weight: .semibold))
-                        .foregroundStyle(Color.textMuted)
-                        .rotationEffect(.degrees(settingsExpanded ? 90 : 0))
-
-                    Text("Settings")
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundStyle(Color.textTertiary)
-
-                    if !settingsExpanded {
-                        // Summary
-                        Text(settingsSummary(definition))
-                            .font(.system(size: 11))
-                            .foregroundStyle(Color.textMuted)
-                            .lineLimit(1)
-                    }
-
-                    Spacer()
-                }
-                .padding(.vertical, 8)
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-
-            if settingsExpanded {
-                VStack(alignment: .leading, spacing: 14) {
+    private func inspectorContent(_ definition: Definition) -> some View {
+        Form {
+            if !definition.advancedParams.isEmpty {
+                Section("Settings") {
                     ForEach(definition.advancedParams) { param in
-                        paramField(param)
+                        inspectorParamField(param)
                     }
+                }
+            }
 
-                    if definition.isChatEndpoint {
-                        VStack(alignment: .leading, spacing: 5) {
-                            Text("System Prompt")
-                                .font(.system(size: 12, weight: .medium))
-                                .foregroundStyle(Color.textTertiary)
+            if definition.isChatEndpoint {
+                Section("System Prompt") {
+                    TextEditor(text: $state.systemPrompt)
+                        .font(.system(size: 12))
+                        .frame(minHeight: 80)
+                }
+            }
 
-                            TextEditor(text: $state.systemPrompt)
-                                .font(.system(size: 13))
-                                .foregroundStyle(Color.textPrimary)
-                                .scrollContentBackground(.hidden)
-                                .frame(minHeight: 60)
-                                .padding(10)
-                                .background(Color.bg900)
-                                .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 6, style: .continuous)
-                                        .strokeBorder(Color.border700, lineWidth: 1)
-                                )
+            if definition.advancedParams.isEmpty && !definition.isChatEndpoint {
+                Section {
+                    VStack(spacing: 6) {
+                        Image(systemName: "slider.horizontal.3")
+                            .font(.system(size: 18))
+                            .foregroundStyle(.secondary)
+                        Text("No settings for this endpoint")
+                            .font(.system(size: 11))
+                            .foregroundStyle(.tertiary)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 20)
+                }
+            }
+        }
+        .formStyle(.grouped)
+    }
+
+    private func inspectorParamField(_ param: ParamDefinition) -> some View {
+        let label = param.displayName
+
+        return Group {
+            switch param.ui {
+            case .dropdown:
+                Picker(label, selection: Binding<String>(
+                    get: { state.formValues[param.name] ?? param.defaultDisplayString ?? "" },
+                    set: { state.formValues[param.name] = $0 }
+                )) {
+                    if let options = param.options {
+                        ForEach(options, id: \.self) { option in
+                            Text(option).tag(option)
                         }
                     }
                 }
-                .padding(.top, 4)
-                .padding(.bottom, 8)
-                .transition(.opacity.combined(with: .move(edge: .top)))
+
+            case .slider:
+                let minVal = param.min ?? 0
+                let maxVal = param.max ?? 100
+                let step = param.type == .integer ? 1.0 : 0.1
+                let binding = Binding<Double>(
+                    get: { Double(state.formValues[param.name] ?? "") ?? param.defaultValue?.doubleValue ?? minVal },
+                    set: {
+                        if param.type == .integer {
+                            state.formValues[param.name] = "\(Int($0))"
+                        } else {
+                            state.formValues[param.name] = String(format: "%.1f", $0)
+                        }
+                    }
+                )
+                HStack {
+                    Text(label)
+                    Spacer()
+                    Text(state.formValues[param.name] ?? param.defaultDisplayString ?? "")
+                        .foregroundStyle(.secondary)
+                        .monospacedDigit()
+                }
+                CustomSlider(value: binding, range: minVal...maxVal, step: step)
+
+            case .text:
+                TextField(label, text: Binding<String>(
+                    get: { state.formValues[param.name] ?? "" },
+                    set: { state.formValues[param.name] = $0 }
+                ))
+
+            case .textarea:
+                TextField(label, text: Binding<String>(
+                    get: { state.formValues[param.name] ?? "" },
+                    set: { state.formValues[param.name] = $0 }
+                ), axis: .vertical)
+                .lineLimit(3...6)
             }
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 4)
-        .background(Color.bg900.opacity(0.3))
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .strokeBorder(Color.border700.opacity(0.3), lineWidth: 0.5)
-        )
-    }
-
-    private func settingsSummary(_ definition: Definition) -> String {
-        definition.advancedParams.compactMap { param in
-            let value = state.formValues[param.name] ?? param.defaultDisplayString
-            guard let v = value else { return nil }
-            return "\(param.name): \(v)"
-        }.joined(separator: " \u{00B7} ")
     }
 
     // MARK: - Generate Bar
 
     private func generateBar(_ definition: Definition) -> some View {
         HStack(spacing: 12) {
+            // Log toggle
+            Button {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                    state.showLogPanel.toggle()
+                }
+            } label: {
+                HStack(spacing: 4) {
+                    Image(systemName: "rectangle.bottomthird.inset.filled")
+                        .font(.system(size: 12))
+                    if !state.logEntries.isEmpty && !state.showLogPanel {
+                        Text("\(state.logEntries.count)")
+                            .font(.system(size: 9, design: .monospaced))
+                            .padding(.horizontal, 4)
+                            .padding(.vertical, 1)
+                            .background(Color.bg800)
+                            .clipShape(Capsule())
+                    }
+                }
+                .foregroundStyle(state.showLogPanel ? Color.accent : Color.textMuted)
+            }
+            .buttonStyle(.plain)
+            .help("Toggle Log (\u{2318}L)")
+
             Spacer()
 
             // Curl preview button
@@ -469,6 +516,7 @@ struct PlayView: View {
                     glowIntensity = 0
                 }
             }
+
         }
     }
 
@@ -712,7 +760,17 @@ struct PlayView: View {
                 }
 
         default:
-            EmptyView()
+            // Empty state placeholder
+            VStack(spacing: 8) {
+                Image(systemName: definition.outputType.iconName)
+                    .font(.system(size: 20))
+                    .foregroundStyle(Color.textMuted.opacity(0.3))
+                Text("Your \(definition.outputType.rawValue) will appear here")
+                    .font(.system(size: 12))
+                    .foregroundStyle(Color.textMuted.opacity(0.4))
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 40)
         }
     }
 

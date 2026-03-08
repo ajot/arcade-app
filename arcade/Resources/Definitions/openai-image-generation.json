@@ -51,7 +51,8 @@
           "1024x1792"
         ],
         "default": "1024x1024",
-        "ui": "dropdown"
+        "ui": "dropdown",
+        "group": "advanced"
       },
       {
         "name": "quality",

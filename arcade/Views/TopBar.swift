@@ -69,6 +69,21 @@ struct TopBar: View {
                         .foregroundStyle(Color.textMuted)
                 }
                 .transition(.move(edge: .trailing).combined(with: .opacity))
+
+                // Inspector toggle
+                Button {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                        state.showInspector.toggle()
+                    }
+                } label: {
+                    Image(systemName: "sidebar.trailing")
+                        .font(.system(size: 12))
+                        .foregroundStyle(state.showInspector ? Color.accent : Color.textMuted)
+                }
+                .buttonStyle(.plain)
+                .help("Toggle Inspector (\u{2318}I)")
+                .padding(.leading, 12)
+                .transition(.move(edge: .trailing).combined(with: .opacity))
             } else {
                 Spacer()
             }

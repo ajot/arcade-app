@@ -40,6 +40,44 @@
         "required": true,
         "body_path": "input.prompt",
         "placeholder": "A cat astronaut floating in space..."
+      },
+      {
+        "name": "image_size",
+        "type": "enum",
+        "options": ["square_hd", "square", "landscape_4_3", "landscape_16_9", "portrait_4_3", "portrait_16_9"],
+        "default": "landscape_4_3",
+        "ui": "dropdown",
+        "body_path": "input.image_size",
+        "group": "advanced"
+      },
+      {
+        "name": "num_inference_steps",
+        "type": "integer",
+        "min": 1,
+        "max": 50,
+        "default": 4,
+        "ui": "slider",
+        "body_path": "input.num_inference_steps",
+        "group": "advanced"
+      },
+      {
+        "name": "guidance_scale",
+        "type": "float",
+        "min": 1.0,
+        "max": 20.0,
+        "default": 3.5,
+        "ui": "slider",
+        "body_path": "input.guidance_scale",
+        "group": "advanced"
+      },
+      {
+        "name": "seed",
+        "type": "integer",
+        "min": 0,
+        "max": 999999,
+        "ui": "text",
+        "body_path": "input.seed",
+        "group": "advanced"
       }
     ]
   },

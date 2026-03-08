@@ -71,7 +71,8 @@
         "min": 1,
         "max": 50,
         "default": 4,
-        "ui": "slider"
+        "ui": "slider",
+        "group": "advanced"
       },
       {
         "name": "width",
@@ -79,7 +80,8 @@
         "min": 256,
         "max": 1440,
         "default": 1024,
-        "ui": "slider"
+        "ui": "slider",
+        "group": "advanced"
       },
       {
         "name": "height",
@@ -87,7 +89,8 @@
         "min": 256,
         "max": 1440,
         "default": 1024,
-        "ui": "slider"
+        "ui": "slider",
+        "group": "advanced"
       }
     ]
   },
