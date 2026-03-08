@@ -34,7 +34,7 @@
         "name": "duration",
         "type": "float",
         "ui": "slider",
-        "body_path": "input.duration",
+        "body_path": "input.seconds_total",
         "min": 1,
         "max": 180,
         "default": 10
