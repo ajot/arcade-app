@@ -21,6 +21,12 @@ final class AppState {
     var showBookmarkPopover = false
     var showInspector = false
     var zoomedImageValue: String?
+    var settingsTab: SettingsTab = .general
+
+    enum SettingsTab: Hashable {
+        case general
+        case apiKeys
+    }
 
     // MARK: - Play Mode State
     var currentDefinition: Definition?

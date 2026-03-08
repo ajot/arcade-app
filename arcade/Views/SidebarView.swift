@@ -62,15 +62,9 @@ struct SidebarView: View {
 
             Spacer()
 
-            if keyStatus == .noKey {
-                Text("no key")
-                    .font(.system(size: 9))
-                    .foregroundStyle(Color.accent.opacity(0.7))
-            } else {
-                Circle()
-                    .fill(keyStatus == .valid ? Color.green : Color.gray)
-                    .frame(width: 6, height: 6)
-            }
+            Circle()
+                .fill(keyStatus.color)
+                .frame(width: 6, height: 6)
         }
     }
 

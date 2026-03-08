@@ -80,6 +80,7 @@ struct InputFieldStyle: ViewModifier {
 }
 
 struct PrimaryButtonStyle: ButtonStyle {
+    @Environment(\.isEnabled) private var isEnabled
     var isGenerating: Bool = false
     var glowIntensity: Double = 0
 
@@ -104,7 +105,8 @@ struct PrimaryButtonStyle: ButtonStyle {
                         lineWidth: 1.5
                     )
             )
-            .scaleEffect(configuration.isPressed ? 0.97 : 1.0)
+            .opacity(isEnabled ? 1.0 : 0.4)
+            .scaleEffect(configuration.isPressed && isEnabled ? 0.97 : 1.0)
             .animation(.spring(response: 0.2, dampingFraction: 0.7), value: configuration.isPressed)
     }
 }
@@ -158,7 +160,7 @@ extension AppState.KeyStatus {
         switch self {
         case .valid: return .success
         case .invalid: return .error
-        case .noKey: return .textMuted
+        case .noKey: return .error
         case .unknown: return .textTertiary
         case .checking: return .textMuted
         }

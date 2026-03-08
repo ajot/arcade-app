@@ -4,16 +4,18 @@ struct SettingsView: View {
     @Bindable var state: AppState
 
     var body: some View {
-        TabView {
+        TabView(selection: $state.settingsTab) {
             GeneralSettingsTab()
                 .tabItem {
                     Label("General", systemImage: "gearshape")
                 }
+                .tag(AppState.SettingsTab.general)
 
             APIKeysSettingsTab(state: state)
                 .tabItem {
                     Label("API Keys", systemImage: "key")
                 }
+                .tag(AppState.SettingsTab.apiKeys)
         }
         .frame(width: 480, height: 420)
     }
