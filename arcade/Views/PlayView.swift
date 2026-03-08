@@ -44,6 +44,7 @@ struct PlayView: View {
 
                             // Results
                             resultArea(definition)
+                                .animation(.spring(response: 0.4, dampingFraction: 0.8), value: state.generationState)
 
                             Color.clear
                                 .frame(height: 1)
@@ -748,11 +749,15 @@ struct PlayView: View {
             }
             .background(Color.bg900.opacity(0.4))
             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-            .transition(.opacity.combined(with: .move(edge: .bottom)))
+            .transition(.asymmetric(
+                insertion: .scale(scale: 0.97, anchor: .top).combined(with: .opacity),
+                removal: .opacity
+            ))
 
         case .error(let message):
             errorCard(message: message)
                 .modifier(ShakeEffect(shakes: errorShakeCount))
+                .transition(.scale(scale: 0.97, anchor: .top).combined(with: .opacity))
                 .onAppear {
                     withAnimation(.linear(duration: 0.4)) {
                         errorShakeCount += 3
