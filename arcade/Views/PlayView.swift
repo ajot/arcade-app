@@ -11,41 +11,52 @@ struct PlayView: View {
         }
 
         return AnyView(
-            ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
-                    // Endpoint header
-                    endpointHeader(definition)
-                        .padding(.bottom, 20)
-
-                    // Examples
-                    if !definition.examples.isEmpty {
-                        exampleChips(definition)
+            ScrollViewReader { proxy in
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 0) {
+                        // Endpoint header
+                        endpointHeader(definition)
                             .padding(.bottom, 20)
+
+                        // Examples
+                        if !definition.examples.isEmpty {
+                            exampleChips(definition)
+                                .padding(.bottom, 20)
+                        }
+
+                        // Form fields
+                        formFields(definition)
+                            .padding(.bottom, 16)
+
+                        // Settings section
+                        if !definition.advancedParams.isEmpty || definition.isChatEndpoint {
+                            settingsSection(definition)
+                                .padding(.bottom, 20)
+                        }
+
+                        // Generate bar
+                        generateBar(definition)
+                            .padding(.bottom, 24)
+
+                        // Results
+                        resultArea(definition)
+
+                        Color.clear
+                            .frame(height: 1)
+                            .id("bottom")
                     }
-
-                    // Form fields
-                    formFields(definition)
-                        .padding(.bottom, 16)
-
-                    // Settings section
-                    if !definition.advancedParams.isEmpty || definition.isChatEndpoint {
-                        settingsSection(definition)
-                            .padding(.bottom, 20)
-                    }
-
-                    // Generate bar
-                    generateBar(definition)
-                        .padding(.bottom, 24)
-
-                    // Results
-                    resultArea(definition)
+                    .padding(.horizontal, 32)
+                    .padding(.top, 16)
+                    .padding(.bottom, 80)
+                    .frame(maxWidth: 720)
+                    .frame(maxWidth: .infinity)
+                    .contentShape(Rectangle())
                 }
-                .padding(.horizontal, 32)
-                .padding(.top, 16)
-                .padding(.bottom, 80)
-                .frame(maxWidth: 720)
-                .frame(maxWidth: .infinity)
-                .contentShape(Rectangle())
+                .onChange(of: state.streamedText) {
+                    withAnimation(.easeOut(duration: 0.15)) {
+                        proxy.scrollTo("bottom", anchor: .bottom)
+                    }
+                }
             }
             .opacity(appeared ? 1 : 0)
             .offset(y: appeared ? 0 : 8)
@@ -459,24 +470,13 @@ struct PlayView: View {
 
     private var textResult: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text(state.streamedText)
-                .font(.system(size: 13))
-                .foregroundStyle(Color.textSecondary)
-                .textSelection(.enabled)
-                .lineSpacing(4)
+            MarkdownTextView(text: state.streamedText)
 
             if state.generationState == .streaming {
-                // Blinking cursor
-                Rectangle()
-                    .fill(Color.accent)
-                    .frame(width: 8, height: 16)
-                    .opacity(blinkOpacity)
-                    .animation(.easeInOut(duration: 0.4).repeatForever(autoreverses: true), value: blinkOpacity)
+                StreamingCursor()
             }
         }
     }
-
-    @State private var blinkOpacity: Double = 1.0
     @State private var showCopied = false
 
     private var copyButton: some View {
@@ -571,6 +571,7 @@ struct PlayView: View {
             }
         }
         .padding(.top, 8)
+        .animation(.easeOut(duration: 0.4), value: state.generationState == .completed)
     }
 
     private func metricPill(label: String, value: String) -> some View {
@@ -581,6 +582,7 @@ struct PlayView: View {
             Text(value)
                 .font(.system(size: 10, design: .monospaced))
                 .foregroundStyle(Color.textTertiary)
+                .contentTransition(.numericText())
         }
     }
 
@@ -590,6 +592,24 @@ struct PlayView: View {
         guard let commaIndex = dataURL.firstIndex(of: ",") else { return nil }
         let base64 = String(dataURL[dataURL.index(after: commaIndex)...])
         return Data(base64Encoded: base64)
+    }
+}
+
+// MARK: - Streaming Cursor
+
+private struct StreamingCursor: View {
+    @State private var visible = true
+
+    var body: some View {
+        Rectangle()
+            .fill(Color.accent)
+            .frame(width: 8, height: 16)
+            .opacity(visible ? 1 : 0)
+            .onAppear {
+                withAnimation(.easeInOut(duration: 0.5).repeatForever(autoreverses: true)) {
+                    visible = false
+                }
+            }
     }
 }
 
