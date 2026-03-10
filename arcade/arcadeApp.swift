@@ -13,7 +13,7 @@ struct ArcadeApp: App {
         .commands {
             CommandGroup(replacing: .newItem) {}
 
-            CommandMenu("View") {
+            CommandGroup(before: .sidebar) {
                 Button("Command Palette") {
                     withAnimation(.easeOut(duration: 0.15)) {
                         state.showCommandPalette.toggle()
@@ -22,6 +22,13 @@ struct ArcadeApp: App {
                 .keyboardShortcut("k", modifiers: .command)
 
                 Divider()
+
+                Button(state.showSidebar ? "Hide Sidebar" : "Show Sidebar") {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                        state.showSidebar.toggle()
+                    }
+                }
+                .keyboardShortcut("0", modifiers: .command)
 
                 Button(state.showLogPanel ? "Hide Log" : "Show Log") {
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
@@ -47,6 +54,8 @@ struct ArcadeApp: App {
                 }
                 .keyboardShortcut("d", modifiers: .command)
                 .disabled(state.currentDefinition == nil)
+
+                Divider()
             }
         }
 

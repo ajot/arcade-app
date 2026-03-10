@@ -10,6 +10,7 @@ final class AppState {
     let bookmarkStore = BookmarkStore()
 
     // MARK: - Navigation
+    var showSidebar = true
     var showCommandPalette = false
     var showBookmarkPopover = false
     var showInspector = false

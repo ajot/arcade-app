@@ -6,7 +6,10 @@ struct ContentView: View {
 
     var body: some View {
         ZStack {
-            NavigationSplitView {
+            NavigationSplitView(columnVisibility: Binding(
+                get: { state.showSidebar ? .automatic : .detailOnly },
+                set: { state.showSidebar = $0 != .detailOnly }
+            )) {
                 SidebarView(state: state)
             } detail: {
                 detailContent
