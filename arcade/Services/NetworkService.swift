@@ -41,7 +41,7 @@ final class NetworkService {
             throw NetworkError.invalidResponse
         }
 
-        // Handle binary audio responses (TTS endpoints)
+        // Handle binary responses (audio/image)
         let contentType = httpResponse.value(forHTTPHeaderField: "Content-Type") ?? ""
         if httpResponse.statusCode == 200 &&
             (contentType.contains("audio") || contentType.contains("octet-stream")) {
@@ -53,6 +53,20 @@ final class NetworkService {
             return GenerationResult(
                 outputs: outputs,
                 rawResponse: responseData,
+                statusCode: httpResponse.statusCode,
+                duration: elapsed
+            )
+        }
+
+        if httpResponse.statusCode == 200 && contentType.contains("image") {
+            let base64 = data.base64EncodedString()
+            let mime = contentType.split(separator: ";").first.map(String.init) ?? "image/png"
+            let dataURL = "data:\(mime);base64,\(base64)"
+            let responseData: [String: Any] = ["image_url": dataURL]
+            let outputs = extractOutputs(definition: definition, responseData: responseData)
+            return GenerationResult(
+                outputs: outputs,
+                rawResponse: ["content_type": mime, "size_bytes": data.count],
                 statusCode: httpResponse.statusCode,
                 duration: elapsed
             )
@@ -241,16 +255,20 @@ final class NetworkService {
                 continue
             }
 
-            // Extract status message and progress for UI
-            let statusMsg = extractPollStatus(definition: definition, response: statusJson)
-            let progress = extractPollProgress(definition: definition, response: statusJson)
-            if let progress {
-                onStatusUpdate("\(statusMsg) · \(Int(progress))%")
-            } else {
-                onStatusUpdate("\(statusMsg) (\(pollCount))")
-            }
-
+            // Check completion status first to avoid race condition
             let pollStatus = checkDone(definition: definition, statusResponse: statusJson)
+
+            // Only update status UI if still pending (avoids overwriting .completed)
+            if pollStatus == .pending {
+                var statusMsg = extractPollStatus(definition: definition, response: statusJson)
+                if statusMsg == "Task not found" { statusMsg = "Starting" }
+                let progress = extractPollProgress(definition: definition, response: statusJson)
+                if let progress {
+                    onStatusUpdate("\(statusMsg) · \(Int(progress))%")
+                } else {
+                    onStatusUpdate("\(statusMsg) (\(pollCount))")
+                }
+            }
 
             switch pollStatus {
             case .done:
@@ -392,7 +410,7 @@ final class NetworkService {
         return nil
     }
 
-    private enum PollStatus { case done, failed, pending }
+    private enum PollStatus: Equatable { case done, failed, pending }
 
     private func checkDone(definition: Definition, statusResponse: [String: Any]) -> PollStatus {
         if let doneWhen = definition.interaction.doneWhen {

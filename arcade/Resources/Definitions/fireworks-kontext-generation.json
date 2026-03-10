@@ -131,10 +131,9 @@
   "response": {
     "outputs": [
       {
-        "path": "$.result",
+        "path": "$.result.sample",
         "type": "image",
-        "source": "base64",
-        "mime_type": "image/png"
+        "source": "url"
       }
     ],
     "error": {
