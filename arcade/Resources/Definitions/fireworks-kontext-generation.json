@@ -1,0 +1,144 @@
+{
+  "schema_version": 1,
+  "id": "fireworks-kontext-generation",
+  "provider": "fireworks",
+  "provider_display_name": "Fireworks",
+  "provider_url": "fireworks.ai",
+  "name": "Fireworks Kontext Image",
+  "description": "FLUX Kontext image generation via Fireworks AI (async, high quality)",
+  "auth": {
+    "type": "header",
+    "header": "Authorization",
+    "prefix": "Bearer ",
+    "env_key": "FIREWORKS_API_KEY",
+    "validation_url": "https://api.fireworks.ai/inference/v1/models"
+  },
+  "request": {
+    "method": "POST",
+    "url": "https://api.fireworks.ai/inference/v1/workflows/accounts/fireworks/models/{model}",
+    "content_type": "application/json",
+    "body_template": {},
+    "params": [
+      {
+        "name": "model",
+        "type": "enum",
+        "options": [
+          "flux-kontext-pro",
+          "flux-kontext-max"
+        ],
+        "default": "flux-kontext-pro",
+        "ui": "dropdown",
+        "required": true,
+        "url_path": true
+      },
+      {
+        "name": "prompt",
+        "type": "string",
+        "ui": "textarea",
+        "required": true,
+        "placeholder": "A photorealistic portrait in a sunlit garden..."
+      },
+      {
+        "name": "aspect_ratio",
+        "type": "enum",
+        "options": [
+          "1:1",
+          "16:9",
+          "9:16",
+          "21:9",
+          "9:21",
+          "3:2",
+          "2:3",
+          "5:4",
+          "4:5",
+          "4:3",
+          "3:4"
+        ],
+        "default": "1:1",
+        "ui": "dropdown"
+      },
+      {
+        "name": "seed",
+        "type": "integer",
+        "min": 0,
+        "max": 999999,
+        "default": 42,
+        "ui": "text",
+        "group": "advanced"
+      },
+      {
+        "name": "safety_tolerance",
+        "type": "integer",
+        "min": 0,
+        "max": 6,
+        "default": 2,
+        "ui": "slider",
+        "group": "advanced"
+      }
+    ]
+  },
+  "interaction": {
+    "pattern": "polling",
+    "status_url": "https://api.fireworks.ai/inference/v1/workflows/accounts/fireworks/models/{model}/get_result",
+    "result_url": "https://api.fireworks.ai/inference/v1/workflows/accounts/fireworks/models/{model}/get_result",
+    "request_id_path": "$.request_id",
+    "poll_interval_ms": 3000,
+    "poll_method": "POST",
+    "poll_body": {
+      "id": "{request_id}"
+    },
+    "status_path": "$.status",
+    "progress_path": "$.progress",
+    "done_when": {
+      "path": "$.status",
+      "equals": "Ready"
+    },
+    "failed_when": {
+      "path": "$.status",
+      "in": ["Error", "Request Moderated", "Content Moderated"]
+    }
+  },
+  "examples": [
+    {
+      "label": "Cinematic portrait",
+      "params": {
+        "prompt": "Cinematic portrait of a woman in golden hour light, shallow depth of field, film grain",
+        "model": "flux-kontext-pro"
+      }
+    },
+    {
+      "label": "Product shot",
+      "params": {
+        "prompt": "Minimalist product photography of a ceramic coffee mug on a marble surface, soft shadows",
+        "model": "flux-kontext-pro"
+      }
+    },
+    {
+      "label": "Fantasy landscape",
+      "params": {
+        "prompt": "Epic fantasy landscape with floating islands, waterfalls cascading into clouds, magical atmosphere",
+        "model": "flux-kontext-max"
+      }
+    },
+    {
+      "label": "Architectural viz",
+      "params": {
+        "prompt": "Modern minimalist house with floor-to-ceiling windows overlooking a mountain lake, architectural photography",
+        "model": "flux-kontext-pro"
+      }
+    }
+  ],
+  "response": {
+    "outputs": [
+      {
+        "path": "$.result",
+        "type": "image",
+        "source": "base64",
+        "mime_type": "image/png"
+      }
+    ],
+    "error": {
+      "path": "$.details"
+    }
+  }
+}

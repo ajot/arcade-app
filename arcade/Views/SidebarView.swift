@@ -68,15 +68,32 @@ struct SidebarView: View {
         }
     }
 
-    // MARK: - Filtering
+    // MARK: - Filtering & Sorting
 
     private func filteredDefinitions(for type: OutputType) -> [Definition] {
-        let all = state.definitionLoader.definitionsByOutputType[type] ?? []
-        if searchText.isEmpty { return all }
-        let query = searchText.lowercased()
-        return all.filter {
-            $0.name.lowercased().contains(query) ||
-            $0.providerDisplayName.lowercased().contains(query)
+        var all = state.definitionLoader.definitionsByOutputType[type] ?? []
+        if !searchText.isEmpty {
+            let query = searchText.lowercased()
+            all = all.filter {
+                $0.name.lowercased().contains(query) ||
+                $0.providerDisplayName.lowercased().contains(query)
+            }
+        }
+        return all.sorted { a, b in
+            let aPriority = keyPriority(for: a.provider)
+            let bPriority = keyPriority(for: b.provider)
+            if aPriority != bPriority { return aPriority < bPriority }
+            return a.name.localizedCaseInsensitiveCompare(b.name) == .orderedAscending
+        }
+    }
+
+    /// Sort priority: valid keys first, then keys present but not validated, then no key.
+    private func keyPriority(for provider: String) -> Int {
+        switch state.keyStatus[provider] ?? .noKey {
+        case .valid: return 0
+        case .checking, .unknown: return 1
+        case .invalid: return 2
+        case .noKey: return 3
         }
     }
 }

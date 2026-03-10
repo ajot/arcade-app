@@ -23,6 +23,12 @@ enum RequestBuilder {
         var headers: [String: String] = [
             "Content-Type": req.contentType,
         ]
+        // Merge custom headers from definition
+        if let customHeaders = req.headers {
+            for (key, value) in customHeaders {
+                headers[key] = value
+            }
+        }
         let auth = definition.auth
         if auth.type == "header" {
             headers[auth.header] = "\(auth.prefix)\(apiKey)"
@@ -97,6 +103,11 @@ enum RequestBuilder {
         var headers: [String: String] = [
             "Content-Type": req.contentType,
         ]
+        if let customHeaders = req.headers {
+            for (key, value) in customHeaders {
+                headers[key] = value
+            }
+        }
         let auth = definition.auth
         if auth.type == "header" {
             headers[auth.header] = "\(auth.prefix)\(effectiveKey)"
@@ -163,16 +174,27 @@ enum RequestBuilder {
     }
 
     /// Build status URL for polling.
-    static func buildStatusURL(definition: Definition, requestId: String) -> URL? {
+    static func buildStatusURL(definition: Definition, requestId: String, params: [String: String] = [:]) -> URL? {
         guard let template = definition.interaction.statusUrl else { return nil }
-        let urlString = template.replacingOccurrences(of: "{request_id}", with: requestId)
+        var urlString = template.replacingOccurrences(of: "{request_id}", with: requestId)
+        // Substitute any other URL path params (e.g. {model})
+        for param in definition.request.params where param.urlPath == true {
+            if let value = params[param.name] {
+                urlString = urlString.replacingOccurrences(of: "{\(param.name)}", with: value)
+            }
+        }
         return URL(string: urlString)
     }
 
     /// Build result URL for polling.
-    static func buildResultURL(definition: Definition, requestId: String) -> URL? {
+    static func buildResultURL(definition: Definition, requestId: String, params: [String: String] = [:]) -> URL? {
         guard let template = definition.interaction.resultUrl else { return nil }
-        let urlString = template.replacingOccurrences(of: "{request_id}", with: requestId)
+        var urlString = template.replacingOccurrences(of: "{request_id}", with: requestId)
+        for param in definition.request.params where param.urlPath == true {
+            if let value = params[param.name] {
+                urlString = urlString.replacingOccurrences(of: "{\(param.name)}", with: value)
+            }
+        }
         return URL(string: urlString)
     }
 

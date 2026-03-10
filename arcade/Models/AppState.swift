@@ -10,13 +10,6 @@ final class AppState {
     let bookmarkStore = BookmarkStore()
 
     // MARK: - Navigation
-    enum Mode: Equatable {
-        case welcome
-        case play
-        case compare
-    }
-
-    var mode: Mode = .welcome
     var showCommandPalette = false
     var showBookmarkPopover = false
     var showInspector = false
@@ -326,34 +319,8 @@ final class AppState {
             await withTaskGroup(of: (String, KeyStatus).self) { group in
                 for (slug, _) in providers {
                     guard let apiKey = KeychainService.getKey(for: slug) else { continue }
-                    let defs = definitionLoader.sortedDefinitions.filter { $0.provider == slug }
-                    guard let definition = defs.first,
-                          let validationUrl = definition.auth.validationUrl,
-                          let url = URL(string: validationUrl) else {
-                        group.addTask { (slug, .unknown) }
-                        continue
-                    }
-
-                    let auth = definition.auth
                     group.addTask {
-                        var request = URLRequest(url: url)
-                        request.timeoutInterval = 5
-                        request.setValue(
-                            "\(auth.prefix)\(apiKey)",
-                            forHTTPHeaderField: auth.header
-                        )
-
-                        do {
-                            let (_, response) = try await URLSession.shared.data(for: request)
-                            let status = (response as? HTTPURLResponse)?.statusCode ?? 0
-                            switch status {
-                            case 200: return (slug, .valid)
-                            case 401, 403: return (slug, .invalid)
-                            default: return (slug, .unknown)
-                            }
-                        } catch {
-                            return (slug, .unknown)
-                        }
+                        await self.checkKey(slug: slug, apiKey: apiKey)
                     }
                 }
 
@@ -363,6 +330,50 @@ final class AppState {
                     }
                 }
             }
+        }
+    }
+
+    func validateKey(for slug: String) {
+        guard let apiKey = KeychainService.getKey(for: slug) else {
+            keyStatus[slug] = .noKey
+            return
+        }
+        keyStatus[slug] = .checking
+        Task {
+            let (provider, status) = await checkKey(slug: slug, apiKey: apiKey)
+            await MainActor.run {
+                self.keyStatus[provider] = status
+            }
+        }
+    }
+
+    private func checkKey(slug: String, apiKey: String) async -> (String, KeyStatus) {
+        let defs = definitionLoader.sortedDefinitions.filter { $0.provider == slug }
+        guard let definition = defs.first,
+              let validationUrl = definition.auth.validationUrl,
+              let url = URL(string: validationUrl) else {
+            return (slug, .unknown)
+        }
+
+        let auth = definition.auth
+        var request = URLRequest(url: url)
+        request.timeoutInterval = 15
+        request.setValue(
+            "\(auth.prefix)\(apiKey)",
+            forHTTPHeaderField: auth.header
+        )
+
+        do {
+            // Use a delegate to cancel after receiving headers (avoid downloading large responses)
+            let (_, response) = try await URLSession.shared.data(for: request)
+            let status = (response as? HTTPURLResponse)?.statusCode ?? 0
+            switch status {
+            case 200..<300: return (slug, .valid)
+            case 401, 403: return (slug, .invalid)
+            default: return (slug, .unknown)
+            }
+        } catch {
+            return (slug, .unknown)
         }
     }
 

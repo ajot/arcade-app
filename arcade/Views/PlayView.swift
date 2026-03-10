@@ -119,7 +119,7 @@ struct PlayView: View {
                 Text("·")
                     .foregroundStyle(Color.textMuted.opacity(0.5))
 
-                Text(definition.interaction.pattern.rawValue)
+                Text(patternLabel(definition))
                     .font(.system(size: 10))
                     .foregroundStyle(Color.textMuted)
             }
@@ -534,6 +534,19 @@ struct PlayView: View {
         switch genState {
         case .generating, .streaming, .polling: return true
         default: return false
+        }
+    }
+
+    private func patternLabel(_ definition: Definition) -> String {
+        let pattern = definition.interaction.pattern
+        switch pattern {
+        case .polling:
+            let method = definition.interaction.pollMethod?.uppercased() ?? "GET"
+            return "async · \(method) polling"
+        case .streaming:
+            return "streaming"
+        case .sync:
+            return "sync"
         }
     }
 
@@ -1037,7 +1050,7 @@ struct PlayView: View {
 
     @ViewBuilder
     private func videoResult(_ output: ExtractedOutput) -> some View {
-        ForEach(output.values, id: \.self) { value in
+        ForEach(Array(output.values.enumerated()), id: \.offset) { _, value in
             if let url = URL(string: value) {
                 VideoPlayerView(url: url)
             }

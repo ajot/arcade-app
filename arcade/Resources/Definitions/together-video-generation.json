@@ -65,6 +65,7 @@
     "result_url": "https://api.together.xyz/v2/videos/{request_id}",
     "request_id_path": "$.id",
     "poll_interval_ms": 5000,
+    "status_path": "$.status",
     "done_when": {
       "path": "$.status",
       "equals": "completed"

@@ -180,7 +180,7 @@ final class NetworkService {
             if let numId = JSONPath.extract(from: submitJson, path: requestIdPath) {
                 let requestId = "\(numId)"
                 return try await pollForResult(
-                    definition: definition, requestId: requestId, apiKey: apiKey,
+                    definition: definition, requestId: requestId, params: params, apiKey: apiKey,
                     start: start, onStatusUpdate: onStatusUpdate
                 )
             }
@@ -188,7 +188,7 @@ final class NetworkService {
         }
 
         return try await pollForResult(
-            definition: definition, requestId: requestId, apiKey: apiKey,
+            definition: definition, requestId: requestId, params: params, apiKey: apiKey,
             start: start, onStatusUpdate: onStatusUpdate
         )
     }
@@ -196,22 +196,23 @@ final class NetworkService {
     private func pollForResult(
         definition: Definition,
         requestId: String,
+        params: [String: String],
         apiKey: String,
         start: Double,
         onStatusUpdate: @escaping (String) -> Void
     ) async throws -> GenerationResult {
         let pollInterval = definition.interaction.pollIntervalMs ?? 2000
         let auth = definition.auth
+        let isPostPoll = definition.interaction.pollMethod?.uppercased() == "POST"
         var pollCount = 0
 
         while !Task.isCancelled {
             try await Task.sleep(for: .milliseconds(pollInterval))
             pollCount += 1
-            onStatusUpdate("Polling... (\(pollCount))")
 
-            // Check status
+            // Build poll request
             guard let statusURL = RequestBuilder.buildStatusURL(
-                definition: definition, requestId: requestId
+                definition: definition, requestId: requestId, params: params
             ) else {
                 throw NetworkError.invalidResponse
             }
@@ -222,18 +223,53 @@ final class NetworkService {
                 statusReq.setValue("\(auth.prefix)\(key)", forHTTPHeaderField: auth.header)
             }
 
+            // POST polling: set method and body
+            if isPostPoll {
+                statusReq.httpMethod = "POST"
+                statusReq.setValue("application/json", forHTTPHeaderField: "Content-Type")
+                if let pollBody = definition.interaction.pollBody {
+                    var body: [String: Any] = [:]
+                    for (key, value) in pollBody {
+                        body[key] = value.replacingOccurrences(of: "{request_id}", with: requestId)
+                    }
+                    statusReq.httpBody = try? JSONSerialization.data(withJSONObject: body)
+                }
+            }
+
             let (statusData, _) = try await session.data(for: statusReq)
             guard let statusJson = try? JSONSerialization.jsonObject(with: statusData) as? [String: Any] else {
                 continue
+            }
+
+            // Extract status message and progress for UI
+            let statusMsg = extractPollStatus(definition: definition, response: statusJson)
+            let progress = extractPollProgress(definition: definition, response: statusJson)
+            if let progress {
+                onStatusUpdate("\(statusMsg) · \(Int(progress))%")
+            } else {
+                onStatusUpdate("\(statusMsg) (\(pollCount))")
             }
 
             let pollStatus = checkDone(definition: definition, statusResponse: statusJson)
 
             switch pollStatus {
             case .done:
-                // Fetch final result
+                // For POST polling, the result is often in the same response
+                if isPostPoll && definition.interaction.resultUrl == definition.interaction.statusUrl {
+                    let outputs = extractOutputs(definition: definition, responseData: statusJson)
+                    let elapsed = CFAbsoluteTimeGetCurrent() - start
+                    return GenerationResult(
+                        outputs: outputs,
+                        rawResponse: statusJson,
+                        statusCode: 200,
+                        duration: elapsed,
+                        pollCount: pollCount
+                    )
+                }
+
+                // Fetch final result from separate URL
                 guard let resultURL = RequestBuilder.buildResultURL(
-                    definition: definition, requestId: requestId
+                    definition: definition, requestId: requestId, params: params
                 ) else {
                     throw NetworkError.invalidResponse
                 }
@@ -242,6 +278,19 @@ final class NetworkService {
                 if auth.type == "header" {
                     let key = KeychainService.getKey(for: definition.provider) ?? ""
                     resultReq.setValue("\(auth.prefix)\(key)", forHTTPHeaderField: auth.header)
+                }
+
+                // POST result fetch if needed
+                if isPostPoll {
+                    resultReq.httpMethod = "POST"
+                    resultReq.setValue("application/json", forHTTPHeaderField: "Content-Type")
+                    if let pollBody = definition.interaction.pollBody {
+                        var body: [String: Any] = [:]
+                        for (key, value) in pollBody {
+                            body[key] = value.replacingOccurrences(of: "{request_id}", with: requestId)
+                        }
+                        resultReq.httpBody = try? JSONSerialization.data(withJSONObject: body)
+                    }
                 }
 
                 let (resultData, _) = try await session.data(for: resultReq)
@@ -273,6 +322,27 @@ final class NetworkService {
         throw CancellationError()
     }
 
+    private func extractPollStatus(definition: Definition, response: [String: Any]) -> String {
+        if let path = definition.interaction.statusPath,
+           let val = JSONPath.extract(from: response, path: path) as? String {
+            return val
+        }
+        if let path = definition.interaction.doneWhen?.path,
+           let val = JSONPath.extract(from: response, path: path) as? String {
+            return val.capitalized
+        }
+        return "Polling"
+    }
+
+    private func extractPollProgress(definition: Definition, response: [String: Any]) -> Double? {
+        guard let path = definition.interaction.progressPath,
+              let val = JSONPath.extract(from: response, path: path) else { return nil }
+        if let n = val as? Double { return n }
+        if let n = val as? Int { return Double(n) }
+        if let n = val as? NSNumber { return n.doubleValue }
+        return nil
+    }
+
     // MARK: - Response Extraction
 
     private func extractOutputs(definition: Definition, responseData: [String: Any]) -> [ExtractedOutput] {
@@ -285,7 +355,10 @@ final class NetworkService {
 
             let values: [Any] = (value as? [Any]) ?? [value]
             var stringValues = values.map { val -> String in
-                if let s = val as? String { return s }
+                if let s = val as? String {
+                    // Clean up escaped forward slashes that may persist in URLs
+                    return s.replacingOccurrences(of: "\\/", with: "/")
+                }
                 if let n = val as? NSNumber { return n.stringValue }
                 return "\(val)"
             }

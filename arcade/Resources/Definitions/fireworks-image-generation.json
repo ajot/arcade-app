@@ -1,0 +1,143 @@
+{
+  "schema_version": 1,
+  "id": "fireworks-image-generation",
+  "provider": "fireworks",
+  "provider_display_name": "Fireworks",
+  "provider_url": "fireworks.ai",
+  "name": "Fireworks Image Generation",
+  "description": "Text-to-image generation via Fireworks AI (FLUX, Stable Diffusion, Playground)",
+  "auth": {
+    "type": "header",
+    "header": "Authorization",
+    "prefix": "Bearer ",
+    "env_key": "FIREWORKS_API_KEY",
+    "validation_url": "https://api.fireworks.ai/inference/v1/models"
+  },
+  "request": {
+    "method": "POST",
+    "url": "https://api.fireworks.ai/inference/v1/workflows/accounts/fireworks/models/{model}/text_to_image",
+    "content_type": "application/json",
+    "headers": {
+      "Accept": "application/json"
+    },
+    "body_template": {},
+    "params": [
+      {
+        "name": "model",
+        "type": "enum",
+        "options": [
+          "flux-1-schnell-fp8",
+          "flux-1-dev-fp8",
+          "stable-diffusion-xl-1024-v1-0",
+          "playground-v2-5-1024px-aesthetic",
+          "playground-v2-1024px-aesthetic",
+          "SSD-1B",
+          "japanese-stable-diffusion-xl"
+        ],
+        "default": "flux-1-schnell-fp8",
+        "ui": "dropdown",
+        "required": true,
+        "url_path": true
+      },
+      {
+        "name": "prompt",
+        "type": "string",
+        "ui": "textarea",
+        "required": true,
+        "placeholder": "A futuristic cityscape at sunset..."
+      },
+      {
+        "name": "aspect_ratio",
+        "type": "enum",
+        "options": [
+          "1:1",
+          "16:9",
+          "9:16",
+          "21:9",
+          "9:21",
+          "3:2",
+          "2:3",
+          "5:4",
+          "4:5",
+          "4:3",
+          "3:4"
+        ],
+        "default": "16:9",
+        "ui": "dropdown"
+      },
+      {
+        "name": "guidance_scale",
+        "type": "float",
+        "min": 1,
+        "max": 20,
+        "default": 3.5,
+        "ui": "slider",
+        "group": "advanced"
+      },
+      {
+        "name": "num_inference_steps",
+        "type": "integer",
+        "min": 1,
+        "max": 50,
+        "default": 4,
+        "ui": "slider",
+        "group": "advanced"
+      },
+      {
+        "name": "seed",
+        "type": "integer",
+        "min": 0,
+        "max": 999999,
+        "default": 0,
+        "ui": "text",
+        "group": "advanced"
+      }
+    ]
+  },
+  "interaction": {
+    "pattern": "sync"
+  },
+  "examples": [
+    {
+      "label": "Neon cityscape",
+      "params": {
+        "prompt": "A futuristic neon cityscape at night, cyberpunk style, reflections on wet streets",
+        "model": "flux-1-schnell-fp8"
+      }
+    },
+    {
+      "label": "Watercolor garden",
+      "params": {
+        "prompt": "A beautiful Japanese garden in watercolor style, cherry blossoms, koi pond",
+        "model": "flux-1-schnell-fp8"
+      }
+    },
+    {
+      "label": "Portrait photo",
+      "params": {
+        "prompt": "Professional headshot of a tabby cat wearing a tiny business suit, studio lighting",
+        "model": "flux-1-schnell-fp8"
+      }
+    },
+    {
+      "label": "Abstract art",
+      "params": {
+        "prompt": "Abstract geometric composition, bold colors, Kandinsky style, shapes and lines",
+        "model": "flux-1-dev-fp8"
+      }
+    }
+  ],
+  "response": {
+    "outputs": [
+      {
+        "path": "$.base64[0]",
+        "type": "image",
+        "source": "base64",
+        "mime_type": "image/png"
+      }
+    ],
+    "error": {
+      "path": "$.error.message"
+    }
+  }
+}

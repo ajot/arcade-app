@@ -70,6 +70,7 @@ struct RequestConfig: Codable, Sendable {
     let contentType: String
     let bodyTemplate: JSONValue
     let params: [ParamDefinition]
+    let headers: [String: String]?
 }
 
 // MARK: - Param
@@ -143,6 +144,10 @@ struct InteractionConfig: Codable, Sendable {
     let resultUrl: String?
     let requestIdPath: String?
     let pollIntervalMs: Int?
+    let pollMethod: String?       // "GET" (default) or "POST"
+    let pollBody: [String: String]? // e.g. {"id": "{request_id}"} — values with {request_id} get substituted
+    let statusPath: String?       // JSONPath to extract human-readable status for UI
+    let progressPath: String?     // JSONPath to extract progress (0-100) for UI
     let doneWhen: PollingCondition?
     let failedWhen: PollingCondition?
 }

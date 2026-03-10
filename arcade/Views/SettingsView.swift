@@ -190,7 +190,7 @@ private struct APIKeysSettingsTab: View {
             try KeychainService.saveKey(keyInput, for: provider)
             editingProvider = nil
             keyInput = ""
-            state.keyStatus[provider] = .unknown
+            state.validateKey(for: provider)
 
             withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                 saveConfirmation = provider
