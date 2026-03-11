@@ -121,20 +121,29 @@ struct ImageZoomOverlay: View {
                   let nsImage = NSImage(data: data),
                   let tiff = nsImage.tiffRepresentation,
                   let bitmap = NSBitmapImageRep(data: tiff),
-                  let pngData = bitmap.representation(using: .png, properties: [:]) else { return }
+                  let pngData = bitmap.representation(using: .png, properties: [:]) else {
+                SoundService.error()
+                return
+            }
 
-            let panel = NSSavePanel()
-            panel.allowedContentTypes = [.png]
-            panel.nameFieldStringValue = "arcade-image-\(Int(Date().timeIntervalSince1970)).png"
+            await MainActor.run {
+                let panel = NSSavePanel()
+                panel.allowedContentTypes = [.png]
+                panel.nameFieldStringValue = "arcade-image-\(Int(Date().timeIntervalSince1970)).png"
 
-            if panel.runModal() == .OK, let url = panel.url {
-                try? pngData.write(to: url)
-                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                    showSaved = true
-                }
-                SoundService.confirm()
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                    withAnimation { showSaved = false }
+                if panel.runModal() == .OK, let url = panel.url {
+                    do {
+                        try pngData.write(to: url)
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                            showSaved = true
+                        }
+                        SoundService.confirm()
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                            withAnimation { showSaved = false }
+                        }
+                    } catch {
+                        SoundService.error()
+                    }
                 }
             }
         }

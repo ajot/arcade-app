@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "id": "openai-image-generation",
+  "id": "openai-gpt-image",
   "provider": "openai",
   "provider_display_name": "OpenAI",
   "provider_url": "openai.com",
-  "name": "OpenAI DALL-E Image",
-  "description": "Image generation via OpenAI DALL-E 3",
+  "name": "OpenAI GPT Image",
+  "description": "Image generation via OpenAI GPT Image 1",
   "auth": {
     "type": "header",
     "header": "Authorization",
@@ -17,18 +17,15 @@
     "method": "POST",
     "url": "https://api.openai.com/v1/images/generations",
     "content_type": "application/json",
-    "body_template": {
-      "response_format": "url"
-    },
+    "body_template": {},
     "params": [
       {
         "name": "model",
         "type": "enum",
         "options": [
-          "dall-e-3",
-          "dall-e-2"
+          "gpt-image-1"
         ],
-        "default": "dall-e-3",
+        "default": "gpt-image-1",
         "ui": "dropdown",
         "required": true
       },
@@ -37,15 +34,15 @@
         "type": "string",
         "ui": "textarea",
         "required": true,
-        "placeholder": "A cat astronaut floating in space..."
+        "placeholder": "A futuristic cyberpunk city at night..."
       },
       {
         "name": "size",
         "type": "enum",
         "options": [
           "1024x1024",
-          "1792x1024",
-          "1024x1792"
+          "1024x1536",
+          "1536x1024"
         ],
         "default": "1024x1024",
         "ui": "dropdown",
@@ -55,10 +52,12 @@
         "name": "quality",
         "type": "enum",
         "options": [
-          "standard",
-          "hd"
+          "auto",
+          "high",
+          "medium",
+          "low"
         ],
-        "default": "standard",
+        "default": "auto",
         "ui": "dropdown",
         "group": "advanced"
       }
@@ -69,28 +68,26 @@
   },
   "examples": [
     {
-      "label": "Space cat",
+      "label": "Cyberpunk city",
       "params": {
-        "prompt": "A cat astronaut floating in space, photorealistic, 8k, dramatic lighting",
-        "model": "dall-e-3",
-        "size": "1024x1024"
+        "prompt": "A futuristic cyberpunk city at night, neon signs, rain-soaked streets, blade runner style",
+        "size": "1536x1024"
       }
     },
     {
-      "label": "Mountain sunset",
+      "label": "Space cat",
       "params": {
-        "prompt": "A mountain landscape at sunset, oil painting style, vibrant colors",
-        "model": "dall-e-3",
-        "size": "1792x1024"
+        "prompt": "A cat astronaut floating in space, photorealistic, 8k, dramatic lighting",
+        "size": "1024x1024"
       }
     }
   ],
   "response": {
     "outputs": [
       {
-        "path": "$.data[0].url",
+        "path": "$.data[0].b64_json",
         "type": "image",
-        "source": "url",
+        "source": "base64",
         "downloadable": true
       }
     ],

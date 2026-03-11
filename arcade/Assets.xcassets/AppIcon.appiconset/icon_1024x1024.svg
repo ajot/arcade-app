@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- macOS icon rounded rect background -->
+  <rect x="0" y="0" width="1024" height="1024" rx="228" fill="#030712"/>
+  <!-- Ambient screen glow -->
+  <ellipse cx="512" cy="400" rx="360" ry="240" fill="#f59e0b" opacity="0.04"/>
+  <!-- Cabinet silhouette -->
+  <rect x="192" y="128" width="640" height="776" rx="40" fill="#1f2937"/>
+  <!-- Screen -->
+  <rect x="256" y="192" width="512" height="352" rx="24" fill="#0a0f1a"/>
+  <!-- Amber screen border -->
+  <rect x="256" y="192" width="512" height="352" rx="24" fill="none" stroke="#f59e0b" stroke-width="6" opacity="0.6"/>
+  <!-- Terminal prompt -->
+  <text x="344" y="412" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="136" fill="#f59e0b" font-weight="bold">&gt;_</text>
+  <!-- Minimal control dots -->
+  <circle cx="416" cy="672" r="12" fill="#f59e0b" opacity="0.4"/>
+  <circle cx="512" cy="672" r="12" fill="#f59e0b"/>
+  <circle cx="608" cy="672" r="12" fill="#f59e0b" opacity="0.4"/>
+</svg>
