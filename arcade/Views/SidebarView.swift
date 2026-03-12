@@ -8,28 +8,61 @@ struct SidebarView: View {
     private let outputTypeOrder: [OutputType] = [.text, .image, .audio, .video]
 
     var body: some View {
-        List(selection: Binding(
-            get: { state.currentDefinition?.id },
-            set: { id in
-                if let id, let def = state.definitionLoader.sortedDefinitions.first(where: { $0.id == id }) {
-                    state.selectEndpoint(def)
+        VStack(spacing: 0) {
+            List(selection: Binding(
+                get: { state.currentDefinition?.id },
+                set: { id in
+                    if let id, let def = state.definitionLoader.sortedDefinitions.first(where: { $0.id == id }) {
+                        state.selectEndpoint(def)
+                    }
                 }
-            }
-        )) {
-            ForEach(outputTypeOrder, id: \.self) { type in
-                let defs = filteredDefinitions(for: type)
-                if !defs.isEmpty {
-                    Section(type.rawValue.capitalized) {
-                        ForEach(defs) { definition in
-                            sidebarRow(definition)
-                                .tag(definition.id)
+            )) {
+                ForEach(outputTypeOrder, id: \.self) { type in
+                    let defs = filteredDefinitions(for: type)
+                    if !defs.isEmpty {
+                        Section(type.rawValue.capitalized) {
+                            ForEach(defs) { definition in
+                                sidebarRow(definition)
+                                    .tag(definition.id)
+                            }
                         }
                     }
                 }
             }
+            .searchable(text: $searchText, placement: .sidebar, prompt: "Search endpoints")
+            .listStyle(.sidebar)
+
+            Divider()
+
+            HStack(spacing: 12) {
+                Button {
+                    state.definitionLoader.reload()
+                } label: {
+                    Image(systemName: "arrow.clockwise")
+                        .font(.system(size: 11))
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(.secondary)
+                .help("Reload Definitions")
+
+                Spacer()
+
+                Button {
+                    state.definitionLoader.showDefinitionsFolder()
+                } label: {
+                    Image(systemName: "folder")
+                        .font(.system(size: 11))
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(.secondary)
+                .help("Show Definitions Folder")
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
         }
-        .searchable(text: $searchText, placement: .sidebar, prompt: "Search endpoints")
-        .listStyle(.sidebar)
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            state.definitionLoader.reload()
+        }
     }
 
     // MARK: - Row

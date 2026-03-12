@@ -1,6 +1,8 @@
 import Foundation
+import AppKit
 
-/// Loads endpoint definitions from bundled JSON files and an optional user directory.
+/// Loads endpoint definitions from a writable directory.
+/// On first launch, bundled definitions are copied there so users can edit, add, or remove them.
 @Observable
 final class DefinitionLoader {
     private(set) var definitions: [String: Definition] = [:]
@@ -37,37 +39,83 @@ final class DefinitionLoader {
     }
 
     init() {
-        loadBundledDefinitions()
-        loadUserDefinitions()
+        seedBundledDefinitionsIfNeeded()
+        loadDefinitions()
     }
 
     func definition(for id: String) -> Definition? {
         definitions[id]
     }
 
-    // MARK: - Loading
+    /// Re-scans definitions from the writable directory.
+    func reload() {
+        definitions.removeAll()
+        loadErrors.removeAll()
+        loadDefinitions()
+    }
 
-    private func loadBundledDefinitions() {
-        guard let urls = Bundle.main.urls(forResourcesWithExtension: "json", subdirectory: nil) else {
-            return
+    /// Opens the definitions directory in Finder.
+    func showDefinitionsFolder() {
+        let dir = definitionsDirectory
+        let fm = FileManager.default
+        if !fm.fileExists(atPath: dir.path) {
+            try? fm.createDirectory(at: dir, withIntermediateDirectories: true)
+        }
+        NSWorkspace.shared.open(dir)
+    }
+
+    // MARK: - Seeding
+
+    /// On first launch, copies all bundled definitions into the writable directory.
+    /// Only copies files that don't already exist — preserves user edits.
+    private func seedBundledDefinitionsIfNeeded() {
+        let fm = FileManager.default
+        let dir = definitionsDirectory
+
+        if !fm.fileExists(atPath: dir.path) {
+            try? fm.createDirectory(at: dir, withIntermediateDirectories: true)
         }
 
-        for url in urls {
-            loadDefinition(at: url)
+        guard let bundledURLs = Bundle.main.urls(forResourcesWithExtension: "json", subdirectory: nil) else { return }
+        for url in bundledURLs {
+            let dest = dir.appendingPathComponent(url.lastPathComponent)
+            // Only copy if the file doesn't already exist — don't overwrite user edits
+            if !fm.fileExists(atPath: dest.path) {
+                try? fm.copyItem(at: url, to: dest)
+            }
         }
     }
 
-    private func loadUserDefinitions() {
-        let userDir = userDefinitionsDirectory
+    /// Copies all bundled definitions into the writable directory, overwriting existing files.
+    /// User-added definitions (not in the bundle) are preserved.
+    func restoreBundledDefinitions() {
         let fm = FileManager.default
+        let dir = definitionsDirectory
 
-        // Create directory if it doesn't exist
-        if !fm.fileExists(atPath: userDir.path) {
-            try? fm.createDirectory(at: userDir, withIntermediateDirectories: true)
+        if !fm.fileExists(atPath: dir.path) {
+            try? fm.createDirectory(at: dir, withIntermediateDirectories: true)
         }
 
+        guard let bundledURLs = Bundle.main.urls(forResourcesWithExtension: "json", subdirectory: nil) else { return }
+        for url in bundledURLs {
+            let dest = dir.appendingPathComponent(url.lastPathComponent)
+            if fm.fileExists(atPath: dest.path) {
+                try? fm.removeItem(at: dest)
+            }
+            try? fm.copyItem(at: url, to: dest)
+        }
+
+        reload()
+    }
+
+    // MARK: - Loading
+
+    private func loadDefinitions() {
+        let dir = definitionsDirectory
+        let fm = FileManager.default
+
         guard let enumerator = fm.enumerator(
-            at: userDir,
+            at: dir,
             includingPropertiesForKeys: [.isRegularFileKey],
             options: [.skipsHiddenFiles]
         ) else { return }
@@ -91,7 +139,7 @@ final class DefinitionLoader {
         }
     }
 
-    private var userDefinitionsDirectory: URL {
+    private var definitionsDirectory: URL {
         let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
         return appSupport.appendingPathComponent("Arcade/Definitions", isDirectory: true)
     }

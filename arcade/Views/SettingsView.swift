@@ -67,6 +67,24 @@ private struct GeneralSettingsTab: View {
                 }
             }
 
+            Section("Definitions") {
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Restore Default Definitions")
+
+                        Text("Re-copies bundled definitions into your definitions folder")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+
+                    Spacer()
+
+                    Button("Restore") {
+                        state.definitionLoader.restoreBundledDefinitions()
+                    }
+                }
+            }
+
             Section("Sound") {
                 Toggle(isOn: $isMuted) {
                     HStack(spacing: 10) {
