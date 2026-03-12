@@ -111,7 +111,7 @@ Toggle the log drawer (`Cmd+L`) to see raw HTTP request/response history.
 ## Quick start
 
 ```bash
-git clone https://github.com/ajot/arcade.git
+git clone https://github.com/ajot/arcade-app.git
 cd arcade
 open arcade.xcodeproj
 ```
