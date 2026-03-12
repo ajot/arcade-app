@@ -4,6 +4,7 @@
   "provider": "huggingface",
   "provider_display_name": "Hugging Face",
   "provider_url": "huggingface.co",
+  "provider_icon_url": "https://huggingface.co/favicon.ico",
   "name": "Hugging Face Chat Completions",
   "description": "Hugging Face chat with streaming (OpenAI-compatible)",
   "auth": {

@@ -4,6 +4,7 @@
   "provider": "perplexity",
   "provider_display_name": "Perplexity",
   "provider_url": "perplexity.ai",
+  "provider_icon_url": "https://www.perplexity.ai/favicon.ico",
   "name": "Perplexity Chat Completions",
   "description": "Perplexity chat with streaming (OpenAI-compatible)",
   "auth": {

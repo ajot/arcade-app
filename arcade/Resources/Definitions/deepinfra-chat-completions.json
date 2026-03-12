@@ -4,6 +4,7 @@
   "provider": "deepinfra",
   "provider_display_name": "DeepInfra",
   "provider_url": "deepinfra.com",
+  "provider_icon_url": "https://deepinfra.com/favicon.ico",
   "name": "DeepInfra Chat Completions",
   "description": "DeepInfra chat with streaming (OpenAI-compatible)",
   "auth": {

@@ -59,7 +59,7 @@ struct CommandPalette: View {
                                 Text(def.name)
                                     .font(.system(size: 12))
                             }
-                            .foregroundStyle(Color.textTertiary)
+                            .foregroundStyle(.tertiary)
                         }
                         .buttonStyle(.plain)
                         Spacer()
@@ -73,14 +73,14 @@ struct CommandPalette: View {
                 HStack(spacing: 8) {
                     Image(systemName: "magnifyingglass")
                         .font(.system(size: 14))
-                        .foregroundStyle(Color.textMuted)
+                        .foregroundStyle(.secondary)
                     TextField(
                         searchPlaceholder,
                         text: $searchText
                     )
                     .textFieldStyle(.plain)
                     .font(.system(size: 14))
-                    .foregroundStyle(Color.textPrimary)
+                    .foregroundStyle(.primary)
                     .focused($isSearchFocused)
                     .onChange(of: searchText) {
                         highlightedIndex = 0
@@ -90,7 +90,7 @@ struct CommandPalette: View {
                 .padding(.vertical, 12)
 
                 Divider()
-                    .background(Color.border700)
+                    .background(.separator)
 
                 // Results
                 ScrollView {
@@ -110,7 +110,7 @@ struct CommandPalette: View {
 
                 // Footer hints
                 Divider()
-                    .background(Color.border700)
+                    .background(.separator)
 
                 HStack(spacing: 16) {
                     if step != .models {
@@ -123,11 +123,11 @@ struct CommandPalette: View {
                                 switchToBookmarks()
                             }
                         }
-                        .background(Color.bg800.opacity(0.5))
+                        .background(.quinary.opacity(0.5))
                         .clipShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
                         .overlay(
                             RoundedRectangle(cornerRadius: 5, style: .continuous)
-                                .strokeBorder(Color.border700.opacity(0.3), lineWidth: 0.5)
+                                .strokeBorder(.separator.opacity(0.3), lineWidth: 0.5)
                         )
 
                         hintLabel(key: "Tab", text: "Switch")
@@ -143,11 +143,11 @@ struct CommandPalette: View {
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)
             }
-            .background(Color.bg900)
+            .background(.ultraThickMaterial)
             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .strokeBorder(Color.border700, lineWidth: 0.5)
+                    .strokeBorder(.separator, lineWidth: 0.5)
             )
             .shadow(color: .black.opacity(0.5), radius: 40, y: 10)
             .frame(width: 520)
@@ -237,7 +237,7 @@ struct CommandPalette: View {
             case .header(let outputType):
                 Text(outputType.displayName)
                     .font(.system(size: 10, weight: .medium))
-                    .foregroundStyle(Color.textMuted)
+                    .foregroundStyle(.secondary)
                     .textCase(.uppercase)
                     .tracking(0.5)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -254,31 +254,31 @@ struct CommandPalette: View {
                     HStack(spacing: 0) {
                         Image(systemName: def.outputType.iconName)
                             .font(.system(size: 12))
-                            .foregroundStyle(Color.textMuted)
+                            .foregroundStyle(.secondary)
                             .frame(width: 20)
                             .padding(.trailing, 8)
 
                         Text(def.providerDisplayName)
                             .font(.system(size: 11))
-                            .foregroundStyle(Color.textTertiary)
+                            .foregroundStyle(.tertiary)
                             .padding(.trailing, 6)
 
                         Text(def.name)
                             .font(.system(size: 13))
-                            .foregroundStyle(hasKey ? Color.textPrimary : Color.textMuted)
+                            .foregroundStyle(hasKey ? .primary : .tertiary)
 
                         Spacer()
 
                         if def.modelCount > 0 {
                             Text("\(def.modelCount) models")
-                                .font(.brandSmall)
-                                .foregroundStyle(Color.textMuted)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
                         }
 
                         if !hasKey {
                             Text("no key")
                                 .font(.system(size: 10))
-                                .foregroundStyle(Color.accent)
+                                .foregroundStyle(Color.accentColor)
                                 .padding(.leading, 8)
                         }
                     }
@@ -286,7 +286,7 @@ struct CommandPalette: View {
                     .padding(.vertical, 8)
                     .background(
                         flatIndex == highlightedIndex
-                            ? Color.accentSubtle
+                            ? Color.accentColor.opacity(0.15)
                             : Color.clear
                     )
                     .contentShape(Rectangle())
@@ -312,15 +312,15 @@ struct CommandPalette: View {
                 HStack {
                     Text(model)
                         .font(.system(size: 13))
-                        .foregroundStyle(Color.textPrimary)
+                        .foregroundStyle(.primary)
 
                     if isDefault {
                         Text("default")
                             .font(.system(size: 10))
-                            .foregroundStyle(Color.textMuted)
+                            .foregroundStyle(.secondary)
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
-                            .background(Color.bg800)
+                            .background(.quinary)
                             .clipShape(Capsule())
                     }
 
@@ -330,7 +330,7 @@ struct CommandPalette: View {
                 .padding(.vertical, 8)
                 .background(
                     index == highlightedIndex
-                        ? Color.accentSubtle
+                        ? Color.accentColor.opacity(0.15)
                         : Color.clear
                 )
                 .contentShape(Rectangle())
@@ -468,14 +468,14 @@ struct CommandPalette: View {
             VStack(spacing: 8) {
                 Image(systemName: "bookmark")
                     .font(.system(size: 24))
-                    .foregroundStyle(Color.textMuted.opacity(0.4))
+                    .foregroundStyle(.quaternary.opacity(0.4))
                 Text(searchText.isEmpty ? "No bookmarks yet" : "No matching bookmarks")
                     .font(.system(size: 13))
-                    .foregroundStyle(Color.textMuted)
+                    .foregroundStyle(.secondary)
                 if searchText.isEmpty {
                     Text("Save one with \u{2318}D")
                         .font(.system(size: 11))
-                        .foregroundStyle(Color.textMuted.opacity(0.6))
+                        .foregroundStyle(.quaternary.opacity(0.6))
                 }
             }
             .frame(maxWidth: .infinity)
@@ -500,7 +500,7 @@ struct CommandPalette: View {
                         // Bookmark icon
                         Image(systemName: "bookmark.fill")
                             .font(.system(size: 10))
-                            .foregroundStyle(Color.accent.opacity(0.7))
+                            .foregroundStyle(Color.accentColor.opacity(0.7))
                             .frame(width: 16)
                             .padding(.trailing, 6)
 
@@ -508,18 +508,18 @@ struct CommandPalette: View {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(bookmark.label)
                                 .font(.system(size: 13))
-                                .foregroundStyle(Color.textPrimary)
+                                .foregroundStyle(.primary)
                                 .lineLimit(1)
 
                             HStack(spacing: 4) {
                                 if let def = definition {
                                     Text(def.providerDisplayName)
-                                        .foregroundStyle(Color.textMuted)
+                                        .foregroundStyle(.secondary)
                                     if let model = bookmark.model {
                                         Text("\u{00B7}")
-                                            .foregroundStyle(Color.textMuted.opacity(0.5))
+                                            .foregroundStyle(.quaternary.opacity(0.5))
                                         Text(model.split(separator: "/").last.map(String.init) ?? model)
-                                            .foregroundStyle(Color.textTertiary)
+                                            .foregroundStyle(.tertiary)
                                     }
                                 }
                             }
@@ -532,7 +532,7 @@ struct CommandPalette: View {
                         // Time ago
                         Text(timeAgo(bookmark.createdAt))
                             .font(.system(size: 10))
-                            .foregroundStyle(Color.textMuted)
+                            .foregroundStyle(.secondary)
 
                         // Delete button (hover reveal)
                         if isHovered {
@@ -543,7 +543,7 @@ struct CommandPalette: View {
                             } label: {
                                 Image(systemName: "trash")
                                     .font(.system(size: 10))
-                                    .foregroundStyle(Color.textMuted)
+                                    .foregroundStyle(.secondary)
                                     .frame(width: 24, height: 24)
                             }
                             .buttonStyle(.plain)
@@ -555,7 +555,7 @@ struct CommandPalette: View {
                     .padding(.vertical, 8)
                     .background(
                         index == highlightedIndex
-                            ? Color.accentSubtle
+                            ? Color.accentColor.opacity(0.15)
                             : Color.clear
                     )
                     .contentShape(Rectangle())
@@ -626,7 +626,7 @@ struct CommandPalette: View {
         switch type {
         case .text: return .blue
         case .image: return .purple
-        case .audio: return Color.accent
+        case .audio: return .accentColor
         case .video: return .green
         case .none: return .gray
         }
@@ -651,10 +651,10 @@ struct CommandPalette: View {
         Button(action: action) {
             Text(label)
                 .font(.system(size: 10, weight: isActive ? .semibold : .regular))
-                .foregroundStyle(isActive ? Color.textPrimary : Color.textMuted)
+                .foregroundStyle(isActive ? .primary : .secondary)
                 .padding(.horizontal, 8)
                 .padding(.vertical, 3)
-                .background(isActive ? Color.bg800 : Color.clear)
+                .background(isActive ? AnyShapeStyle(.quaternary) : AnyShapeStyle(Color.clear))
                 .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
         }
         .buttonStyle(.plain)
@@ -666,14 +666,14 @@ struct CommandPalette: View {
         HStack(spacing: 4) {
             Text(key)
                 .font(.system(size: 10, weight: .medium, design: .monospaced))
-                .foregroundStyle(Color.textMuted)
+                .foregroundStyle(.secondary)
                 .padding(.horizontal, 4)
                 .padding(.vertical, 1)
-                .background(Color.bg800)
+                .background(.quinary)
                 .clipShape(RoundedRectangle(cornerRadius: 3, style: .continuous))
             Text(text)
                 .font(.system(size: 10))
-                .foregroundStyle(Color.textMuted)
+                .foregroundStyle(.secondary)
         }
     }
 }

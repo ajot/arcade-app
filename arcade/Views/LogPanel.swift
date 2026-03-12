@@ -17,20 +17,20 @@ struct LogPanel: View {
             HStack(spacing: 8) {
                 Image(systemName: "text.line.last.and.arrowtriangle.forward")
                     .font(.system(size: 11))
-                    .foregroundStyle(Color.textMuted)
+                    .foregroundStyle(.secondary)
                 Text("Log")
                     .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(Color.textTertiary)
+                    .foregroundStyle(.tertiary)
 
                 Spacer()
 
                 if !state.logEntries.isEmpty {
                     Text("\(state.logEntries.count)")
                         .font(.system(size: 10, design: .monospaced))
-                        .foregroundStyle(Color.textMuted)
+                        .foregroundStyle(.secondary)
                         .padding(.horizontal, 6)
                         .padding(.vertical, 2)
-                        .background(Color.bg800)
+                        .background(.quinary)
                         .clipShape(Capsule())
 
                     Button {
@@ -41,7 +41,7 @@ struct LogPanel: View {
                     } label: {
                         Image(systemName: "trash")
                             .font(.system(size: 10))
-                            .foregroundStyle(Color.textMuted)
+                            .foregroundStyle(.secondary)
                     }
                     .buttonStyle(.plain)
                     .help("Clear log")
@@ -51,7 +51,7 @@ struct LogPanel: View {
             .padding(.vertical, 8)
 
             Divider()
-                .background(Color.border700)
+                .background(.separator)
 
             // Log entries
             if state.logEntries.isEmpty {
@@ -59,7 +59,7 @@ struct LogPanel: View {
                     Spacer()
                     Text("No log entries yet")
                         .font(.system(size: 12))
-                        .foregroundStyle(Color.textMuted)
+                        .foregroundStyle(.secondary)
                     Spacer()
                 }
                 .frame(maxWidth: .infinity)
@@ -85,18 +85,18 @@ struct LogPanel: View {
             }
         }
         .frame(height: panelHeight)
-        .background(Color.bg950)
+        .background(.bar)
     }
 
     // MARK: - Resize Handle
 
     private var resizeHandle: some View {
         Rectangle()
-            .fill(Color.border700)
+            .fill(.separator)
             .frame(height: 1)
             .overlay(
                 RoundedRectangle(cornerRadius: 2)
-                    .fill(Color.border600)
+                    .fill(.separator)
                     .frame(width: 36, height: 4)
                     .offset(y: -1)
             )
@@ -133,7 +133,7 @@ struct LogPanel: View {
                 // Timestamp
                 Text(formatTimestamp(entry.timestamp))
                     .font(.system(size: 10, design: .monospaced))
-                    .foregroundStyle(Color.textMuted)
+                    .foregroundStyle(.secondary)
 
                 // Message
                 Text(entry.message)
@@ -146,7 +146,7 @@ struct LogPanel: View {
                 if hasDetail {
                     Image(systemName: "chevron.right")
                         .font(.system(size: 8, weight: .semibold))
-                        .foregroundStyle(Color.textMuted)
+                        .foregroundStyle(.secondary)
                         .rotationEffect(.degrees(isExpanded ? 90 : 0))
                 }
             }
@@ -167,14 +167,14 @@ struct LogPanel: View {
             if isExpanded, let detail = entry.detail {
                 Text(detail)
                     .font(.system(size: 10, design: .monospaced))
-                    .foregroundStyle(Color.textMuted)
+                    .foregroundStyle(.secondary)
                     .textSelection(.enabled)
                     .lineSpacing(3)
                     .padding(.horizontal, 38)
                     .padding(.vertical, 6)
                     .padding(.bottom, 4)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color.bg900.opacity(0.5))
+                    .background(.quinary)
                     .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
@@ -204,7 +204,7 @@ extension AppState.LogEntry.Kind {
         switch self {
         case .request: return .logRequest
         case .response: return .logResponse
-        case .polling: return .textTertiary
+        case .polling: return .secondary
         case .success: return .logResponse
         case .error: return .logError
         }

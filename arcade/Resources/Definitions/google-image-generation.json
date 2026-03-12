@@ -4,6 +4,7 @@
   "provider": "google",
   "provider_display_name": "Google",
   "provider_url": "ai.google.dev",
+  "provider_icon_url": "https://www.google.com/favicon.ico",
   "name": "Google Imagen Image Generation",
   "description": "Text-to-image generation via Google Imagen 4 (Gemini API)",
   "auth": {

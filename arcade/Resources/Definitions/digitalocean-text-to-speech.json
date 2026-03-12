@@ -4,6 +4,7 @@
   "provider": "digitalocean",
   "provider_display_name": "DigitalOcean",
   "provider_url": "digitalocean.com",
+  "provider_icon_url": "https://www.digitalocean.com/favicon.ico",
   "name": "DigitalOcean Text-to-Speech",
   "description": "ElevenLabs multilingual TTS via DigitalOcean GenAI",
   "auth": {

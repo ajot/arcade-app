@@ -4,6 +4,7 @@
   "provider": "fireworks",
   "provider_display_name": "Fireworks",
   "provider_url": "fireworks.ai",
+  "provider_icon_url": "https://fireworks.ai/favicon.ico",
   "name": "Fireworks AI Chat Completions",
   "description": "Fireworks AI chat with streaming (OpenAI-compatible)",
   "auth": {

@@ -7,6 +7,8 @@ struct ArcadeApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView(state: state)
+                .preferredColorScheme(state.preferredColorScheme)
+                .tint(state.accentColor)
         }
         .windowToolbarStyle(.unified)
         .defaultSize(width: 1000, height: 700)

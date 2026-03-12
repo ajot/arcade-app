@@ -4,6 +4,7 @@
   "provider": "baseten",
   "provider_display_name": "Baseten",
   "provider_url": "baseten.co",
+  "provider_icon_url": "https://www.baseten.co/favicon.ico",
   "name": "Baseten Chat Completions",
   "description": "Baseten Model APIs \u2014 OpenAI-compatible inference for open-source LLMs",
   "auth": {

@@ -4,6 +4,7 @@
   "provider": "groq",
   "provider_display_name": "Groq",
   "provider_url": "groq.com",
+  "provider_icon_url": "https://groq.com/favicon.ico",
   "name": "Groq Chat Completions",
   "description": "Groq chat with streaming (OpenAI-compatible)",
   "auth": {

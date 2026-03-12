@@ -4,6 +4,7 @@
   "provider": "google",
   "provider_display_name": "Google",
   "provider_url": "ai.google.dev",
+  "provider_icon_url": "https://www.google.com/favicon.ico",
   "name": "Google Gemini Chat Completions",
   "description": "Google Gemini chat with streaming (OpenAI-compatible)",
   "auth": {

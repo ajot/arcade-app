@@ -251,10 +251,10 @@ struct AudioPlayerView: View {
                 HStack(spacing: 8) {
                     Image(systemName: "exclamationmark.triangle")
                         .font(.system(size: 12))
-                        .foregroundStyle(Color.error)
+                        .foregroundStyle(.red)
                     Text(error)
                         .font(.system(size: 12))
-                        .foregroundStyle(Color.error)
+                        .foregroundStyle(.red)
                 }
                 .padding(16)
             } else if !model.isLoaded {
@@ -265,7 +265,7 @@ struct AudioPlayerView: View {
                         .scaleEffect(0.7)
                     Text("Loading audio...")
                         .font(.system(size: 12))
-                        .foregroundStyle(Color.textMuted)
+                        .foregroundStyle(.secondary)
                 }
                 .padding(16)
             } else {
@@ -281,11 +281,11 @@ struct AudioPlayerView: View {
                     .padding(.bottom, 12)
             }
         }
-        .background(Color.bg900.opacity(0.6))
+        .background(.quinary)
         .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .strokeBorder(Color.border700.opacity(0.5), lineWidth: 0.5)
+                .strokeBorder(.separator.opacity(0.5), lineWidth: 0.5)
         )
         .onAppear { model.setup(urlString: urlString, autoplay: autoplay) }
         .onDisappear { model.cleanup() }
@@ -319,11 +319,11 @@ struct AudioPlayerView: View {
 
                     let color: Color
                     if isPlayed {
-                        color = .accent
+                        color = .accentColor
                     } else if isHovered {
-                        color = .accent.opacity(0.3)
+                        color = .accentColor.opacity(0.3)
                     } else {
-                        color = .border700
+                        color = Color(nsColor: .separatorColor)
                     }
 
                     context.fill(path, with: .color(color))
@@ -367,9 +367,9 @@ struct AudioPlayerView: View {
                 Image(systemName: model.isPlaying ? "pause.fill" : "play.fill")
                     .contentTransition(.symbolEffect(.replace))
                     .font(.system(size: 13))
-                    .foregroundStyle(Color.accent)
+                    .foregroundStyle(Color.accentColor)
                     .frame(width: 32, height: 32)
-                    .background(Color.bg800)
+                    .background(.quinary)
                     .clipShape(Circle())
             }
             .buttonStyle(.plain)
@@ -377,11 +377,11 @@ struct AudioPlayerView: View {
             // Time
             HStack(spacing: 0) {
                 Text(model.elapsed)
-                    .foregroundStyle(Color.textTertiary)
+                    .foregroundStyle(.tertiary)
                 Text(" / ")
-                    .foregroundStyle(Color.textMuted)
+                    .foregroundStyle(.secondary)
                 Text(model.total)
-                    .foregroundStyle(Color.textMuted)
+                    .foregroundStyle(.secondary)
             }
             .font(.system(size: 10, design: .monospaced))
 
@@ -397,10 +397,10 @@ struct AudioPlayerView: View {
                     Text(model.showSaved ? "Saved" : "Save")
                         .font(.system(size: 11))
                 }
-                .foregroundStyle(model.showSaved ? Color.success : Color.textTertiary)
+                .foregroundStyle(model.showSaved ? Color.green : Color.secondary)
                 .padding(.horizontal, 8)
                 .padding(.vertical, 4)
-                .background(Color.bg800.opacity(0.5))
+                .background(.quinary)
                 .clipShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
             }
             .buttonStyle(.plain)

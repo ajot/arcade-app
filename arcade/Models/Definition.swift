@@ -8,6 +8,7 @@ struct Definition: Codable, Identifiable, Sendable {
     let provider: String
     let providerDisplayName: String
     let providerUrl: String
+    let providerIconUrl: String?
     let name: String
     let description: String
     let auth: AuthConfig

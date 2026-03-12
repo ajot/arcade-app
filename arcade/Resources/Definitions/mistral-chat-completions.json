@@ -4,6 +4,7 @@
   "provider": "mistral",
   "provider_display_name": "Mistral",
   "provider_url": "mistral.ai",
+  "provider_icon_url": "https://mistral.ai/favicon.ico",
   "name": "Mistral AI Chat Completions",
   "description": "Mistral AI chat with streaming (OpenAI-compatible)",
   "auth": {

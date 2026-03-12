@@ -21,9 +21,9 @@ struct WelcomeView: View {
                 HStack(spacing: 2) {
                     ForEach(0..<letters.count, id: \.self) { index in
                         Text(String(letters[index]))
-                            .font(.brandLarge)
+                            .font(.largeTitle.bold())
                             .fontWeight(.bold)
-                            .foregroundStyle(hoveredLetter == index ? Color.accent : Color.textPrimary)
+                            .foregroundStyle(hoveredLetter == index ? Color.accentColor : Color.primary)
                             .offset(letterOffsets[index])
                             .gesture(
                                 DragGesture()
@@ -61,7 +61,7 @@ struct WelcomeView: View {
                 // Subtitle
                 Text("An AI playground for every provider")
                     .font(.system(size: 15))
-                    .foregroundStyle(Color.textTertiary)
+                    .foregroundStyle(.tertiary)
                     .opacity(appeared ? 1 : 0)
                     .offset(y: appeared ? 0 : 8)
 
@@ -77,21 +77,21 @@ struct WelcomeView: View {
                         Spacer()
                         Text("\u{2318}K")
                             .font(.system(size: 11, weight: .medium, design: .monospaced))
-                            .foregroundStyle(Color.textMuted)
+                            .foregroundStyle(.secondary)
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
-                            .background(Color.bg800)
+                            .background(.quinary)
                             .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
                     }
-                    .foregroundStyle(Color.textTertiary)
+                    .foregroundStyle(.tertiary)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 12)
                     .frame(width: 320)
-                    .background(Color.bg900)
+                    .background(.quinary)
                     .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
                     .overlay(
                         RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .strokeBorder(Color.border700, lineWidth: 0.5)
+                            .strokeBorder(.separator, lineWidth: 0.5)
                     )
                 }
                 .buttonStyle(.plain)
@@ -101,7 +101,7 @@ struct WelcomeView: View {
                 // Stats
                 Text("\(state.definitionLoader.endpointCount) endpoints \u{00B7} \(state.definitionLoader.providerCount) providers")
                     .font(.system(size: 12))
-                    .foregroundStyle(Color.textMuted)
+                    .foregroundStyle(.secondary)
                     .opacity(appeared ? 1 : 0)
                     .offset(y: appeared ? 0 : 4)
 
@@ -148,7 +148,7 @@ struct WelcomeView: View {
         VStack(spacing: 8) {
             Text("Recent Bookmarks")
                 .font(.system(size: 10, weight: .medium))
-                .foregroundStyle(Color.textMuted)
+                .foregroundStyle(.secondary)
                 .textCase(.uppercase)
                 .tracking(0.5)
 
@@ -165,31 +165,31 @@ struct WelcomeView: View {
                             HStack(spacing: 5) {
                                 Image(systemName: definition?.outputType.iconName ?? "text.alignleft")
                                     .font(.system(size: 10))
-                                    .foregroundStyle(Color.accent)
+                                    .foregroundStyle(Color.accentColor)
                                 Text(bookmark.label)
                                     .font(.system(size: 11, weight: .medium))
-                                    .foregroundStyle(Color.textPrimary)
+                                    .foregroundStyle(.primary)
                                     .lineLimit(1)
                             }
 
                             if let def = definition {
                                 Text(def.providerDisplayName)
                                     .font(.system(size: 10))
-                                    .foregroundStyle(Color.textMuted)
+                                    .foregroundStyle(.secondary)
                                     .lineLimit(1)
                             }
 
                             Text(timeAgo(bookmark.createdAt))
                                 .font(.system(size: 9))
-                                .foregroundStyle(Color.textMuted.opacity(0.7))
+                                .foregroundStyle(.quaternary.opacity(0.7))
                         }
                         .frame(width: 130, alignment: .leading)
                         .padding(10)
-                        .background(Color.bg900)
+                        .background(.quinary)
                         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                         .overlay(
                             RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                .strokeBorder(isHovered ? Color.accent.opacity(0.4) : Color.border700.opacity(0.5), lineWidth: 0.5)
+                                .strokeBorder(isHovered ? Color.accentColor.opacity(0.4) : Color.gray.opacity(0.3), lineWidth: 0.5)
                         )
                         .shadow(color: .black.opacity(isHovered ? 0.3 : 0.1), radius: isHovered ? 8 : 2, y: isHovered ? 4 : 1)
                         .rotationEffect(.degrees(isHovered ? 0 : tilt))

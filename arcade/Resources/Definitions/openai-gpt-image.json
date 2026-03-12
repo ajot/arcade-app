@@ -4,6 +4,7 @@
   "provider": "openai",
   "provider_display_name": "OpenAI",
   "provider_url": "openai.com",
+  "provider_icon_url": "https://openai.com/favicon.ico",
   "name": "OpenAI GPT Image",
   "description": "Image generation via OpenAI GPT Image 1",
   "auth": {

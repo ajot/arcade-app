@@ -11,7 +11,6 @@ struct PlayView: View {
     @State private var showBookmarkPopover = false
     @State private var bookmarkLabel = ""
     @State private var bookmarkSaved = false
-    @State private var glowIntensity: Double = 0
     @State private var errorShakeCount: Int = 0
     @State private var showRequestJSON = false
     @State private var showResponseJSON = false
@@ -35,8 +34,38 @@ struct PlayView: View {
                             // Examples
                             if !definition.examples.isEmpty {
                                 exampleChips(definition)
-                                    .padding(.bottom, 14)
+                                    .padding(.bottom, 12)
+
+                                Divider()
+                                    .padding(.bottom, 12)
                             }
+
+                            // Model picker
+                            if let modelParam = definition.modelParam, let options = modelParam.options {
+                                VStack(alignment: .leading, spacing: 6) {
+                                    Text("Model")
+                                        .font(.system(size: 11, weight: .medium))
+                                        .foregroundStyle(.secondary)
+                                        .textCase(.uppercase)
+                                        .tracking(0.3)
+
+                                    Picker("", selection: Binding<String>(
+                                        get: { state.currentModel ?? "" },
+                                        set: { state.selectModel($0) }
+                                    )) {
+                                        ForEach(options, id: \.self) { model in
+                                            Text(model).tag(model)
+                                        }
+                                    }
+                                    .labelsHidden()
+                                    .tint(.primary)
+                                    .fixedSize()
+                                }
+                                .padding(.bottom, 8)
+                            }
+
+                            Divider()
+                                .padding(.bottom, 12)
 
                             // Form fields
                             formFields(definition)
@@ -68,10 +97,7 @@ struct PlayView: View {
                 generateBar(definition)
                     .padding(.horizontal, 24)
                     .padding(.vertical, 10)
-                    .background(Color.bg950)
-                    .overlay(alignment: .top) {
-                        Divider().background(Color.border700.opacity(0.5))
-                    }
+                    .background(.bar)
             }
             .inspector(isPresented: $state.showInspector) {
                 inspectorContent(definition)
@@ -104,24 +130,20 @@ struct PlayView: View {
     private func endpointHeader(_ definition: Definition) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(definition.description)
-                .font(.system(size: 13))
-                .foregroundStyle(Color.textTertiary)
+                .font(.callout)
+                .foregroundStyle(.secondary)
 
-            HStack(spacing: 8) {
-                HStack(spacing: 4) {
-                    Image(systemName: definition.outputType.iconName)
-                        .font(.system(size: 10))
-                    Text(definition.outputType.rawValue)
-                        .font(.system(size: 10))
-                }
-                .foregroundStyle(Color.textMuted)
+            HStack(spacing: 6) {
+                Label(definition.outputType.rawValue, systemImage: definition.outputType.iconName)
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
 
                 Text("·")
-                    .foregroundStyle(Color.textMuted.opacity(0.5))
+                    .foregroundStyle(.tertiary)
 
                 Text(patternLabel(definition))
-                    .font(.system(size: 10))
-                    .foregroundStyle(Color.textMuted)
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
             }
         }
     }
@@ -132,9 +154,11 @@ struct PlayView: View {
 
     private func exampleChips(_ definition: Definition) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("examples")
+            Text("Examples")
                 .font(.system(size: 11, weight: .medium))
-                .foregroundStyle(Color.textMuted)
+                .foregroundStyle(.secondary)
+                .textCase(.uppercase)
+                .tracking(0.3)
 
             FlowLayout(spacing: 6) {
                 ForEach(Array(definition.examples.enumerated()), id: \.element.id) { index, example in
@@ -144,7 +168,9 @@ struct PlayView: View {
                         }
                         SoundService.confirm()
                     }
-                    .buttonStyle(ChipStyle())
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                    .buttonBorderShape(.capsule)
                     .opacity(chipsAppeared ? 1 : 0)
                     .offset(y: chipsAppeared ? 0 : 6)
                     .animation(
@@ -180,15 +206,17 @@ struct PlayView: View {
 
     @ViewBuilder
     private func paramField(_ param: ParamDefinition, isPrimary: Bool = false) -> some View {
-        VStack(alignment: .leading, spacing: 5) {
+        VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 4) {
                 Text(param.name)
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(Color.textTertiary)
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(.secondary)
+                    .textCase(.uppercase)
+                    .tracking(0.3)
                 if param.isRequired {
                     Text("*")
-                        .font(.system(size: 12))
-                        .foregroundStyle(Color.accent)
+                        .font(.system(size: 11))
+                        .foregroundStyle(Color.accentColor)
                 }
             }
 
@@ -213,23 +241,22 @@ struct PlayView: View {
 
         return TextEditor(text: binding)
             .font(.system(size: 13))
-            .foregroundStyle(Color.textPrimary)
             .scrollContentBackground(.hidden)
-            .frame(minHeight: isPrimary ? 48 : 36)
-            .padding(10)
-            .background(isPrimary ? Color.bg900.opacity(0.8) : Color.bg900)
+            .padding(8)
+            .frame(minHeight: isPrimary ? 60 : 40)
+            .background(Color(nsColor: .textBackgroundColor))
             .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: 6, style: .continuous)
-                    .strokeBorder(Color.border700, lineWidth: 1)
+                    .strokeBorder(Color(nsColor: .separatorColor), lineWidth: 0.5)
             )
             .overlay(alignment: .leading) {
                 if isPrimary {
                     Rectangle()
-                        .fill(Color.accent)
-                        .frame(width: 2)
-                        .clipShape(RoundedRectangle(cornerRadius: 1))
-                        .padding(.vertical, 4)
+                        .fill(Color.accentColor)
+                        .frame(width: 2.5)
+                        .clipShape(RoundedRectangle(cornerRadius: 1.5))
+                        .padding(.vertical, 5)
                 }
             }
     }
@@ -249,7 +276,8 @@ struct PlayView: View {
         }
         .pickerStyle(.menu)
         .labelsHidden()
-        .tint(Color.textPrimary)
+        .tint(.primary)
+        .fixedSize()
     }
 
     private func sliderField(_ param: ParamDefinition) -> some View {
@@ -271,12 +299,13 @@ struct PlayView: View {
         )
 
         return HStack(spacing: 12) {
-            CustomSlider(value: binding, range: minVal...maxVal, step: step)
+            Slider(value: binding, in: minVal...maxVal, step: step)
+                .tint(.accentColor)
                 .frame(width: 200)
 
             Text(state.formValues[param.name] ?? param.defaultDisplayString ?? "")
                 .font(.system(size: 12, design: .monospaced))
-                .foregroundStyle(Color.textSecondary)
+                .foregroundStyle(.secondary)
                 .frame(width: 40, alignment: .trailing)
                 .monospacedDigit()
 
@@ -291,8 +320,7 @@ struct PlayView: View {
         )
 
         return TextField(param.placeholder ?? "", text: binding)
-            .textFieldStyle(.plain)
-            .inputFieldStyle()
+            .textFieldStyle(.roundedBorder)
     }
 
     // MARK: - Inspector
@@ -371,7 +399,7 @@ struct PlayView: View {
                         .foregroundStyle(.secondary)
                         .monospacedDigit()
                 }
-                CustomSlider(value: binding, range: minVal...maxVal, step: step)
+                Slider(value: binding, in: minVal...maxVal, step: step)
 
             case .text:
                 TextField(label, text: Binding<String>(
@@ -407,11 +435,11 @@ struct PlayView: View {
                             .font(.system(size: 9, design: .monospaced))
                             .padding(.horizontal, 4)
                             .padding(.vertical, 1)
-                            .background(Color.bg800)
+                            .background(.quinary)
                             .clipShape(Capsule())
                     }
                 }
-                .foregroundStyle(state.showLogPanel ? Color.accent : Color.textMuted)
+                .foregroundStyle(state.showLogPanel ? Color.accentColor : Color.secondary)
             }
             .buttonStyle(.plain)
             .help("Toggle Log (\u{2318}L)")
@@ -428,15 +456,11 @@ struct PlayView: View {
                     Text("curl")
                         .font(.system(size: 12))
                 }
-                .foregroundStyle(Color.textTertiary)
+                .foregroundStyle(.tertiary)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
-                .background(Color.bg800.opacity(0.5))
+                .background(.quinary)
                 .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 6, style: .continuous)
-                        .strokeBorder(Color.border700.opacity(0.5), lineWidth: 0.5)
-                )
             }
             .buttonStyle(.plain)
             .popover(isPresented: $showCurlPopover, arrowEdge: .bottom) {
@@ -450,15 +474,11 @@ struct PlayView: View {
             } label: {
                 Image(systemName: bookmarkSaved ? "bookmark.fill" : "bookmark")
                     .font(.system(size: 13))
-                    .foregroundStyle(bookmarkSaved ? Color.accent : Color.textTertiary)
+                    .foregroundStyle(bookmarkSaved ? Color.accentColor : Color.secondary)
                     .contentTransition(.symbolEffect(.replace))
                     .frame(width: 32, height: 32)
-                    .background(Color.bg800.opacity(0.5))
+                    .background(.quinary)
                     .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 6, style: .continuous)
-                            .strokeBorder(Color.border700.opacity(0.5), lineWidth: 0.5)
-                    )
                     .scaleEffect(bookmarkSaved ? 1.15 : 1.0)
             }
             .buttonStyle(.plain)
@@ -498,25 +518,9 @@ struct PlayView: View {
                     }
                 }
             }
-            .buttonStyle(PrimaryButtonStyle(isGenerating: isActive(state.generationState), glowIntensity: glowIntensity))
+            .buttonStyle(.borderedProminent)
+            .controlSize(.large)
             .disabled(!state.hasValidKey && !isActive(state.generationState))
-            .onChange(of: state.generationState) { _, newState in
-                switch newState {
-                case .generating, .streaming, .polling:
-                    withAnimation(.easeInOut(duration: 1.2).repeatForever(autoreverses: true)) {
-                        glowIntensity = 1.0
-                    }
-                case .completed:
-                    withAnimation(.easeOut(duration: 0.15)) { glowIntensity = 1.5 }
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                        withAnimation(.easeOut(duration: 0.6)) { glowIntensity = 0 }
-                    }
-                case .error:
-                    withAnimation(.easeOut(duration: 0.1)) { glowIntensity = 0 }
-                case .idle:
-                    glowIntensity = 0
-                }
-            }
 
         }
     }
@@ -569,7 +573,7 @@ struct PlayView: View {
                 Toggle(isOn: $curlShowKey) {
                     Text("Show API key")
                         .font(.system(size: 11))
-                        .foregroundStyle(Color.textTertiary)
+                        .foregroundStyle(.tertiary)
                 }
                 .toggleStyle(.switch)
                 .controlSize(.small)
@@ -593,10 +597,10 @@ struct PlayView: View {
                         Text(curlCopied ? "Copied" : "Copy")
                             .font(.system(size: 11))
                     }
-                    .foregroundStyle(curlCopied ? Color.success : Color.textTertiary)
+                    .foregroundStyle(curlCopied ? Color.green : Color.secondary)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
-                    .background(Color.bg800.opacity(0.5))
+                    .background(.quinary)
                     .clipShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
                 }
                 .buttonStyle(.plain)
@@ -611,7 +615,7 @@ struct PlayView: View {
             ScrollView([.horizontal, .vertical]) {
                 Text(curlString)
                     .font(.system(size: 11, design: .monospaced))
-                    .foregroundStyle(Color.textSecondary)
+                    .foregroundStyle(.secondary)
                     .textSelection(.enabled)
                     .lineSpacing(3)
                     .padding(14)
@@ -619,7 +623,6 @@ struct PlayView: View {
             .frame(maxHeight: 300)
         }
         .frame(width: 520)
-        .background(Color.bg900)
     }
 
     // MARK: - Bookmark Popover
@@ -629,51 +632,34 @@ struct PlayView: View {
             HStack {
                 Image(systemName: "bookmark.fill")
                     .font(.system(size: 12))
-                    .foregroundStyle(Color.accent)
+                    .foregroundStyle(Color.accentColor)
                 Text("Save Bookmark")
                     .font(.system(size: 13, weight: .medium))
-                    .foregroundStyle(Color.textPrimary)
+                    .foregroundStyle(.primary)
                 Spacer()
             }
 
             TextField("Label", text: $bookmarkLabel)
-                .textFieldStyle(.plain)
+                .textFieldStyle(.roundedBorder)
                 .font(.system(size: 13))
-                .padding(.horizontal, 10)
-                .padding(.vertical, 8)
-                .background(Color.bg800)
-                .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 6, style: .continuous)
-                        .strokeBorder(Color.border700, lineWidth: 0.5)
-                )
 
             HStack {
                 Spacer()
                 Button("Cancel") {
                     showBookmarkPopover = false
                 }
-                .buttonStyle(.plain)
-                .font(.system(size: 12))
-                .foregroundStyle(Color.textMuted)
+                .buttonStyle(.bordered)
 
                 Button {
                     saveBookmark()
                 } label: {
                     Text("Save")
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundStyle(Color.bg950)
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 5)
-                        .background(Color.accent)
-                        .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.borderedProminent)
             }
         }
         .padding(14)
         .frame(width: 280)
-        .background(Color.bg900)
         .onSubmit {
             saveBookmark()
         }
@@ -708,6 +694,9 @@ struct PlayView: View {
     @ViewBuilder
     private func resultArea(_ definition: Definition) -> some View {
         switch state.generationState {
+        case .streaming where state.streamedText.isEmpty && state.generationResult == nil:
+            EmptyView()
+
         case .completed, .streaming:
             VStack(alignment: .leading, spacing: 0) {
                 // Result toolbar
@@ -760,7 +749,7 @@ struct PlayView: View {
                 .padding(.bottom, 16)
                 .padding(.top, state.generationState == .completed ? 4 : 16)
             }
-            .background(Color.bg900.opacity(0.4))
+            .background(.regularMaterial)
             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             .transition(.asymmetric(
                 insertion: .scale(scale: 0.97, anchor: .top).combined(with: .opacity),
@@ -782,10 +771,10 @@ struct PlayView: View {
             VStack(spacing: 8) {
                 Image(systemName: definition.outputType.iconName)
                     .font(.system(size: 20))
-                    .foregroundStyle(Color.textMuted.opacity(0.3))
+                    .foregroundStyle(.tertiary)
                 Text("Your \(definition.outputType.rawValue) will appear here")
-                    .font(.system(size: 12))
-                    .foregroundStyle(Color.textMuted.opacity(0.4))
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 40)
@@ -823,10 +812,10 @@ struct PlayView: View {
                 Text(showCopied ? "Copied" : "Copy")
                     .font(.system(size: 11))
             }
-            .foregroundStyle(showCopied ? Color.success : Color.textTertiary)
+            .foregroundStyle(showCopied ? Color.green : Color.secondary)
             .padding(.horizontal, 8)
             .padding(.vertical, 4)
-            .background(Color.bg800.opacity(0.5))
+            .background(.quinary)
             .clipShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
         }
         .buttonStyle(.plain)
@@ -846,10 +835,10 @@ struct PlayView: View {
                 Text(showSaved ? "Saved" : "Save")
                     .font(.system(size: 11))
             }
-            .foregroundStyle(showSaved ? Color.success : Color.textTertiary)
+            .foregroundStyle(showSaved ? Color.green : Color.secondary)
             .padding(.horizontal, 8)
             .padding(.vertical, 4)
-            .background(Color.bg800.opacity(0.5))
+            .background(.quinary)
             .clipShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
         }
         .buttonStyle(.plain)
@@ -910,7 +899,7 @@ struct PlayView: View {
         return HStack(alignment: .top, spacing: 0) {
             // Error accent bar
             RoundedRectangle(cornerRadius: 1)
-                .fill(Color.error)
+                .fill(.red)
                 .frame(width: 2)
                 .padding(.vertical, 6)
 
@@ -919,12 +908,12 @@ struct PlayView: View {
                 HStack(alignment: .top, spacing: 8) {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .font(.system(size: 12))
-                        .foregroundStyle(Color.error)
+                        .foregroundStyle(.red)
                         .padding(.top, 1)
 
                     Text(summary)
                         .font(.system(size: 13))
-                        .foregroundStyle(Color.error)
+                        .foregroundStyle(.red)
                         .lineLimit(errorExpanded ? nil : 2)
 
                     Spacer()
@@ -938,14 +927,14 @@ struct PlayView: View {
                             Text("Retry")
                                 .font(.system(size: 12, weight: .medium))
                         }
-                        .foregroundStyle(Color.error)
+                        .foregroundStyle(.red)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 5)
-                        .background(Color.error.opacity(0.1))
+                        .background(.red.opacity(0.1))
                         .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
                         .overlay(
                             RoundedRectangle(cornerRadius: 6, style: .continuous)
-                                .strokeBorder(Color.error.opacity(0.3), lineWidth: 0.5)
+                                .strokeBorder(.red.opacity(0.3), lineWidth: 0.5)
                         )
                     }
                     .buttonStyle(.plain)
@@ -965,26 +954,22 @@ struct PlayView: View {
                             Text(errorExpanded ? "Hide details" : "Show details")
                                 .font(.system(size: 11))
                         }
-                        .foregroundStyle(Color.textMuted)
+                        .foregroundStyle(.secondary)
                     }
                     .buttonStyle(.plain)
 
                     if errorExpanded {
                         ScrollView {
                             Text(message)
-                                .font(.codeOutput)
-                                .foregroundStyle(Color.textTertiary)
+                                .font(.caption.monospaced())
+                                .foregroundStyle(.tertiary)
                                 .textSelection(.enabled)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                         }
                         .frame(maxHeight: 200)
                         .padding(10)
-                        .background(Color.bg900)
+                        .background(.quinary)
                         .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 6, style: .continuous)
-                                .strokeBorder(Color.border700, lineWidth: 0.5)
-                        )
                         .transition(.opacity.combined(with: .move(edge: .top)))
                     }
                 }
@@ -993,11 +978,11 @@ struct PlayView: View {
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.error.opacity(0.06))
+        .background(.red.opacity(0.06))
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .strokeBorder(Color.error.opacity(0.15), lineWidth: 0.5)
+                .strokeBorder(.red.opacity(0.15), lineWidth: 0.5)
         )
     }
 
@@ -1039,7 +1024,7 @@ struct PlayView: View {
                             }
                     case .failure:
                         Label("Failed to load image", systemImage: "photo")
-                            .foregroundStyle(Color.textMuted)
+                            .foregroundStyle(.secondary)
                     case .empty:
                         ProgressView()
                     @unknown default:
@@ -1089,10 +1074,10 @@ struct PlayView: View {
         HStack(spacing: 4) {
             Text(label)
                 .font(.system(size: 10))
-                .foregroundStyle(Color.textMuted)
+                .foregroundStyle(.secondary)
             Text(value)
                 .font(.system(size: 10, design: .monospaced))
-                .foregroundStyle(Color.textTertiary)
+                .foregroundStyle(.tertiary)
                 .contentTransition(.numericText())
         }
     }
@@ -1169,16 +1154,16 @@ struct PlayView: View {
                         Image(systemName: "chevron.right")
                             .font(.system(size: 9, weight: .semibold))
                             .rotationEffect(.degrees(isExpanded.wrappedValue ? 90 : 0))
-                            .foregroundStyle(Color.textMuted)
+                            .foregroundStyle(.secondary)
 
                         Text(title)
                             .font(.system(size: 11, weight: .medium))
-                            .foregroundStyle(Color.textTertiary)
+                            .foregroundStyle(.tertiary)
 
                         if !subtitle.isEmpty {
                             Text(subtitle)
                                 .font(.system(size: 10))
-                                .foregroundStyle(Color.textMuted)
+                                .foregroundStyle(.secondary)
                                 .lineLimit(1)
                         }
                     }
@@ -1205,7 +1190,7 @@ struct PlayView: View {
                             Text(isCopied.wrappedValue ? "Copied" : "Copy")
                                 .font(.system(size: 10))
                         }
-                        .foregroundStyle(isCopied.wrappedValue ? Color.success : Color.textMuted)
+                        .foregroundStyle(isCopied.wrappedValue ? Color.green : Color.secondary)
                     }
                     .buttonStyle(.plain)
                     .transition(.opacity)
@@ -1218,18 +1203,14 @@ struct PlayView: View {
                 ScrollView([.horizontal, .vertical]) {
                     Text(json)
                         .font(.system(size: 11, design: .monospaced))
-                        .foregroundStyle(Color.textSecondary)
+                        .foregroundStyle(.secondary)
                         .textSelection(.enabled)
                         .lineSpacing(3)
                         .padding(12)
                 }
                 .frame(maxHeight: 300)
-                .background(Color.bg950.opacity(0.6))
+                .background(.quinary)
                 .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 6, style: .continuous)
-                        .strokeBorder(Color.border700.opacity(0.3), lineWidth: 0.5)
-                )
                 .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
@@ -1251,7 +1232,7 @@ private struct StreamingCursor: View {
 
     var body: some View {
         Rectangle()
-            .fill(Color.accent)
+            .fill(Color.accentColor)
             .frame(width: 8, height: 16)
             .opacity(visible ? 1 : 0)
             .onAppear {
@@ -1261,8 +1242,6 @@ private struct StreamingCursor: View {
             }
     }
 }
-
-// MARK: - Flow Layout
 
 // MARK: - Shake Effect
 
@@ -1280,51 +1259,6 @@ struct ShakeEffect: GeometryEffect {
 }
 
 // MARK: - Flow Layout
-
-// MARK: - Custom Slider
-
-struct CustomSlider: View {
-    @Binding var value: Double
-    let range: ClosedRange<Double>
-    let step: Double
-
-    var body: some View {
-        GeometryReader { geo in
-            let fraction = (value - range.lowerBound) / (range.upperBound - range.lowerBound)
-            let thumbX = fraction * geo.size.width
-
-            ZStack(alignment: .leading) {
-                // Track background
-                Capsule()
-                    .fill(Color.bg800)
-                    .frame(height: 4)
-
-                // Filled track
-                Capsule()
-                    .fill(Color.accent)
-                    .frame(width: max(4, thumbX), height: 4)
-
-                // Thumb
-                Circle()
-                    .fill(Color.white)
-                    .frame(width: 14, height: 14)
-                    .shadow(color: .black.opacity(0.25), radius: 2, y: 1)
-                    .offset(x: thumbX - 7)
-            }
-            .frame(maxHeight: .infinity)
-            .contentShape(Rectangle())
-            .gesture(
-                DragGesture(minimumDistance: 0)
-                    .onChanged { drag in
-                        let frac = max(0, min(1, drag.location.x / geo.size.width))
-                        let raw = range.lowerBound + frac * (range.upperBound - range.lowerBound)
-                        value = (raw / step).rounded() * step
-                    }
-            )
-        }
-        .frame(height: 20)
-    }
-}
 
 struct FlowLayout: Layout {
     var spacing: CGFloat = 6

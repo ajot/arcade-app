@@ -129,7 +129,7 @@ struct MarkdownTextView: View {
                 if let lang = language {
                     Text(lang)
                         .font(.system(size: 10, weight: .medium))
-                        .foregroundStyle(Color.textMuted)
+                        .foregroundStyle(.secondary)
                         .padding(.horizontal, 12)
                         .padding(.top, 8)
                         .padding(.bottom, 4)
@@ -137,7 +137,7 @@ struct MarkdownTextView: View {
 
                 Text(code)
                     .font(.system(size: 12, design: .monospaced))
-                    .foregroundStyle(Color.textSecondary)
+                    .foregroundStyle(.secondary)
                     .textSelection(.enabled)
                     .lineSpacing(3)
                     .padding(.horizontal, 12)
@@ -145,11 +145,11 @@ struct MarkdownTextView: View {
                     .padding(.bottom, 4)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color.bg900)
+            .background(.quinary)
             .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: 6, style: .continuous)
-                    .strokeBorder(Color.border700, lineWidth: 0.5)
+                    .strokeBorder(.separator, lineWidth: 0.5)
             )
 
         case .heading(let level, let text):
@@ -162,21 +162,21 @@ struct MarkdownTextView: View {
             let weight: Font.Weight = level <= 2 ? .semibold : .medium
             Text(text)
                 .font(.system(size: size, weight: weight))
-                .foregroundStyle(Color.textPrimary)
+                .foregroundStyle(.primary)
                 .padding(.top, level <= 2 ? 4 : 2)
 
         case .listItem(_, let text):
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Text("•")
                     .font(.system(size: 13))
-                    .foregroundStyle(Color.textMuted)
+                    .foregroundStyle(.secondary)
                 inlineMarkdown(text)
             }
 
         case .blockquote(let text):
             HStack(alignment: .top, spacing: 0) {
                 RoundedRectangle(cornerRadius: 1)
-                    .fill(Color.border600)
+                    .fill(.separator)
                     .frame(width: 3)
                 inlineMarkdown(text)
                     .padding(.leading, 12)
@@ -193,14 +193,14 @@ struct MarkdownTextView: View {
         ) {
             Text(attributed)
                 .font(.system(size: 13))
-                .foregroundStyle(Color.textSecondary)
+                .foregroundStyle(.secondary)
                 .textSelection(.enabled)
                 .lineSpacing(4)
-                .tint(Color.accent)
+                .tint(.accentColor)
         } else {
             Text(text)
                 .font(.system(size: 13))
-                .foregroundStyle(Color.textSecondary)
+                .foregroundStyle(.secondary)
                 .textSelection(.enabled)
                 .lineSpacing(4)
         }

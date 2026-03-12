@@ -4,6 +4,7 @@
   "provider": "openrouter",
   "provider_display_name": "OpenRouter",
   "provider_url": "openrouter.ai",
+  "provider_icon_url": "https://openrouter.ai/favicon.ico",
   "name": "OpenRouter Chat Completions",
   "description": "OpenRouter chat with streaming (OpenAI-compatible)",
   "auth": {

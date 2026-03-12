@@ -9,6 +9,36 @@ final class AppState {
     let networkService = NetworkService()
     let bookmarkStore = BookmarkStore()
 
+    // MARK: - Appearance Preferences
+    var appearanceMode: String = UserDefaults.standard.string(forKey: "appearanceMode") ?? "system" {
+        didSet { UserDefaults.standard.set(appearanceMode, forKey: "appearanceMode") }
+    }
+    var accentColorName: String = UserDefaults.standard.string(forKey: "accentColorName") ?? "amber" {
+        didSet { UserDefaults.standard.set(accentColorName, forKey: "accentColorName") }
+    }
+
+    var preferredColorScheme: ColorScheme? {
+        switch appearanceMode {
+        case "light": return .light
+        case "dark": return .dark
+        default: return nil
+        }
+    }
+
+    var accentColor: Color {
+        switch accentColorName {
+        case "blue": return .blue
+        case "purple": return .purple
+        case "green": return .green
+        case "red": return .red
+        case "orange": return .orange
+        case "pink": return .pink
+        default: return Color(red: 0.961, green: 0.620, blue: 0.043) // amber #f59e0b
+        }
+    }
+
+    let iconService = ProviderIconService()
+
     // MARK: - Navigation
     var showSidebar = true
     var showCommandPalette = false

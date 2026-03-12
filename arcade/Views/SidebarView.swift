@@ -38,10 +38,12 @@ struct SidebarView: View {
         let keyStatus = state.keyStatus[definition.provider] ?? .noKey
 
         return HStack(spacing: 8) {
-            Image(systemName: definition.outputType.iconName)
-                .font(.system(size: 11))
-                .foregroundStyle(Color.accent)
-                .frame(width: 16)
+            ProviderIconView(
+                provider: definition.provider,
+                displayName: definition.providerDisplayName,
+                iconUrl: definition.providerIconUrl,
+                iconService: state.iconService
+            )
 
             VStack(alignment: .leading, spacing: 1) {
                 Text(definition.name)

@@ -5,7 +5,7 @@ struct SettingsView: View {
 
     var body: some View {
         TabView(selection: $state.settingsTab) {
-            GeneralSettingsTab()
+            GeneralSettingsTab(state: state)
                 .tabItem {
                     Label("General", systemImage: "gearshape")
                 }
@@ -24,10 +24,49 @@ struct SettingsView: View {
 // MARK: - General Settings
 
 private struct GeneralSettingsTab: View {
+    @Bindable var state: AppState
     @State private var isMuted = SoundService.isMuted
+
+    private let accentOptions: [(name: String, color: Color)] = [
+        ("amber", Color(red: 0.961, green: 0.620, blue: 0.043)),
+        ("blue", .blue),
+        ("purple", .purple),
+        ("green", .green),
+        ("red", .red),
+        ("orange", .orange),
+        ("pink", .pink),
+    ]
 
     var body: some View {
         Form {
+            Section("Appearance") {
+                Picker("Theme", selection: $state.appearanceMode) {
+                    Text("System").tag("system")
+                    Text("Light").tag("light")
+                    Text("Dark").tag("dark")
+                }
+
+                HStack {
+                    Text("Accent Color")
+                    Spacer()
+                    HStack(spacing: 6) {
+                        ForEach(accentOptions, id: \.name) { option in
+                            Circle()
+                                .fill(option.color)
+                                .frame(width: 18, height: 18)
+                                .overlay(
+                                    Circle()
+                                        .strokeBorder(.primary.opacity(state.accentColorName == option.name ? 0.4 : 0), lineWidth: 2)
+                                        .padding(-2)
+                                )
+                                .onTapGesture {
+                                    state.accentColorName = option.name
+                                }
+                        }
+                    }
+                }
+            }
+
             Section("Sound") {
                 Toggle(isOn: $isMuted) {
                     HStack(spacing: 10) {
@@ -100,9 +139,17 @@ private struct APIKeysSettingsTab: View {
         let status = state.keyStatus[slug] ?? .noKey
         let hasKey = KeychainService.getKey(for: slug) != nil
         let isEditing = editingProvider == slug
+        let iconUrl = state.definitionLoader.sortedDefinitions.first { $0.provider == slug }?.providerIconUrl
 
         return VStack(spacing: 0) {
             HStack(spacing: 10) {
+                ProviderIconView(
+                    provider: slug,
+                    displayName: displayName,
+                    iconUrl: iconUrl,
+                    iconService: state.iconService
+                )
+
                 Image(systemName: status.iconName)
                     .font(.system(size: 12))
                     .foregroundStyle(status.color)

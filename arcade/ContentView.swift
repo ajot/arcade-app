@@ -18,33 +18,6 @@ struct ContentView: View {
             .toolbar {
                 ToolbarItemGroup(placement: .primaryAction) {
                     if let definition = state.currentDefinition {
-                        // Model picker
-                        if let modelParam = definition.modelParam, let options = modelParam.options {
-                            Menu {
-                                ForEach(options, id: \.self) { model in
-                                    Button {
-                                        state.selectModel(model)
-                                    } label: {
-                                        if model == state.currentModel {
-                                            Label(model, systemImage: "checkmark")
-                                        } else {
-                                            Text(model)
-                                        }
-                                    }
-                                }
-                            } label: {
-                                HStack(spacing: 4) {
-                                    Text(state.currentModel ?? "")
-                                        .font(.system(size: 12))
-                                        .lineLimit(1)
-                                    Image(systemName: "chevron.up.chevron.down")
-                                        .font(.system(size: 8, weight: .medium))
-                                        .foregroundStyle(.secondary)
-                                }
-                            }
-                            .menuIndicator(.hidden)
-                        }
-
                         // Key status — click opens Settings
                         let keyStatus = state.keyStatus[definition.provider] ?? .noKey
                         Button {
@@ -88,7 +61,6 @@ struct ContentView: View {
             }
         }
         .frame(minWidth: 900, minHeight: 600)
-        .preferredColorScheme(.dark)
         .onAppear {
             state.validateAllKeys()
         }

@@ -4,6 +4,7 @@
   "provider": "deepseek",
   "provider_display_name": "DeepSeek",
   "provider_url": "deepseek.com",
+  "provider_icon_url": "https://www.deepseek.com/favicon.ico",
   "name": "DeepSeek Chat Completions",
   "description": "DeepSeek chat with streaming (OpenAI-compatible)",
   "auth": {

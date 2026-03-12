@@ -4,6 +4,7 @@
   "provider": "sambanova",
   "provider_display_name": "SambaNova",
   "provider_url": "sambanova.ai",
+  "provider_icon_url": "https://sambanova.ai/favicon.ico",
   "name": "SambaNova Chat Completions",
   "description": "SambaNova chat with streaming (OpenAI-compatible)",
   "auth": {

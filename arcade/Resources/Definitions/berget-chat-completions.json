@@ -4,6 +4,7 @@
   "provider": "berget",
   "provider_display_name": "Berget",
   "provider_url": "berget.ai",
+  "provider_icon_url": "https://berget.ai/favicon.ico",
   "name": "Berget AI Chat Completions",
   "description": "Berget AI chat with streaming (OpenAI-compatible, EU sovereign infrastructure)",
   "auth": {

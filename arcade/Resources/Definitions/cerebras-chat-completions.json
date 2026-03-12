@@ -4,6 +4,7 @@
   "provider": "cerebras",
   "provider_display_name": "Cerebras",
   "provider_url": "cerebras.ai",
+  "provider_icon_url": "https://cerebras.ai/favicon.ico",
   "name": "Cerebras Chat Completions",
   "description": "Cerebras chat with streaming (OpenAI-compatible)",
   "auth": {

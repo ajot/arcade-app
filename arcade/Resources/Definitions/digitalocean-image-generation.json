@@ -4,6 +4,7 @@
   "provider": "digitalocean",
   "provider_display_name": "DigitalOcean",
   "provider_url": "digitalocean.com",
+  "provider_icon_url": "https://www.digitalocean.com/favicon.ico",
   "name": "DigitalOcean Image Generation",
   "description": "Text-to-image generation via DigitalOcean GenAI",
   "auth": {

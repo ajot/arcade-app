@@ -4,6 +4,7 @@
   "provider": "together",
   "provider_display_name": "Together AI",
   "provider_url": "together.ai",
+  "provider_icon_url": "https://www.together.ai/favicon.ico",
   "name": "Together AI Image Generation",
   "description": "Text-to-image generation via Together AI (FLUX, Stable Diffusion, and more)",
   "auth": {

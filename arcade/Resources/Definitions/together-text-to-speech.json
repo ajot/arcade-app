@@ -4,6 +4,7 @@
   "provider": "together",
   "provider_display_name": "Together AI",
   "provider_url": "together.ai",
+  "provider_icon_url": "https://www.together.ai/favicon.ico",
   "name": "Together AI Text to Speech",
   "description": "Text-to-speech via Together AI (Orpheus, Kokoro, Cartesia Sonic)",
   "auth": {

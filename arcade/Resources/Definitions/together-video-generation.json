@@ -4,6 +4,7 @@
   "provider": "together",
   "provider_display_name": "Together AI",
   "provider_url": "together.ai",
+  "provider_icon_url": "https://www.together.ai/favicon.ico",
   "name": "Together AI Video Generation",
   "description": "Text-to-video generation via Together AI (Sora, Veo, Kling, and more)",
   "auth": {
