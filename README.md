@@ -6,6 +6,8 @@ Arcade is a local, definition-driven playground for testing AI inference endpoin
 
 Built natively with SwiftUI. No Electron. No browser. No server.
 
+![Arcade — streaming chat completions](screenshots/hero.png)
+
 ### Why
 
 Generic API tools show you every possible field regardless of the model you're testing. But an image generation model has completely different inputs than a chat model, and those inputs vary between providers. You end up ignoring half the form and guessing which fields matter.
@@ -14,7 +16,9 @@ Arcade solves this with **JSON definition files**. Each file describes one model
 
 ### What makes it different
 
-- **Multimodal in one place** — text, image, audio, and video generation across 17 providers
+- **Multimodal in one place** — text, image, audio, and video generation across 16 providers
+
+  ![Image generation](screenshots/image-generation.png)
 - **Adaptive UI** — each model gets a form built from its definition, showing only relevant inputs
 - **Full transparency** — curl commands, raw request/response JSON, latency metrics on every call
 - **BYOK** — bring your own API keys. Keys are stored in macOS Keychain, sent only to the provider's API, never persisted elsewhere
@@ -27,21 +31,31 @@ Arcade solves this with **JSON definition files**. Each file describes one model
 
 Hit `Cmd+K` to open the command palette. Search across all endpoints, bookmarks, and saved configurations. Select an endpoint to see available models, then pick one to load the form.
 
+![Command palette](screenshots/command-palette.png)
+
 ### Play mode
 
 Pick any endpoint, click an example chip to pre-fill the prompt, and hit Generate. Streaming endpoints show tokens as they arrive with TTFT and tokens/sec metrics.
+
+![Completed result with request/response JSON and metrics](screenshots/completed-result.png)
 
 ### Curl preview
 
 Inspect the exact HTTP request before or after sending. Toggle "Include API key" to copy a ready-to-run curl command.
 
+![Curl preview](screenshots/curl-preview.png)
+
 ### JSON inspector
 
 Open the inspector (`Cmd+I`) to see the full request and response payloads with redacted auth headers.
 
+![JSON inspector](screenshots/json-inspector.png)
+
 ### Log panel
 
 Toggle the log drawer (`Cmd+L`) to see raw HTTP request/response history.
+
+![Log panel](screenshots/log-panel.png)
 
 ### Everything else
 
@@ -52,7 +66,13 @@ Toggle the log drawer (`Cmd+L`) to see raw HTTP request/response history.
 - **Bookmarks** — save and restore endpoint + param combinations (`Cmd+D`)
 - **Advanced params** — collapsible section for sliders (temperature, max tokens, etc.)
 - **API key management** — stored in macOS Keychain, status shown per provider in Settings (`Cmd+,`)
+- **Appearance** — light mode, dark mode, or system, with configurable accent color
 - **Sound effects** — semantic system sounds for actions, toggleable in Settings
+
+![Advanced params, system prompt, and streaming metrics](screenshots/everything.png)
+
+| ![Settings — API Keys](screenshots/settings-api-keys.png) | ![Settings — General](screenshots/settings-general.png) |
+|---|---|
 
 ## Keyboard shortcuts
 
@@ -74,8 +94,8 @@ Toggle the log drawer (`Cmd+L`) to see raw HTTP request/response history.
 | Cerebras | 1 | chat |
 | DeepInfra | 2 | chat, image |
 | DeepSeek | 1 | chat |
-| DigitalOcean | 3 | chat, image, TTS |
-| Fireworks | 3 | chat, image |
+| DigitalOcean | 4 | chat, image, music, TTS |
+| Fireworks | 3 | chat, image, Kontext |
 | Google | 2 | chat, image |
 | Groq | 1 | chat |
 | Hugging Face | 1 | chat |
@@ -86,7 +106,7 @@ Toggle the log drawer (`Cmd+L`) to see raw HTTP request/response history.
 | SambaNova | 1 | chat |
 | Together | 4 | chat, image, TTS, video |
 
-**17 providers, 29 definitions.**
+**16 providers, 30 definitions.**
 
 ## Quick start
 
@@ -98,9 +118,23 @@ open arcade.xcodeproj
 
 Build and run (`Cmd+R`). Add your API keys in Settings (`Cmd+,`). You only need keys for the providers you want to test.
 
-## Adding a provider
+## Definitions
 
-Create a JSON file in `arcade/Resources/Definitions/`. The definition has four sections:
+Arcade is driven entirely by JSON definition files. On first launch, the bundled definitions are copied into a writable directory. From there, you can edit, add, or remove definitions freely.
+
+Click the **folder icon** at the bottom of the sidebar to open the definitions directory in Finder. Click the **refresh icon** to reload after making changes (the app also reloads automatically when it regains focus).
+
+To restore the original bundled definitions, go to Settings → General → Definitions → Restore.
+
+### Three levels of customization
+
+1. **Add a model** — open an existing definition, add a model ID to the `options` array
+2. **Add an endpoint** — drop a new JSON file into the definitions folder (e.g., a new image generation endpoint for an existing provider)
+3. **Add a provider** — drop a new JSON file with a new `provider` slug. The provider automatically appears in the sidebar and Settings → API Keys
+
+### Definition format
+
+Each definition has four sections:
 
 | Section | Purpose |
 |---|---|
@@ -178,13 +212,13 @@ Each parameter in `request.params` needs a `ui` type that tells Arcade how to re
 | `dropdown` | `enum` | Select menu | `options` (required), `default` |
 | `slider` | `integer` or `float` | Range slider with numeric display | `min`, `max`, `default` |
 
-User-added definitions are loaded from the app's Application Support directory alongside bundled ones. Because the app is sandboxed, the path is:
+The definitions directory is inside the app's sandbox container:
 
 ```
 ~/Library/Containers/me.ajot.arcade/Data/Library/Application Support/Arcade/Definitions/
 ```
 
-The directory is created automatically on first launch. Drop a JSON file there and relaunch to pick it up.
+Use the **folder icon** in the sidebar to open it — no need to remember the path.
 
 ## Project structure
 
@@ -205,7 +239,8 @@ arcade/
 │   │   ├── JSONPathExtractor.swift  # $.foo.bar, $..key, $.foo[0] extraction
 │   │   ├── KeychainService.swift    # API key storage via macOS Keychain
 │   │   ├── BookmarkStore.swift      # Persists bookmarks to Application Support
-│   │   └── SoundService.swift       # Semantic system sounds
+│   │   ├── SoundService.swift       # Semantic system sounds
+│   │   └── ProviderIconService.swift # Provider favicon fetch + disk/memory cache
 │   ├── Views/
 │   │   ├── PlayView.swift           # Main endpoint interaction UI
 │   │   ├── CommandPalette.swift     # Cmd+K search and selection
@@ -219,7 +254,7 @@ arcade/
 │   │   ├── ImageZoomOverlay.swift   # Full-size image preview
 │   │   └── MarkdownTextView.swift   # Rendered markdown output
 │   ├── Resources/
-│   │   └── Definitions/             # 29 bundled endpoint definitions
+│   │   └── Definitions/             # 30 bundled endpoint definitions
 │   └── Assets.xcassets/
 └── CLAUDE.md
 ```
