@@ -16,17 +16,17 @@ struct LogPanel: View {
             // Header
             HStack(spacing: 8) {
                 Image(systemName: "text.line.last.and.arrowtriangle.forward")
-                    .font(.system(size: 12))
+                    .font(.system(size: DS.Font.secondary))
                     .foregroundStyle(.secondary)
                 Text("Log")
-                    .font(.system(size: 12, weight: .medium))
+                    .font(.system(size: DS.Font.secondary, weight: .medium))
                     .foregroundStyle(.tertiary)
 
                 Spacer()
 
                 if !state.logEntries.isEmpty {
                     Text("\(state.logEntries.count)")
-                        .font(.system(size: 10, design: .monospaced))
+                        .font(.system(size: DS.Font.caption, design: .monospaced))
                         .foregroundStyle(.secondary)
                         .padding(.horizontal, 6)
                         .padding(.vertical, 2)
@@ -40,7 +40,7 @@ struct LogPanel: View {
                         }
                     } label: {
                         Image(systemName: "trash")
-                            .font(.system(size: 10))
+                            .font(.system(size: DS.Font.caption))
                             .foregroundStyle(.secondary)
                     }
                     .buttonStyle(.plain)
@@ -58,7 +58,7 @@ struct LogPanel: View {
                 VStack {
                     Spacer()
                     Text("No log entries yet")
-                        .font(.system(size: 12))
+                        .font(.system(size: DS.Font.secondary))
                         .foregroundStyle(.secondary)
                     Spacer()
                 }
@@ -95,7 +95,7 @@ struct LogPanel: View {
             .fill(.separator)
             .frame(height: 1)
             .overlay(
-                RoundedRectangle(cornerRadius: 2)
+                RoundedRectangle(cornerRadius: DS.Radius.xs)
                     .fill(.separator)
                     .frame(width: 36, height: 4)
                     .offset(y: -1)
@@ -127,17 +127,17 @@ struct LogPanel: View {
             HStack(alignment: .top, spacing: 8) {
                 // Icon
                 Text(entry.kind.symbol)
-                    .font(.system(size: 12))
+                    .font(.system(size: DS.Font.secondary))
                     .frame(width: 14)
 
                 // Timestamp
                 Text(formatTimestamp(entry.timestamp))
-                    .font(.system(size: 10, design: .monospaced))
+                    .font(.system(size: DS.Font.caption, design: .monospaced))
                     .foregroundStyle(.secondary)
 
                 // Message
                 Text(entry.message)
-                    .font(.system(size: 12, design: .monospaced))
+                    .font(.system(size: DS.Font.secondary, design: .monospaced))
                     .foregroundStyle(entry.kind.color)
                     .lineLimit(isExpanded ? nil : 1)
 
@@ -145,7 +145,7 @@ struct LogPanel: View {
 
                 if hasDetail {
                     Image(systemName: "chevron.right")
-                        .font(.system(size: 10, weight: .semibold))
+                        .font(.system(size: DS.Font.caption, weight: .semibold))
                         .foregroundStyle(.secondary)
                         .rotationEffect(.degrees(isExpanded ? 90 : 0))
                 }
@@ -166,7 +166,7 @@ struct LogPanel: View {
 
             if isExpanded, let detail = entry.detail {
                 Text(detail)
-                    .font(.system(size: 10, design: .monospaced))
+                    .font(.system(size: DS.Font.caption, design: .monospaced))
                     .foregroundStyle(.secondary)
                     .textSelection(.enabled)
                     .lineSpacing(3)

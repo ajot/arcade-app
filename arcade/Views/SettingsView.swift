@@ -73,7 +73,7 @@ private struct GeneralSettingsTab: View {
                         Text("Restore Default Definitions")
 
                         Text("Re-copies bundled definitions into your definitions folder")
-                            .font(.system(size: 10))
+                            .font(.system(size: DS.Font.caption))
                             .foregroundStyle(.secondary)
                     }
 
@@ -89,7 +89,7 @@ private struct GeneralSettingsTab: View {
                 Toggle(isOn: $isMuted) {
                     HStack(spacing: 10) {
                         Image(systemName: isMuted ? "speaker.slash.fill" : "speaker.wave.2.fill")
-                            .font(.system(size: 13))
+                            .font(.system(size: DS.Font.body))
                             .foregroundStyle(isMuted ? Color.secondary : Color.accentColor)
                             .frame(width: 20)
                             .contentTransition(.symbolEffect(.replace))
@@ -98,7 +98,7 @@ private struct GeneralSettingsTab: View {
                             Text("Mute all sounds")
 
                             Text("Disable UI feedback sounds throughout the app")
-                                .font(.system(size: 10))
+                                .font(.system(size: DS.Font.caption))
                                 .foregroundStyle(.secondary)
                         }
                     }
@@ -125,7 +125,7 @@ private struct APIKeysSettingsTab: View {
         VStack(alignment: .leading, spacing: 0) {
             HStack {
                 Text("Manage your API keys for each provider")
-                    .font(.system(size: 12))
+                    .font(.system(size: DS.Font.secondary))
                     .foregroundStyle(.secondary)
 
                 Spacer()
@@ -133,7 +133,7 @@ private struct APIKeysSettingsTab: View {
                 Button("Validate All") {
                     state.validateAllKeys()
                 }
-                .font(.system(size: 12))
+                .font(.system(size: DS.Font.secondary))
                 .buttonStyle(.plain)
                 .foregroundStyle(.secondary)
             }
@@ -169,18 +169,18 @@ private struct APIKeysSettingsTab: View {
                 )
 
                 Image(systemName: status.iconName)
-                    .font(.system(size: 12))
+                    .font(.system(size: DS.Font.secondary))
                     .foregroundStyle(status.color)
                     .frame(width: 16)
 
                 Text(displayName)
-                    .font(.system(size: 13))
+                    .font(.system(size: DS.Font.body))
 
                 Spacer()
 
                 if saveConfirmation == slug {
                     Image(systemName: "checkmark")
-                        .font(.system(size: 12))
+                        .font(.system(size: DS.Font.secondary))
                         .foregroundStyle(.green)
                         .transition(.scale.combined(with: .opacity))
                 } else if isEditing {
@@ -188,14 +188,14 @@ private struct APIKeysSettingsTab: View {
                 } else if hasKey {
                     HStack(spacing: 8) {
                         Text("\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}")
-                            .font(.system(size: 10))
+                            .font(.system(size: DS.Font.caption))
                             .foregroundStyle(.tertiary)
 
                         Button("Edit") {
                             editingProvider = slug
                             keyInput = ""
                         }
-                        .font(.system(size: 12))
+                        .font(.system(size: DS.Font.secondary))
                         .buttonStyle(.plain)
                         .foregroundStyle(.secondary)
 
@@ -204,7 +204,7 @@ private struct APIKeysSettingsTab: View {
                             state.keyStatus[slug] = .noKey
                         } label: {
                             Image(systemName: "trash")
-                                .font(.system(size: 12))
+                                .font(.system(size: DS.Font.secondary))
                                 .foregroundStyle(.tertiary)
                         }
                         .buttonStyle(.plain)
@@ -214,7 +214,7 @@ private struct APIKeysSettingsTab: View {
                         editingProvider = slug
                         keyInput = ""
                     }
-                    .font(.system(size: 12))
+                    .font(.system(size: DS.Font.secondary))
                     .buttonStyle(.plain)
                     .foregroundStyle(.tint)
                 }
@@ -226,7 +226,7 @@ private struct APIKeysSettingsTab: View {
                 HStack(spacing: 8) {
                     TextField("Paste API key...", text: $keyInput)
                         .textFieldStyle(.roundedBorder)
-                        .font(.system(size: 12, design: .monospaced))
+                        .font(.system(size: DS.Font.secondary, design: .monospaced))
 
                     Button("Save") {
                         saveKey(provider: slug)
@@ -239,7 +239,7 @@ private struct APIKeysSettingsTab: View {
                         keyInput = ""
                     }
                     .buttonStyle(.plain)
-                    .font(.system(size: 12))
+                    .font(.system(size: DS.Font.secondary))
                     .foregroundStyle(.secondary)
                 }
                 .padding(.horizontal, 46)

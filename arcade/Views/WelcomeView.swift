@@ -59,7 +59,7 @@ struct WelcomeView: View {
 
                 // Subtitle
                 Text("An AI playground for every provider")
-                    .font(.system(size: 13))
+                    .font(.system(size: DS.Font.body))
                     .foregroundStyle(.tertiary)
                     .opacity(appeared ? 1 : 0)
                     .offset(y: appeared ? 0 : 8)
@@ -70,26 +70,26 @@ struct WelcomeView: View {
                 } label: {
                     HStack(spacing: 8) {
                         Image(systemName: "magnifyingglass")
-                            .font(.system(size: 13))
+                            .font(.system(size: DS.Font.body))
                         Text("Select an endpoint...")
-                            .font(.system(size: 13))
+                            .font(.system(size: DS.Font.body))
                         Spacer()
                         Text("\u{2318}K")
-                            .font(.system(size: 12, weight: .medium, design: .monospaced))
+                            .font(.system(size: DS.Font.secondary, weight: .medium, design: .monospaced))
                             .foregroundStyle(.secondary)
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
                             .background(.quinary)
-                            .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
+                            .clipShape(RoundedRectangle(cornerRadius: DS.Radius.sm, style: .continuous))
                     }
                     .foregroundStyle(.tertiary)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 12)
                     .frame(width: 320)
                     .background(.quinary)
-                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    .clipShape(RoundedRectangle(cornerRadius: DS.Radius.lg, style: .continuous))
                     .overlay(
-                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        RoundedRectangle(cornerRadius: DS.Radius.lg, style: .continuous)
                             .strokeBorder(.separator, lineWidth: 0.5)
                     )
                 }
@@ -99,7 +99,7 @@ struct WelcomeView: View {
 
                 // Stats
                 Text("\(state.definitionLoader.endpointCount) endpoints \u{00B7} \(state.definitionLoader.providerCount) providers")
-                    .font(.system(size: 12))
+                    .font(.system(size: DS.Font.secondary))
                     .foregroundStyle(.secondary)
                     .opacity(appeared ? 1 : 0)
                     .offset(y: appeared ? 0 : 4)

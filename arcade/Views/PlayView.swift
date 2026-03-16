@@ -44,7 +44,7 @@ struct PlayView: View {
                             if let modelParam = definition.modelParam, let options = modelParam.options {
                                 VStack(alignment: .leading, spacing: 6) {
                                     Text("Model")
-                                        .font(.system(size: 12, weight: .medium))
+                                        .font(.system(size: DS.Font.secondary, weight: .medium))
                                         .foregroundStyle(.secondary)
                                         .textCase(.uppercase)
                                         .tracking(0.3)
@@ -130,19 +130,19 @@ struct PlayView: View {
     private func endpointHeader(_ definition: Definition) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(definition.description)
-                .font(.system(size: 13))
+                .font(.system(size: DS.Font.body))
                 .foregroundStyle(.secondary)
 
             HStack(spacing: 6) {
                 Label(definition.outputType.rawValue, systemImage: definition.outputType.iconName)
-                    .font(.system(size: 10))
+                    .font(.system(size: DS.Font.caption))
                     .foregroundStyle(.tertiary)
 
                 Text("·")
                     .foregroundStyle(.tertiary)
 
                 Text(patternLabel(definition))
-                    .font(.system(size: 10))
+                    .font(.system(size: DS.Font.caption))
                     .foregroundStyle(.tertiary)
             }
         }
@@ -155,7 +155,7 @@ struct PlayView: View {
     private func exampleChips(_ definition: Definition) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Examples")
-                .font(.system(size: 12, weight: .medium))
+                .font(.system(size: DS.Font.secondary, weight: .medium))
                 .foregroundStyle(.secondary)
                 .textCase(.uppercase)
                 .tracking(0.3)
@@ -209,13 +209,13 @@ struct PlayView: View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 4) {
                 Text(param.name)
-                    .font(.system(size: 12, weight: .medium))
+                    .font(.system(size: DS.Font.secondary, weight: .medium))
                     .foregroundStyle(.secondary)
                     .textCase(.uppercase)
                     .tracking(0.3)
                 if param.isRequired {
                     Text("*")
-                        .font(.system(size: 12))
+                        .font(.system(size: DS.Font.secondary))
                         .foregroundStyle(Color.accentColor)
                 }
             }
@@ -240,14 +240,14 @@ struct PlayView: View {
         )
 
         return TextEditor(text: binding)
-            .font(.system(size: 13))
+            .font(.system(size: DS.Font.body))
             .scrollContentBackground(.hidden)
             .padding(8)
             .frame(minHeight: isPrimary ? 60 : 40)
             .background(Color(nsColor: .textBackgroundColor))
-            .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous))
             .overlay(
-                RoundedRectangle(cornerRadius: 6, style: .continuous)
+                RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
                     .strokeBorder(Color(nsColor: .separatorColor), lineWidth: 0.5)
             )
             .overlay(alignment: .leading) {
@@ -255,7 +255,7 @@ struct PlayView: View {
                     Rectangle()
                         .fill(Color.accentColor)
                         .frame(width: 2.5)
-                        .clipShape(RoundedRectangle(cornerRadius: 1.5))
+                        .clipShape(RoundedRectangle(cornerRadius: DS.Radius.xs))
                         .padding(.vertical, 5)
                 }
             }
@@ -304,7 +304,7 @@ struct PlayView: View {
                 .frame(width: 200)
 
             Text(state.formValues[param.name] ?? param.defaultDisplayString ?? "")
-                .font(.system(size: 12, design: .monospaced))
+                .font(.system(size: DS.Font.secondary, design: .monospaced))
                 .foregroundStyle(.secondary)
                 .frame(width: 40, alignment: .trailing)
                 .monospacedDigit()
@@ -338,7 +338,7 @@ struct PlayView: View {
             if definition.isChatEndpoint {
                 Section("System Prompt") {
                     TextEditor(text: $state.systemPrompt)
-                        .font(.system(size: 12))
+                        .font(.system(size: DS.Font.secondary))
                         .frame(minHeight: 80)
                 }
             }
@@ -347,10 +347,10 @@ struct PlayView: View {
                 Section {
                     VStack(spacing: 6) {
                         Image(systemName: "slider.horizontal.3")
-                            .font(.system(size: 20))
+                            .font(.system(size: DS.Font.display))
                             .foregroundStyle(.secondary)
                         Text("No settings for this endpoint")
-                            .font(.system(size: 12))
+                            .font(.system(size: DS.Font.secondary))
                             .foregroundStyle(.tertiary)
                     }
                     .frame(maxWidth: .infinity)
@@ -429,10 +429,10 @@ struct PlayView: View {
             } label: {
                 HStack(spacing: 4) {
                     Image(systemName: "rectangle.bottomthird.inset.filled")
-                        .font(.system(size: 12))
+                        .font(.system(size: DS.Font.secondary))
                     if !state.logEntries.isEmpty && !state.showLogPanel {
                         Text("\(state.logEntries.count)")
-                            .font(.system(size: 10, design: .monospaced))
+                            .font(.system(size: DS.Font.caption, design: .monospaced))
                             .padding(.horizontal, 4)
                             .padding(.vertical, 1)
                             .background(.quinary)
@@ -452,15 +452,15 @@ struct PlayView: View {
             } label: {
                 HStack(spacing: 4) {
                     Image(systemName: "terminal")
-                        .font(.system(size: 12))
+                        .font(.system(size: DS.Font.secondary))
                     Text("curl")
-                        .font(.system(size: 12))
+                        .font(.system(size: DS.Font.secondary))
                 }
                 .foregroundStyle(.tertiary)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
                 .background(.quinary)
-                .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                .clipShape(RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous))
             }
             .buttonStyle(.plain)
             .popover(isPresented: $showCurlPopover, arrowEdge: .bottom) {
@@ -473,12 +473,12 @@ struct PlayView: View {
                 showBookmarkPopover = true
             } label: {
                 Image(systemName: bookmarkSaved ? "bookmark.fill" : "bookmark")
-                    .font(.system(size: 13))
+                    .font(.system(size: DS.Font.body))
                     .foregroundStyle(bookmarkSaved ? Color.accentColor : Color.secondary)
                     .contentTransition(.symbolEffect(.replace))
                     .frame(width: 32, height: 32)
                     .background(.quinary)
-                    .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                    .clipShape(RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous))
                     .scaleEffect(bookmarkSaved ? 1.15 : 1.0)
             }
             .buttonStyle(.plain)
@@ -507,12 +507,12 @@ struct PlayView: View {
                             .controlSize(.small)
                             .scaleEffect(0.7)
                         Text(generateButtonText)
-                            .font(.system(size: 13, weight: .semibold))
+                            .font(.system(size: DS.Font.body, weight: .semibold))
                     } else {
                         Image(systemName: "play.fill")
-                            .font(.system(size: 12))
+                            .font(.system(size: DS.Font.secondary))
                         Text("Generate")
-                            .font(.system(size: 13, weight: .semibold))
+                            .font(.system(size: DS.Font.body, weight: .semibold))
                     }
                 }
             }
@@ -570,7 +570,7 @@ struct PlayView: View {
             HStack(spacing: 12) {
                 Toggle(isOn: $curlShowKey) {
                     Text("Show API key")
-                        .font(.system(size: 12))
+                        .font(.system(size: DS.Font.secondary))
                         .foregroundStyle(.tertiary)
                 }
                 .toggleStyle(.switch)
@@ -591,15 +591,15 @@ struct PlayView: View {
                 } label: {
                     HStack(spacing: 4) {
                         Image(systemName: curlCopied ? "checkmark" : "doc.on.doc")
-                            .font(.system(size: 10))
+                            .font(.system(size: DS.Font.caption))
                         Text(curlCopied ? "Copied" : "Copy")
-                            .font(.system(size: 12))
+                            .font(.system(size: DS.Font.secondary))
                     }
                     .foregroundStyle(curlCopied ? Color.green : Color.secondary)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
                     .background(.quinary)
-                    .clipShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
+                    .clipShape(RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous))
                 }
                 .buttonStyle(.plain)
             }
@@ -612,7 +612,7 @@ struct PlayView: View {
             // Curl command
             ScrollView([.horizontal, .vertical]) {
                 Text(curlString)
-                    .font(.system(size: 12, design: .monospaced))
+                    .font(.system(size: DS.Font.secondary, design: .monospaced))
                     .foregroundStyle(.secondary)
                     .textSelection(.enabled)
                     .lineSpacing(3)
@@ -629,17 +629,17 @@ struct PlayView: View {
         VStack(spacing: 12) {
             HStack {
                 Image(systemName: "bookmark.fill")
-                    .font(.system(size: 12))
+                    .font(.system(size: DS.Font.secondary))
                     .foregroundStyle(Color.accentColor)
                 Text("Save Bookmark")
-                    .font(.system(size: 13, weight: .medium))
+                    .font(.system(size: DS.Font.body, weight: .medium))
                     .foregroundStyle(.primary)
                 Spacer()
             }
 
             TextField("Label", text: $bookmarkLabel)
                 .textFieldStyle(.roundedBorder)
-                .font(.system(size: 13))
+                .font(.system(size: DS.Font.body))
 
             HStack {
                 Spacer()
@@ -748,7 +748,7 @@ struct PlayView: View {
                 .padding(.top, state.generationState == .completed ? 4 : 16)
             }
             .background(.regularMaterial)
-            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: DS.Radius.lg, style: .continuous))
             .transition(.asymmetric(
                 insertion: .scale(scale: 0.97, anchor: .top).combined(with: .opacity),
                 removal: .opacity
@@ -768,10 +768,10 @@ struct PlayView: View {
             // Empty state placeholder
             VStack(spacing: 8) {
                 Image(systemName: definition.outputType.iconName)
-                    .font(.system(size: 20))
+                    .font(.system(size: DS.Font.display))
                     .foregroundStyle(.tertiary)
                 Text("Your \(definition.outputType.rawValue) will appear here")
-                    .font(.system(size: 10))
+                    .font(.system(size: DS.Font.caption))
                     .foregroundStyle(.tertiary)
             }
             .frame(maxWidth: .infinity)
@@ -806,15 +806,15 @@ struct PlayView: View {
         } label: {
             HStack(spacing: 4) {
                 Image(systemName: showCopied ? "checkmark" : "doc.on.doc")
-                    .font(.system(size: 10))
+                    .font(.system(size: DS.Font.caption))
                 Text(showCopied ? "Copied" : "Copy")
-                    .font(.system(size: 12))
+                    .font(.system(size: DS.Font.secondary))
             }
             .foregroundStyle(showCopied ? Color.green : Color.secondary)
             .padding(.horizontal, 8)
             .padding(.vertical, 4)
             .background(.quinary)
-            .clipShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous))
         }
         .buttonStyle(.plain)
     }
@@ -829,15 +829,15 @@ struct PlayView: View {
         } label: {
             HStack(spacing: 4) {
                 Image(systemName: showSaved ? "checkmark" : "arrow.down.circle")
-                    .font(.system(size: 10))
+                    .font(.system(size: DS.Font.caption))
                 Text(showSaved ? "Saved" : "Save")
-                    .font(.system(size: 12))
+                    .font(.system(size: DS.Font.secondary))
             }
             .foregroundStyle(showSaved ? Color.green : Color.secondary)
             .padding(.horizontal, 8)
             .padding(.vertical, 4)
             .background(.quinary)
-            .clipShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous))
         }
         .buttonStyle(.plain)
     }
@@ -896,7 +896,7 @@ struct PlayView: View {
 
         return HStack(alignment: .top, spacing: 0) {
             // Error accent bar
-            RoundedRectangle(cornerRadius: 1)
+            RoundedRectangle(cornerRadius: DS.Radius.xs)
                 .fill(.red)
                 .frame(width: 2)
                 .padding(.vertical, 6)
@@ -905,12 +905,12 @@ struct PlayView: View {
                 // Summary row
                 HStack(alignment: .top, spacing: 8) {
                     Image(systemName: "exclamationmark.triangle.fill")
-                        .font(.system(size: 12))
+                        .font(.system(size: DS.Font.secondary))
                         .foregroundStyle(.red)
                         .padding(.top, 1)
 
                     Text(summary)
-                        .font(.system(size: 13))
+                        .font(.system(size: DS.Font.body))
                         .foregroundStyle(.red)
                         .lineLimit(errorExpanded ? nil : 2)
 
@@ -921,17 +921,17 @@ struct PlayView: View {
                     } label: {
                         HStack(spacing: 4) {
                             Image(systemName: "arrow.clockwise")
-                                .font(.system(size: 12))
+                                .font(.system(size: DS.Font.secondary))
                             Text("Retry")
-                                .font(.system(size: 12, weight: .medium))
+                                .font(.system(size: DS.Font.secondary, weight: .medium))
                         }
                         .foregroundStyle(.red)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 5)
                         .background(.red.opacity(0.1))
-                        .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                        .clipShape(RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous))
                         .overlay(
-                            RoundedRectangle(cornerRadius: 6, style: .continuous)
+                            RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
                                 .strokeBorder(.red.opacity(0.3), lineWidth: 0.5)
                         )
                     }
@@ -947,10 +947,10 @@ struct PlayView: View {
                     } label: {
                         HStack(spacing: 4) {
                             Image(systemName: "chevron.right")
-                                .font(.system(size: 10, weight: .semibold))
+                                .font(.system(size: DS.Font.caption, weight: .semibold))
                                 .rotationEffect(.degrees(errorExpanded ? 90 : 0))
                             Text(errorExpanded ? "Hide details" : "Show details")
-                                .font(.system(size: 12))
+                                .font(.system(size: DS.Font.secondary))
                         }
                         .foregroundStyle(.secondary)
                     }
@@ -959,7 +959,7 @@ struct PlayView: View {
                     if errorExpanded {
                         ScrollView {
                             Text(message)
-                                .font(.system(size: 10, design: .monospaced))
+                                .font(.system(size: DS.Font.caption, design: .monospaced))
                                 .foregroundStyle(.tertiary)
                                 .textSelection(.enabled)
                                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -967,7 +967,7 @@ struct PlayView: View {
                         .frame(maxHeight: 200)
                         .padding(10)
                         .background(.quinary)
-                        .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                        .clipShape(RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous))
                         .transition(.opacity.combined(with: .move(edge: .top)))
                     }
                 }
@@ -977,9 +977,9 @@ struct PlayView: View {
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(.red.opacity(0.06))
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: DS.Radius.lg, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
+            RoundedRectangle(cornerRadius: DS.Radius.lg, style: .continuous)
                 .strokeBorder(.red.opacity(0.15), lineWidth: 0.5)
         )
     }
@@ -1002,7 +1002,7 @@ struct PlayView: View {
                     Image(nsImage: nsImage)
                         .resizable()
                         .aspectRatio(contentMode: .fit)
-                        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                        .clipShape(RoundedRectangle(cornerRadius: DS.Radius.lg, style: .continuous))
                         .onTapGesture { state.zoomedImageValue = value }
                         .onHover { hovering in
                             if hovering { NSCursor.pointingHand.push() } else { NSCursor.pop() }
@@ -1015,7 +1015,7 @@ struct PlayView: View {
                         image
                             .resizable()
                             .aspectRatio(contentMode: .fit)
-                            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                            .clipShape(RoundedRectangle(cornerRadius: DS.Radius.lg, style: .continuous))
                             .onTapGesture { state.zoomedImageValue = value }
                             .onHover { hovering in
                                 if hovering { NSCursor.pointingHand.push() } else { NSCursor.pop() }
@@ -1071,10 +1071,10 @@ struct PlayView: View {
     private func metricPill(label: String, value: String) -> some View {
         HStack(spacing: 4) {
             Text(label)
-                .font(.system(size: 10))
+                .font(.system(size: DS.Font.caption))
                 .foregroundStyle(.secondary)
             Text(value)
-                .font(.system(size: 10, design: .monospaced))
+                .font(.system(size: DS.Font.caption, design: .monospaced))
                 .foregroundStyle(.tertiary)
                 .contentTransition(.numericText())
         }
@@ -1150,17 +1150,17 @@ struct PlayView: View {
                 } label: {
                     HStack(spacing: 6) {
                         Image(systemName: "chevron.right")
-                            .font(.system(size: 10, weight: .semibold))
+                            .font(.system(size: DS.Font.caption, weight: .semibold))
                             .rotationEffect(.degrees(isExpanded.wrappedValue ? 90 : 0))
                             .foregroundStyle(.secondary)
 
                         Text(title)
-                            .font(.system(size: 12, weight: .medium))
+                            .font(.system(size: DS.Font.secondary, weight: .medium))
                             .foregroundStyle(.tertiary)
 
                         if !subtitle.isEmpty {
                             Text(subtitle)
-                                .font(.system(size: 10))
+                                .font(.system(size: DS.Font.caption))
                                 .foregroundStyle(.secondary)
                                 .lineLimit(1)
                         }
@@ -1184,9 +1184,9 @@ struct PlayView: View {
                     } label: {
                         HStack(spacing: 3) {
                             Image(systemName: isCopied.wrappedValue ? "checkmark" : "doc.on.doc")
-                                .font(.system(size: 10))
+                                .font(.system(size: DS.Font.caption))
                             Text(isCopied.wrappedValue ? "Copied" : "Copy")
-                                .font(.system(size: 10))
+                                .font(.system(size: DS.Font.caption))
                         }
                         .foregroundStyle(isCopied.wrappedValue ? Color.green : Color.secondary)
                     }
@@ -1200,7 +1200,7 @@ struct PlayView: View {
             if isExpanded.wrappedValue {
                 ScrollView([.horizontal, .vertical]) {
                     Text(json)
-                        .font(.system(size: 12, design: .monospaced))
+                        .font(.system(size: DS.Font.secondary, design: .monospaced))
                         .foregroundStyle(.secondary)
                         .textSelection(.enabled)
                         .lineSpacing(3)
@@ -1208,7 +1208,7 @@ struct PlayView: View {
                 }
                 .frame(maxHeight: 300)
                 .background(.quinary)
-                .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                .clipShape(RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous))
                 .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }

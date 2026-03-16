@@ -250,10 +250,10 @@ struct AudioPlayerView: View {
                 // Error state
                 HStack(spacing: 8) {
                     Image(systemName: "exclamationmark.triangle")
-                        .font(.system(size: 12))
+                        .font(.system(size: DS.Font.secondary))
                         .foregroundStyle(.red)
                     Text(error)
-                        .font(.system(size: 12))
+                        .font(.system(size: DS.Font.secondary))
                         .foregroundStyle(.red)
                 }
                 .padding(16)
@@ -264,7 +264,7 @@ struct AudioPlayerView: View {
                         .controlSize(.small)
                         .scaleEffect(0.7)
                     Text("Loading audio...")
-                        .font(.system(size: 12))
+                        .font(.system(size: DS.Font.secondary))
                         .foregroundStyle(.secondary)
                 }
                 .padding(16)
@@ -282,9 +282,9 @@ struct AudioPlayerView: View {
             }
         }
         .background(.quinary)
-        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: DS.Radius.lg, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
+            RoundedRectangle(cornerRadius: DS.Radius.lg, style: .continuous)
                 .strokeBorder(.separator.opacity(0.5), lineWidth: 0.5)
         )
         .onAppear { model.setup(urlString: urlString, autoplay: autoplay) }
@@ -311,7 +311,7 @@ struct AudioPlayerView: View {
                     let barHeight = max(minHeight, CGFloat(amplitude) * maxHeight)
                     let y = (maxHeight - barHeight) / 2
                     let rect = CGRect(x: x, y: y, width: barWidth, height: barHeight)
-                    let path = RoundedRectangle(cornerRadius: 1).path(in: rect)
+                    let path = RoundedRectangle(cornerRadius: DS.Radius.xs).path(in: rect)
 
                     let barProgress = CGFloat(i) / CGFloat(barCount)
                     let isPlayed = barProgress <= model.progress
@@ -366,7 +366,7 @@ struct AudioPlayerView: View {
             } label: {
                 Image(systemName: model.isPlaying ? "pause.fill" : "play.fill")
                     .contentTransition(.symbolEffect(.replace))
-                    .font(.system(size: 13))
+                    .font(.system(size: DS.Font.body))
                     .foregroundStyle(Color.accentColor)
                     .frame(width: 32, height: 32)
                     .background(.quinary)
@@ -383,7 +383,7 @@ struct AudioPlayerView: View {
                 Text(model.total)
                     .foregroundStyle(.secondary)
             }
-            .font(.system(size: 10, design: .monospaced))
+            .font(.system(size: DS.Font.caption, design: .monospaced))
 
             Spacer()
 
@@ -393,15 +393,15 @@ struct AudioPlayerView: View {
             } label: {
                 HStack(spacing: 4) {
                     Image(systemName: model.showSaved ? "checkmark" : "arrow.down.circle")
-                        .font(.system(size: 10))
+                        .font(.system(size: DS.Font.caption))
                     Text(model.showSaved ? "Saved" : "Save")
-                        .font(.system(size: 12))
+                        .font(.system(size: DS.Font.secondary))
                 }
                 .foregroundStyle(model.showSaved ? Color.green : Color.secondary)
                 .padding(.horizontal, 8)
                 .padding(.vertical, 4)
                 .background(.quinary)
-                .clipShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
+                .clipShape(RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous))
             }
             .buttonStyle(.plain)
         }

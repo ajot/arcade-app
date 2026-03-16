@@ -18,16 +18,16 @@ struct VideoPlayerView: View {
             } else if let errorMessage {
                 VStack(spacing: 8) {
                     Image(systemName: "exclamationmark.triangle")
-                        .font(.system(size: 20))
+                        .font(.system(size: DS.Font.display))
                         .foregroundStyle(.secondary)
                     Text(errorMessage)
-                        .font(.system(size: 10))
+                        .font(.system(size: DS.Font.caption))
                         .foregroundStyle(.secondary)
                 }
             }
         }
         .aspectRatio(16 / 9, contentMode: .fit)
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: DS.Radius.lg, style: .continuous))
         .task {
             await downloadAndPlay()
         }

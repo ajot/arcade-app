@@ -26,10 +26,10 @@ struct ContentView: View {
                         } label: {
                             HStack(spacing: 4) {
                                 Image(systemName: keyStatus.iconName)
-                                    .font(.system(size: 10))
+                                    .font(.system(size: DS.Font.caption))
                                     .foregroundStyle(keyStatus.color)
                                 Text(definition.providerDisplayName)
-                                    .font(.system(size: 12))
+                                    .font(.system(size: DS.Font.secondary))
                                     .foregroundStyle(.secondary)
                             }
                         }

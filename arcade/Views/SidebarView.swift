@@ -40,7 +40,7 @@ struct SidebarView: View {
                     state.definitionLoader.reload()
                 } label: {
                     Image(systemName: "arrow.clockwise")
-                        .font(.system(size: 12))
+                        .font(.system(size: DS.Font.secondary))
                 }
                 .buttonStyle(.plain)
                 .foregroundStyle(.secondary)
@@ -52,7 +52,7 @@ struct SidebarView: View {
                     state.definitionLoader.showDefinitionsFolder()
                 } label: {
                     Image(systemName: "folder")
-                        .font(.system(size: 12))
+                        .font(.system(size: DS.Font.secondary))
                 }
                 .buttonStyle(.plain)
                 .foregroundStyle(.secondary)
@@ -81,16 +81,16 @@ struct SidebarView: View {
 
             VStack(alignment: .leading, spacing: 1) {
                 Text(definition.name)
-                    .font(.system(size: 12))
+                    .font(.system(size: DS.Font.secondary))
                     .lineLimit(1)
 
                 HStack(spacing: 4) {
                     Text(definition.providerDisplayName)
-                        .font(.system(size: 10))
+                        .font(.system(size: DS.Font.caption))
                         .foregroundStyle(.secondary)
                     if definition.modelCount > 1 {
                         Text("· \(definition.modelCount) models")
-                            .font(.system(size: 10))
+                            .font(.system(size: DS.Font.caption))
                             .foregroundStyle(.tertiary)
                     }
                 }

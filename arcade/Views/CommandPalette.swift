@@ -55,9 +55,9 @@ struct CommandPalette: View {
                         } label: {
                             HStack(spacing: 4) {
                                 Image(systemName: "chevron.left")
-                                    .font(.system(size: 10))
+                                    .font(.system(size: DS.Font.caption))
                                 Text(def.name)
-                                    .font(.system(size: 12))
+                                    .font(.system(size: DS.Font.secondary))
                             }
                             .foregroundStyle(.tertiary)
                         }
@@ -72,14 +72,14 @@ struct CommandPalette: View {
                 // Search field
                 HStack(spacing: 8) {
                     Image(systemName: "magnifyingglass")
-                        .font(.system(size: 13))
+                        .font(.system(size: DS.Font.body))
                         .foregroundStyle(.secondary)
                     TextField(
                         searchPlaceholder,
                         text: $searchText
                     )
                     .textFieldStyle(.plain)
-                    .font(.system(size: 13))
+                    .font(.system(size: DS.Font.body))
                     .foregroundStyle(.primary)
                     .focused($isSearchFocused)
                     .onChange(of: searchText) {
@@ -124,9 +124,9 @@ struct CommandPalette: View {
                             }
                         }
                         .background(.quinary.opacity(0.5))
-                        .clipShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
+                        .clipShape(RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous))
                         .overlay(
-                            RoundedRectangle(cornerRadius: 5, style: .continuous)
+                            RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
                                 .strokeBorder(.separator.opacity(0.3), lineWidth: 0.5)
                         )
 
@@ -144,9 +144,9 @@ struct CommandPalette: View {
                 .padding(.vertical, 8)
             }
             .background(.ultraThickMaterial)
-            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: DS.Radius.lg, style: .continuous))
             .overlay(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                RoundedRectangle(cornerRadius: DS.Radius.lg, style: .continuous)
                     .strokeBorder(.separator, lineWidth: 0.5)
             )
             .shadow(color: .black.opacity(0.5), radius: 40, y: 10)
@@ -246,7 +246,7 @@ struct CommandPalette: View {
             switch item {
             case .header(let outputType):
                 Text(outputType.displayName)
-                    .font(.system(size: 10, weight: .medium))
+                    .font(.system(size: DS.Font.caption, weight: .medium))
                     .foregroundStyle(.secondary)
                     .textCase(.uppercase)
                     .tracking(0.5)
@@ -263,31 +263,31 @@ struct CommandPalette: View {
                 } label: {
                     HStack(spacing: 0) {
                         Image(systemName: def.outputType.iconName)
-                            .font(.system(size: 12))
+                            .font(.system(size: DS.Font.secondary))
                             .foregroundStyle(.secondary)
                             .frame(width: 20)
                             .padding(.trailing, 8)
 
                         Text(def.providerDisplayName)
-                            .font(.system(size: 12))
+                            .font(.system(size: DS.Font.secondary))
                             .foregroundStyle(.tertiary)
                             .padding(.trailing, 6)
 
                         Text(def.name)
-                            .font(.system(size: 13))
+                            .font(.system(size: DS.Font.body))
                             .foregroundStyle(hasKey ? .primary : .tertiary)
 
                         Spacer()
 
                         if def.modelCount > 0 {
                             Text("\(def.modelCount) models")
-                                .font(.system(size: 10))
+                                .font(.system(size: DS.Font.caption))
                                 .foregroundStyle(.secondary)
                         }
 
                         if !hasKey {
                             Text("no key")
-                                .font(.system(size: 10))
+                                .font(.system(size: DS.Font.caption))
                                 .foregroundStyle(Color.accentColor)
                                 .padding(.leading, 8)
                         }
@@ -321,12 +321,12 @@ struct CommandPalette: View {
             } label: {
                 HStack {
                     Text(model)
-                        .font(.system(size: 13))
+                        .font(.system(size: DS.Font.body))
                         .foregroundStyle(.primary)
 
                     if isDefault {
                         Text("default")
-                            .font(.system(size: 10))
+                            .font(.system(size: DS.Font.caption))
                             .foregroundStyle(.secondary)
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
@@ -449,14 +449,14 @@ struct CommandPalette: View {
         if bookmarks.isEmpty {
             VStack(spacing: 8) {
                 Image(systemName: "bookmark")
-                    .font(.system(size: 20))
+                    .font(.system(size: DS.Font.display))
                     .foregroundStyle(.quaternary.opacity(0.4))
                 Text(searchText.isEmpty ? "No bookmarks yet" : "No matching bookmarks")
-                    .font(.system(size: 13))
+                    .font(.system(size: DS.Font.body))
                     .foregroundStyle(.secondary)
                 if searchText.isEmpty {
                     Text("Save one with \u{2318}D")
-                        .font(.system(size: 12))
+                        .font(.system(size: DS.Font.secondary))
                         .foregroundStyle(.quaternary.opacity(0.6))
                 }
             }
@@ -474,14 +474,14 @@ struct CommandPalette: View {
                 } label: {
                     HStack(spacing: 0) {
                         // Output type accent bar
-                        RoundedRectangle(cornerRadius: 1.5)
+                        RoundedRectangle(cornerRadius: DS.Radius.xs)
                             .fill(outputTypeColor(definition?.outputType))
                             .frame(width: 3, height: 24)
                             .padding(.trailing, 10)
 
                         // Bookmark icon
                         Image(systemName: "bookmark.fill")
-                            .font(.system(size: 10))
+                            .font(.system(size: DS.Font.caption))
                             .foregroundStyle(Color.accentColor.opacity(0.7))
                             .frame(width: 16)
                             .padding(.trailing, 6)
@@ -489,7 +489,7 @@ struct CommandPalette: View {
                         // Label + endpoint info
                         VStack(alignment: .leading, spacing: 2) {
                             Text(bookmark.label)
-                                .font(.system(size: 13))
+                                .font(.system(size: DS.Font.body))
                                 .foregroundStyle(.primary)
                                 .lineLimit(1)
 
@@ -505,7 +505,7 @@ struct CommandPalette: View {
                                     }
                                 }
                             }
-                            .font(.system(size: 10))
+                            .font(.system(size: DS.Font.caption))
                             .lineLimit(1)
                         }
 
@@ -513,7 +513,7 @@ struct CommandPalette: View {
 
                         // Time ago
                         Text(timeAgo(bookmark.createdAt))
-                            .font(.system(size: 10))
+                            .font(.system(size: DS.Font.caption))
                             .foregroundStyle(.secondary)
 
                         // Delete button (hover reveal)
@@ -524,7 +524,7 @@ struct CommandPalette: View {
                                 }
                             } label: {
                                 Image(systemName: "trash")
-                                    .font(.system(size: 10))
+                                    .font(.system(size: DS.Font.caption))
                                     .foregroundStyle(.secondary)
                                     .frame(width: 24, height: 24)
                             }
@@ -632,12 +632,12 @@ struct CommandPalette: View {
     private func tabPill(_ label: String, isActive: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(label)
-                .font(.system(size: 10, weight: isActive ? .semibold : .regular))
+                .font(.system(size: DS.Font.caption, weight: isActive ? .semibold : .regular))
                 .foregroundStyle(isActive ? .primary : .secondary)
                 .padding(.horizontal, 8)
                 .padding(.vertical, 3)
                 .background(isActive ? AnyShapeStyle(.quaternary) : AnyShapeStyle(Color.clear))
-                .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
+                .clipShape(RoundedRectangle(cornerRadius: DS.Radius.sm, style: .continuous))
         }
         .buttonStyle(.plain)
     }
@@ -647,14 +647,14 @@ struct CommandPalette: View {
     private func hintLabel(key: String, text: String) -> some View {
         HStack(spacing: 4) {
             Text(key)
-                .font(.system(size: 10, weight: .medium, design: .monospaced))
+                .font(.system(size: DS.Font.caption, weight: .medium, design: .monospaced))
                 .foregroundStyle(.secondary)
                 .padding(.horizontal, 4)
                 .padding(.vertical, 1)
                 .background(.quinary)
-                .clipShape(RoundedRectangle(cornerRadius: 3, style: .continuous))
+                .clipShape(RoundedRectangle(cornerRadius: DS.Radius.sm, style: .continuous))
             Text(text)
-                .font(.system(size: 10))
+                .font(.system(size: DS.Font.caption))
                 .foregroundStyle(.secondary)
         }
     }

@@ -1,5 +1,36 @@
 import SwiftUI
 
+// MARK: - Design Tokens
+
+enum DS {
+    // Base-4 spacing grid: 4, 8, 12, 16, 20, 24, 32, 40, 48
+    enum Spacing {
+        static let xs: CGFloat = 4
+        static let sm: CGFloat = 8
+        static let md: CGFloat = 12
+        static let lg: CGFloat = 16
+        static let xl: CGFloat = 24
+        static let xxl: CGFloat = 32
+    }
+
+    // 5-tier type scale
+    enum Font {
+        static let caption: CGFloat = 10
+        static let secondary: CGFloat = 12
+        static let body: CGFloat = 13
+        static let display: CGFloat = 20
+        // Hero: use .largeTitle directly
+    }
+
+    // 4-tier corner radius
+    enum Radius {
+        static let xs: CGFloat = 2    // accent bars, tiny details
+        static let sm: CGFloat = 4    // icons, small elements
+        static let md: CGFloat = 6    // buttons, inputs, code blocks
+        static let lg: CGFloat = 10   // cards, panels
+    }
+}
+
 // MARK: - Semantic Colors
 
 extension Color {
@@ -65,13 +96,13 @@ struct ProviderIconView: View {
                 .resizable()
                 .aspectRatio(contentMode: .fit)
                 .frame(width: size, height: size)
-                .clipShape(RoundedRectangle(cornerRadius: 3))
+                .clipShape(RoundedRectangle(cornerRadius: DS.Radius.sm))
         } else {
             Text(String(displayName.prefix(1)))
-                .font(.system(size: 10, weight: .bold))
+                .font(.system(size: DS.Font.caption, weight: .bold))
                 .foregroundStyle(.secondary)
                 .frame(width: size, height: size)
-                .background(.quinary, in: RoundedRectangle(cornerRadius: 3))
+                .background(.quinary, in: RoundedRectangle(cornerRadius: DS.Radius.sm))
         }
     }
 }

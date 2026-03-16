@@ -128,7 +128,7 @@ struct MarkdownTextView: View {
             VStack(alignment: .leading, spacing: 0) {
                 if let lang = language {
                     Text(lang)
-                        .font(.system(size: 10, weight: .medium))
+                        .font(.system(size: DS.Font.caption, weight: .medium))
                         .foregroundStyle(.secondary)
                         .padding(.horizontal, 12)
                         .padding(.top, 8)
@@ -136,7 +136,7 @@ struct MarkdownTextView: View {
                 }
 
                 Text(code)
-                    .font(.system(size: 12, design: .monospaced))
+                    .font(.system(size: DS.Font.secondary, design: .monospaced))
                     .foregroundStyle(.secondary)
                     .textSelection(.enabled)
                     .lineSpacing(3)
@@ -146,9 +146,9 @@ struct MarkdownTextView: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(.quinary)
-            .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous))
             .overlay(
-                RoundedRectangle(cornerRadius: 6, style: .continuous)
+                RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
                     .strokeBorder(.separator, lineWidth: 0.5)
             )
 
@@ -168,14 +168,14 @@ struct MarkdownTextView: View {
         case .listItem(_, let text):
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Text("•")
-                    .font(.system(size: 13))
+                    .font(.system(size: DS.Font.body))
                     .foregroundStyle(.secondary)
                 inlineMarkdown(text)
             }
 
         case .blockquote(let text):
             HStack(alignment: .top, spacing: 0) {
-                RoundedRectangle(cornerRadius: 1)
+                RoundedRectangle(cornerRadius: DS.Radius.xs)
                     .fill(.separator)
                     .frame(width: 3)
                 inlineMarkdown(text)
@@ -192,14 +192,14 @@ struct MarkdownTextView: View {
             options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace)
         ) {
             Text(attributed)
-                .font(.system(size: 13))
+                .font(.system(size: DS.Font.body))
                 .foregroundStyle(.secondary)
                 .textSelection(.enabled)
                 .lineSpacing(4)
                 .tint(.accentColor)
         } else {
             Text(text)
-                .font(.system(size: 13))
+                .font(.system(size: DS.Font.body))
                 .foregroundStyle(.secondary)
                 .textSelection(.enabled)
                 .lineSpacing(4)

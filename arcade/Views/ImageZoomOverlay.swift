@@ -30,15 +30,15 @@ struct ImageZoomOverlay: View {
                     } label: {
                         HStack(spacing: 4) {
                             Image(systemName: showSaved ? "checkmark" : "arrow.down.circle")
-                                .font(.system(size: 12))
+                                .font(.system(size: DS.Font.secondary))
                             Text(showSaved ? "Saved" : "Save")
-                                .font(.system(size: 12))
+                                .font(.system(size: DS.Font.secondary))
                         }
                         .foregroundStyle(showSaved ? .green : .secondary)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 6)
                         .background(.ultraThinMaterial)
-                        .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                        .clipShape(RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous))
                     }
                     .buttonStyle(.plain)
 
@@ -47,7 +47,7 @@ struct ImageZoomOverlay: View {
                         dismiss()
                     } label: {
                         Image(systemName: "xmark")
-                            .font(.system(size: 12, weight: .semibold))
+                            .font(.system(size: DS.Font.secondary, weight: .semibold))
                             .foregroundStyle(.secondary)
                             .frame(width: 28, height: 28)
                             .background(.ultraThinMaterial)
@@ -81,7 +81,7 @@ struct ImageZoomOverlay: View {
                 Image(nsImage: nsImage)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
-                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                    .clipShape(RoundedRectangle(cornerRadius: DS.Radius.lg, style: .continuous))
             }
         } else if let url = URL(string: value) {
             AsyncImage(url: url) { phase in
@@ -90,7 +90,7 @@ struct ImageZoomOverlay: View {
                     image
                         .resizable()
                         .aspectRatio(contentMode: .fit)
-                        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                        .clipShape(RoundedRectangle(cornerRadius: DS.Radius.lg, style: .continuous))
                 case .failure:
                     Label("Failed to load image", systemImage: "photo")
                         .foregroundStyle(.secondary)
