@@ -5,7 +5,7 @@ struct MarkdownTextView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            ForEach(Array(parseBlocks().enumerated()), id: \.offset) { _, block in
+            ForEach(parseBlocks()) { block in
                 renderBlock(block)
             }
         }
@@ -13,12 +13,22 @@ struct MarkdownTextView: View {
 
     // MARK: - Block Types
 
-    private enum Block {
+    private enum Block: Identifiable {
         case paragraph(String)
         case codeBlock(language: String?, code: String)
         case heading(level: Int, text: String)
         case listItem(ordered: Bool, text: String)
         case blockquote(String)
+
+        var id: String {
+            switch self {
+            case .paragraph(let t): return "p-\(t.prefix(60).hashValue)"
+            case .codeBlock(let lang, let code): return "code-\(lang ?? "")-\(code.prefix(60).hashValue)"
+            case .heading(let level, let t): return "h\(level)-\(t.hashValue)"
+            case .listItem(_, let t): return "li-\(t.prefix(60).hashValue)"
+            case .blockquote(let t): return "bq-\(t.prefix(60).hashValue)"
+            }
+        }
     }
 
     // MARK: - Parser

@@ -16,13 +16,11 @@ struct PlayView: View {
     @State private var showResponseJSON = false
     @State private var requestJSONCopied = false
     @State private var responseJSONCopied = false
+    @State private var scrollThrottleTask: Task<Void, Never>?
 
+    @ViewBuilder
     var body: some View {
-        guard let definition = state.currentDefinition else {
-            return AnyView(EmptyView())
-        }
-
-        return AnyView(
+        if let definition = state.currentDefinition {
             VStack(spacing: 0) {
                 ScrollViewReader { proxy in
                     ScrollView {
@@ -87,8 +85,13 @@ struct PlayView: View {
                         .contentShape(Rectangle())
                     }
                     .onChange(of: state.streamedText) {
-                        withAnimation(.easeOut(duration: 0.15)) {
-                            proxy.scrollTo("bottom", anchor: .bottom)
+                        guard scrollThrottleTask == nil else { return }
+                        scrollThrottleTask = Task {
+                            withAnimation(.easeOut(duration: 0.15)) {
+                                proxy.scrollTo("bottom", anchor: .bottom)
+                            }
+                            try? await Task.sleep(for: .milliseconds(100))
+                            scrollThrottleTask = nil
                         }
                     }
                 }
@@ -122,7 +125,7 @@ struct PlayView: View {
                     state.showBookmarkPopover = false
                 }
             }
-        )
+        }
     }
 
     // MARK: - Header
