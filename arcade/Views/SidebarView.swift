@@ -31,6 +31,7 @@ struct SidebarView: View {
             }
             .searchable(text: $searchText, placement: .sidebar, prompt: "Search endpoints")
             .listStyle(.sidebar)
+            .animation(.easeInOut(duration: 0.35), value: state.keysValidated)
 
             Divider()
 
@@ -115,9 +116,13 @@ struct SidebarView: View {
             }
         }
         return all.sorted { a, b in
-            let aPriority = keyPriority(for: a.provider)
-            let bPriority = keyPriority(for: b.provider)
-            if aPriority != bPriority { return aPriority < bPriority }
+            // Only sort by key status after all keys have been validated,
+            // otherwise the list shuffles as each key result arrives
+            if state.keysValidated {
+                let aPriority = keyPriority(for: a.provider)
+                let bPriority = keyPriority(for: b.provider)
+                if aPriority != bPriority { return aPriority < bPriority }
+            }
             return a.name.localizedCaseInsensitiveCompare(b.name) == .orderedAscending
         }
     }

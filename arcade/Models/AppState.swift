@@ -336,6 +336,8 @@ final class AppState {
 
     // MARK: - Key Validation
 
+    var keysValidated = false
+
     func validateAllKeys() {
         let providers = definitionLoader.providers
         for (slug, _) in providers {
@@ -347,6 +349,7 @@ final class AppState {
         }
 
         Task {
+            var results: [(String, KeyStatus)] = []
             await withTaskGroup(of: (String, KeyStatus).self) { group in
                 for (slug, _) in providers {
                     guard let apiKey = KeychainService.getKey(for: slug) else { continue }
@@ -355,11 +358,16 @@ final class AppState {
                     }
                 }
 
-                for await (provider, status) in group {
-                    await MainActor.run {
-                        self.keyStatus[provider] = status
-                    }
+                for await result in group {
+                    results.append(result)
                 }
+            }
+
+            await MainActor.run {
+                for (provider, status) in results {
+                    self.keyStatus[provider] = status
+                }
+                self.keysValidated = true
             }
         }
     }
