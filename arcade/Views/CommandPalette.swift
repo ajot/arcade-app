@@ -211,14 +211,24 @@ struct CommandPalette: View {
 
     // MARK: - Endpoint List (flattened for stable identities)
 
+    private static let outputOrder: [OutputType] = [.text, .image, .audio, .video]
+
     private var flatEndpointItems: [PaletteItem] {
-        let grouped = filteredEndpointsByType
-        let outputOrder: [OutputType] = [.text, .image, .audio, .video]
+        let all = state.definitionLoader.definitionsByOutputType
+        let query = searchText.lowercased()
         var items: [PaletteItem] = []
         var flatIdx = 0
 
-        for type in outputOrder {
-            guard let defs = grouped[type], !defs.isEmpty else { continue }
+        for type in Self.outputOrder {
+            guard var defs = all[type], !defs.isEmpty else { continue }
+            if !query.isEmpty {
+                defs = defs.filter {
+                    $0.name.lowercased().contains(query) ||
+                    $0.provider.lowercased().contains(query) ||
+                    $0.providerDisplayName.lowercased().contains(query)
+                }
+                if defs.isEmpty { continue }
+            }
             items.append(.header(type))
             for def in defs {
                 items.append(.endpoint(def, flatIdx))
@@ -341,32 +351,11 @@ struct CommandPalette: View {
 
     // MARK: - Filtering
 
-    private var filteredEndpointsByType: [OutputType: [Definition]] {
-        let all = state.definitionLoader.definitionsByOutputType
-        if searchText.isEmpty { return all }
-        let query = searchText.lowercased()
-        var result: [OutputType: [Definition]] = [:]
-        for (type, defs) in all {
-            let filtered = defs.filter {
-                $0.name.lowercased().contains(query) ||
-                $0.provider.lowercased().contains(query) ||
-                $0.providerDisplayName.lowercased().contains(query)
-            }
-            if !filtered.isEmpty {
-                result[type] = filtered
-            }
-        }
-        return result
-    }
-
     private var totalFilteredCount: Int {
-        let grouped = filteredEndpointsByType
-        let outputOrder: [OutputType] = [.text, .image, .audio, .video]
-        var count = 0
-        for type in outputOrder {
-            count += grouped[type]?.count ?? 0
+        flatEndpointItems.reduce(0) { count, item in
+            if case .endpoint = item { return count + 1 }
+            return count
         }
-        return count
     }
 
     private var filteredModels: [String] {
@@ -398,17 +387,10 @@ struct CommandPalette: View {
     private func selectHighlighted() {
         switch step {
         case .endpoints:
-            let grouped = filteredEndpointsByType
-            let outputOrder: [OutputType] = [.text, .image, .audio, .video]
-            var idx = 0
-            for type in outputOrder {
-                guard let defs = grouped[type] else { continue }
-                for def in defs {
-                    if idx == highlightedIndex {
-                        selectEndpoint(def)
-                        return
-                    }
-                    idx += 1
+            for item in flatEndpointItems {
+                if case .endpoint(let def, let idx) = item, idx == highlightedIndex {
+                    selectEndpoint(def)
+                    return
                 }
             }
         case .models:
