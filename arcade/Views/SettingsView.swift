@@ -220,7 +220,7 @@ private struct APIKeysSettingsTab: View {
                 }
             }
             .padding(.horizontal, 20)
-            .padding(.vertical, 10)
+            .padding(.vertical, 12)
 
             if isEditing {
                 HStack(spacing: 8) {
@@ -243,7 +243,7 @@ private struct APIKeysSettingsTab: View {
                     .foregroundStyle(.secondary)
                 }
                 .padding(.horizontal, 46)
-                .padding(.bottom, 10)
+                .padding(.bottom, 12)
                 .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }

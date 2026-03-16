@@ -99,7 +99,7 @@ struct PlayView: View {
                 // Fixed bottom bar
                 generateBar(definition)
                     .padding(.horizontal, 24)
-                    .padding(.vertical, 10)
+                    .padding(.vertical, 12)
                     .background(.bar)
             }
             .inspector(isPresented: $state.showInspector) {
@@ -712,7 +712,7 @@ struct PlayView: View {
                         }
                     }
                     .padding(.horizontal, 12)
-                    .padding(.top, 10)
+                    .padding(.top, 12)
                     .padding(.bottom, 4)
                 }
 
@@ -929,8 +929,8 @@ struct PlayView: View {
                                 .font(.system(size: DS.Font.secondary, weight: .medium))
                         }
                         .foregroundStyle(.red)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 5)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 4)
                         .background(.red.opacity(0.1))
                         .clipShape(RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous))
                         .overlay(
@@ -968,7 +968,7 @@ struct PlayView: View {
                                 .frame(maxWidth: .infinity, alignment: .leading)
                         }
                         .frame(maxHeight: 200)
-                        .padding(10)
+                        .padding(12)
                         .background(.quinary)
                         .clipShape(RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous))
                         .transition(.opacity.combined(with: .move(edge: .top)))

@@ -477,7 +477,7 @@ struct CommandPalette: View {
                         RoundedRectangle(cornerRadius: DS.Radius.xs)
                             .fill(outputTypeColor(definition?.outputType))
                             .frame(width: 3, height: 24)
-                            .padding(.trailing, 10)
+                            .padding(.trailing, 12)
 
                         // Bookmark icon
                         Image(systemName: "bookmark.fill")

@@ -35,8 +35,8 @@ struct ImageZoomOverlay: View {
                                 .font(.system(size: DS.Font.secondary))
                         }
                         .foregroundStyle(showSaved ? .green : .secondary)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 6)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
                         .background(.ultraThinMaterial)
                         .clipShape(RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous))
                     }

@@ -151,7 +151,7 @@ struct MarkdownTextView: View {
                     .textSelection(.enabled)
                     .lineSpacing(3)
                     .padding(.horizontal, 12)
-                    .padding(.vertical, language != nil ? 4 : 10)
+                    .padding(.vertical, language != nil ? 4 : 12)
                     .padding(.bottom, 4)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
