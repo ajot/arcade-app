@@ -29,7 +29,7 @@ struct PlayView: View {
                         VStack(alignment: .leading, spacing: 0) {
                             // Endpoint header
                             endpointHeader(definition)
-                                .padding(.bottom, 14)
+                                .padding(.bottom, 12)
 
                             // Examples
                             if !definition.examples.isEmpty {
@@ -603,7 +603,7 @@ struct PlayView: View {
                 }
                 .buttonStyle(.plain)
             }
-            .padding(.horizontal, 14)
+            .padding(.horizontal, 12)
             .padding(.top, 12)
             .padding(.bottom, 8)
 
@@ -616,7 +616,7 @@ struct PlayView: View {
                     .foregroundStyle(.secondary)
                     .textSelection(.enabled)
                     .lineSpacing(3)
-                    .padding(14)
+                    .padding(12)
             }
             .frame(maxHeight: 300)
         }
@@ -656,7 +656,7 @@ struct PlayView: View {
                 .buttonStyle(.borderedProminent)
             }
         }
-        .padding(14)
+        .padding(12)
         .frame(width: 280)
         .onSubmit {
             saveBookmark()
@@ -974,7 +974,7 @@ struct PlayView: View {
             }
             .padding(.leading, 12)
         }
-        .padding(14)
+        .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(.red.opacity(0.06))
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))

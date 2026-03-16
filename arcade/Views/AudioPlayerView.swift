@@ -271,12 +271,12 @@ struct AudioPlayerView: View {
             } else {
                 // Waveform
                 waveformArea
-                    .padding(.horizontal, 14)
-                    .padding(.top, 14)
+                    .padding(.horizontal, 12)
+                    .padding(.top, 12)
 
                 // Transport
                 transportBar
-                    .padding(.horizontal, 14)
+                    .padding(.horizontal, 12)
                     .padding(.top, 8)
                     .padding(.bottom, 12)
             }
