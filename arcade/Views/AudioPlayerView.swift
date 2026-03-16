@@ -395,7 +395,7 @@ struct AudioPlayerView: View {
                     Image(systemName: model.showSaved ? "checkmark" : "arrow.down.circle")
                         .font(.system(size: 10))
                     Text(model.showSaved ? "Saved" : "Save")
-                        .font(.system(size: 11))
+                        .font(.system(size: 12))
                 }
                 .foregroundStyle(model.showSaved ? Color.green : Color.secondary)
                 .padding(.horizontal, 8)

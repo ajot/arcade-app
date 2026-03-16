@@ -18,10 +18,10 @@ struct VideoPlayerView: View {
             } else if let errorMessage {
                 VStack(spacing: 8) {
                     Image(systemName: "exclamationmark.triangle")
-                        .font(.title2)
+                        .font(.system(size: 20))
                         .foregroundStyle(.secondary)
                     Text(errorMessage)
-                        .font(.caption)
+                        .font(.system(size: 10))
                         .foregroundStyle(.secondary)
                 }
             }

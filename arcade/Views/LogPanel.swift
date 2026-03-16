@@ -16,7 +16,7 @@ struct LogPanel: View {
             // Header
             HStack(spacing: 8) {
                 Image(systemName: "text.line.last.and.arrowtriangle.forward")
-                    .font(.system(size: 11))
+                    .font(.system(size: 12))
                     .foregroundStyle(.secondary)
                 Text("Log")
                     .font(.system(size: 12, weight: .medium))
@@ -127,7 +127,7 @@ struct LogPanel: View {
             HStack(alignment: .top, spacing: 8) {
                 // Icon
                 Text(entry.kind.symbol)
-                    .font(.system(size: 11))
+                    .font(.system(size: 12))
                     .frame(width: 14)
 
                 // Timestamp
@@ -137,7 +137,7 @@ struct LogPanel: View {
 
                 // Message
                 Text(entry.message)
-                    .font(.system(size: 11, design: .monospaced))
+                    .font(.system(size: 12, design: .monospaced))
                     .foregroundStyle(entry.kind.color)
                     .lineLimit(isExpanded ? nil : 1)
 
@@ -145,7 +145,7 @@ struct LogPanel: View {
 
                 if hasDetail {
                     Image(systemName: "chevron.right")
-                        .font(.system(size: 8, weight: .semibold))
+                        .font(.system(size: 10, weight: .semibold))
                         .foregroundStyle(.secondary)
                         .rotationEffect(.degrees(isExpanded ? 90 : 0))
                 }

@@ -73,7 +73,7 @@ private struct GeneralSettingsTab: View {
                         Text("Restore Default Definitions")
 
                         Text("Re-copies bundled definitions into your definitions folder")
-                            .font(.caption)
+                            .font(.system(size: 10))
                             .foregroundStyle(.secondary)
                     }
 
@@ -89,7 +89,7 @@ private struct GeneralSettingsTab: View {
                 Toggle(isOn: $isMuted) {
                     HStack(spacing: 10) {
                         Image(systemName: isMuted ? "speaker.slash.fill" : "speaker.wave.2.fill")
-                            .font(.system(size: 14))
+                            .font(.system(size: 13))
                             .foregroundStyle(isMuted ? Color.secondary : Color.accentColor)
                             .frame(width: 20)
                             .contentTransition(.symbolEffect(.replace))
@@ -98,7 +98,7 @@ private struct GeneralSettingsTab: View {
                             Text("Mute all sounds")
 
                             Text("Disable UI feedback sounds throughout the app")
-                                .font(.caption)
+                                .font(.system(size: 10))
                                 .foregroundStyle(.secondary)
                         }
                     }
@@ -125,7 +125,7 @@ private struct APIKeysSettingsTab: View {
         VStack(alignment: .leading, spacing: 0) {
             HStack {
                 Text("Manage your API keys for each provider")
-                    .font(.subheadline)
+                    .font(.system(size: 12))
                     .foregroundStyle(.secondary)
 
                 Spacer()
@@ -133,7 +133,7 @@ private struct APIKeysSettingsTab: View {
                 Button("Validate All") {
                     state.validateAllKeys()
                 }
-                .font(.subheadline)
+                .font(.system(size: 12))
                 .buttonStyle(.plain)
                 .foregroundStyle(.secondary)
             }
@@ -180,7 +180,7 @@ private struct APIKeysSettingsTab: View {
 
                 if saveConfirmation == slug {
                     Image(systemName: "checkmark")
-                        .font(.system(size: 11))
+                        .font(.system(size: 12))
                         .foregroundStyle(.green)
                         .transition(.scale.combined(with: .opacity))
                 } else if isEditing {
@@ -195,7 +195,7 @@ private struct APIKeysSettingsTab: View {
                             editingProvider = slug
                             keyInput = ""
                         }
-                        .font(.system(size: 11))
+                        .font(.system(size: 12))
                         .buttonStyle(.plain)
                         .foregroundStyle(.secondary)
 
@@ -204,7 +204,7 @@ private struct APIKeysSettingsTab: View {
                             state.keyStatus[slug] = .noKey
                         } label: {
                             Image(systemName: "trash")
-                                .font(.system(size: 11))
+                                .font(.system(size: 12))
                                 .foregroundStyle(.tertiary)
                         }
                         .buttonStyle(.plain)
@@ -214,7 +214,7 @@ private struct APIKeysSettingsTab: View {
                         editingProvider = slug
                         keyInput = ""
                     }
-                    .font(.system(size: 11))
+                    .font(.system(size: 12))
                     .buttonStyle(.plain)
                     .foregroundStyle(.tint)
                 }
@@ -239,7 +239,7 @@ private struct APIKeysSettingsTab: View {
                         keyInput = ""
                     }
                     .buttonStyle(.plain)
-                    .font(.system(size: 11))
+                    .font(.system(size: 12))
                     .foregroundStyle(.secondary)
                 }
                 .padding(.horizontal, 46)

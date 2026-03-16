@@ -59,7 +59,7 @@ struct WelcomeView: View {
 
                 // Subtitle
                 Text("An AI playground for every provider")
-                    .font(.system(size: 15))
+                    .font(.system(size: 13))
                     .foregroundStyle(.tertiary)
                     .opacity(appeared ? 1 : 0)
                     .offset(y: appeared ? 0 : 8)
@@ -75,7 +75,7 @@ struct WelcomeView: View {
                             .font(.system(size: 13))
                         Spacer()
                         Text("\u{2318}K")
-                            .font(.system(size: 11, weight: .medium, design: .monospaced))
+                            .font(.system(size: 12, weight: .medium, design: .monospaced))
                             .foregroundStyle(.secondary)
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)

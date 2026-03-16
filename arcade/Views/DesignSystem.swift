@@ -68,7 +68,7 @@ struct ProviderIconView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 3))
         } else {
             Text(String(displayName.prefix(1)))
-                .font(.caption2.bold())
+                .font(.system(size: 10, weight: .bold))
                 .foregroundStyle(.secondary)
                 .frame(width: size, height: size)
                 .background(.quinary, in: RoundedRectangle(cornerRadius: 3))

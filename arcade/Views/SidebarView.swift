@@ -39,7 +39,7 @@ struct SidebarView: View {
                     state.definitionLoader.reload()
                 } label: {
                     Image(systemName: "arrow.clockwise")
-                        .font(.system(size: 11))
+                        .font(.system(size: 12))
                 }
                 .buttonStyle(.plain)
                 .foregroundStyle(.secondary)
@@ -51,7 +51,7 @@ struct SidebarView: View {
                     state.definitionLoader.showDefinitionsFolder()
                 } label: {
                     Image(systemName: "folder")
-                        .font(.system(size: 11))
+                        .font(.system(size: 12))
                 }
                 .buttonStyle(.plain)
                 .foregroundStyle(.secondary)

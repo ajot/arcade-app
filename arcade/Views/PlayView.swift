@@ -44,7 +44,7 @@ struct PlayView: View {
                             if let modelParam = definition.modelParam, let options = modelParam.options {
                                 VStack(alignment: .leading, spacing: 6) {
                                     Text("Model")
-                                        .font(.system(size: 11, weight: .medium))
+                                        .font(.system(size: 12, weight: .medium))
                                         .foregroundStyle(.secondary)
                                         .textCase(.uppercase)
                                         .tracking(0.3)
@@ -130,19 +130,19 @@ struct PlayView: View {
     private func endpointHeader(_ definition: Definition) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(definition.description)
-                .font(.callout)
+                .font(.system(size: 13))
                 .foregroundStyle(.secondary)
 
             HStack(spacing: 6) {
                 Label(definition.outputType.rawValue, systemImage: definition.outputType.iconName)
-                    .font(.caption)
+                    .font(.system(size: 10))
                     .foregroundStyle(.tertiary)
 
                 Text("·")
                     .foregroundStyle(.tertiary)
 
                 Text(patternLabel(definition))
-                    .font(.caption)
+                    .font(.system(size: 10))
                     .foregroundStyle(.tertiary)
             }
         }
@@ -155,7 +155,7 @@ struct PlayView: View {
     private func exampleChips(_ definition: Definition) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Examples")
-                .font(.system(size: 11, weight: .medium))
+                .font(.system(size: 12, weight: .medium))
                 .foregroundStyle(.secondary)
                 .textCase(.uppercase)
                 .tracking(0.3)
@@ -209,13 +209,13 @@ struct PlayView: View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 4) {
                 Text(param.name)
-                    .font(.system(size: 11, weight: .medium))
+                    .font(.system(size: 12, weight: .medium))
                     .foregroundStyle(.secondary)
                     .textCase(.uppercase)
                     .tracking(0.3)
                 if param.isRequired {
                     Text("*")
-                        .font(.system(size: 11))
+                        .font(.system(size: 12))
                         .foregroundStyle(Color.accentColor)
                 }
             }
@@ -347,10 +347,10 @@ struct PlayView: View {
                 Section {
                     VStack(spacing: 6) {
                         Image(systemName: "slider.horizontal.3")
-                            .font(.system(size: 18))
+                            .font(.system(size: 20))
                             .foregroundStyle(.secondary)
                         Text("No settings for this endpoint")
-                            .font(.system(size: 11))
+                            .font(.system(size: 12))
                             .foregroundStyle(.tertiary)
                     }
                     .frame(maxWidth: .infinity)
@@ -432,7 +432,7 @@ struct PlayView: View {
                         .font(.system(size: 12))
                     if !state.logEntries.isEmpty && !state.showLogPanel {
                         Text("\(state.logEntries.count)")
-                            .font(.system(size: 9, design: .monospaced))
+                            .font(.system(size: 10, design: .monospaced))
                             .padding(.horizontal, 4)
                             .padding(.vertical, 1)
                             .background(.quinary)
@@ -452,7 +452,7 @@ struct PlayView: View {
             } label: {
                 HStack(spacing: 4) {
                     Image(systemName: "terminal")
-                        .font(.system(size: 11))
+                        .font(.system(size: 12))
                     Text("curl")
                         .font(.system(size: 12))
                 }
@@ -510,7 +510,7 @@ struct PlayView: View {
                             .font(.system(size: 13, weight: .semibold))
                     } else {
                         Image(systemName: "play.fill")
-                            .font(.system(size: 11))
+                            .font(.system(size: 12))
                         Text("Generate")
                             .font(.system(size: 13, weight: .semibold))
                     }
@@ -570,7 +570,7 @@ struct PlayView: View {
             HStack(spacing: 12) {
                 Toggle(isOn: $curlShowKey) {
                     Text("Show API key")
-                        .font(.system(size: 11))
+                        .font(.system(size: 12))
                         .foregroundStyle(.tertiary)
                 }
                 .toggleStyle(.switch)
@@ -593,7 +593,7 @@ struct PlayView: View {
                         Image(systemName: curlCopied ? "checkmark" : "doc.on.doc")
                             .font(.system(size: 10))
                         Text(curlCopied ? "Copied" : "Copy")
-                            .font(.system(size: 11))
+                            .font(.system(size: 12))
                     }
                     .foregroundStyle(curlCopied ? Color.green : Color.secondary)
                     .padding(.horizontal, 8)
@@ -612,7 +612,7 @@ struct PlayView: View {
             // Curl command
             ScrollView([.horizontal, .vertical]) {
                 Text(curlString)
-                    .font(.system(size: 11, design: .monospaced))
+                    .font(.system(size: 12, design: .monospaced))
                     .foregroundStyle(.secondary)
                     .textSelection(.enabled)
                     .lineSpacing(3)
@@ -771,7 +771,7 @@ struct PlayView: View {
                     .font(.system(size: 20))
                     .foregroundStyle(.tertiary)
                 Text("Your \(definition.outputType.rawValue) will appear here")
-                    .font(.caption)
+                    .font(.system(size: 10))
                     .foregroundStyle(.tertiary)
             }
             .frame(maxWidth: .infinity)
@@ -808,7 +808,7 @@ struct PlayView: View {
                 Image(systemName: showCopied ? "checkmark" : "doc.on.doc")
                     .font(.system(size: 10))
                 Text(showCopied ? "Copied" : "Copy")
-                    .font(.system(size: 11))
+                    .font(.system(size: 12))
             }
             .foregroundStyle(showCopied ? Color.green : Color.secondary)
             .padding(.horizontal, 8)
@@ -831,7 +831,7 @@ struct PlayView: View {
                 Image(systemName: showSaved ? "checkmark" : "arrow.down.circle")
                     .font(.system(size: 10))
                 Text(showSaved ? "Saved" : "Save")
-                    .font(.system(size: 11))
+                    .font(.system(size: 12))
             }
             .foregroundStyle(showSaved ? Color.green : Color.secondary)
             .padding(.horizontal, 8)
@@ -921,7 +921,7 @@ struct PlayView: View {
                     } label: {
                         HStack(spacing: 4) {
                             Image(systemName: "arrow.clockwise")
-                                .font(.system(size: 11))
+                                .font(.system(size: 12))
                             Text("Retry")
                                 .font(.system(size: 12, weight: .medium))
                         }
@@ -947,10 +947,10 @@ struct PlayView: View {
                     } label: {
                         HStack(spacing: 4) {
                             Image(systemName: "chevron.right")
-                                .font(.system(size: 9, weight: .semibold))
+                                .font(.system(size: 10, weight: .semibold))
                                 .rotationEffect(.degrees(errorExpanded ? 90 : 0))
                             Text(errorExpanded ? "Hide details" : "Show details")
-                                .font(.system(size: 11))
+                                .font(.system(size: 12))
                         }
                         .foregroundStyle(.secondary)
                     }
@@ -959,7 +959,7 @@ struct PlayView: View {
                     if errorExpanded {
                         ScrollView {
                             Text(message)
-                                .font(.caption.monospaced())
+                                .font(.system(size: 10, design: .monospaced))
                                 .foregroundStyle(.tertiary)
                                 .textSelection(.enabled)
                                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -1150,12 +1150,12 @@ struct PlayView: View {
                 } label: {
                     HStack(spacing: 6) {
                         Image(systemName: "chevron.right")
-                            .font(.system(size: 9, weight: .semibold))
+                            .font(.system(size: 10, weight: .semibold))
                             .rotationEffect(.degrees(isExpanded.wrappedValue ? 90 : 0))
                             .foregroundStyle(.secondary)
 
                         Text(title)
-                            .font(.system(size: 11, weight: .medium))
+                            .font(.system(size: 12, weight: .medium))
                             .foregroundStyle(.tertiary)
 
                         if !subtitle.isEmpty {
@@ -1184,7 +1184,7 @@ struct PlayView: View {
                     } label: {
                         HStack(spacing: 3) {
                             Image(systemName: isCopied.wrappedValue ? "checkmark" : "doc.on.doc")
-                                .font(.system(size: 9))
+                                .font(.system(size: 10))
                             Text(isCopied.wrappedValue ? "Copied" : "Copy")
                                 .font(.system(size: 10))
                         }
@@ -1200,7 +1200,7 @@ struct PlayView: View {
             if isExpanded.wrappedValue {
                 ScrollView([.horizontal, .vertical]) {
                     Text(json)
-                        .font(.system(size: 11, design: .monospaced))
+                        .font(.system(size: 12, design: .monospaced))
                         .foregroundStyle(.secondary)
                         .textSelection(.enabled)
                         .lineSpacing(3)

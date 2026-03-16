@@ -72,14 +72,14 @@ struct CommandPalette: View {
                 // Search field
                 HStack(spacing: 8) {
                     Image(systemName: "magnifyingglass")
-                        .font(.system(size: 14))
+                        .font(.system(size: 13))
                         .foregroundStyle(.secondary)
                     TextField(
                         searchPlaceholder,
                         text: $searchText
                     )
                     .textFieldStyle(.plain)
-                    .font(.system(size: 14))
+                    .font(.system(size: 13))
                     .foregroundStyle(.primary)
                     .focused($isSearchFocused)
                     .onChange(of: searchText) {
@@ -259,7 +259,7 @@ struct CommandPalette: View {
                             .padding(.trailing, 8)
 
                         Text(def.providerDisplayName)
-                            .font(.system(size: 11))
+                            .font(.system(size: 12))
                             .foregroundStyle(.tertiary)
                             .padding(.trailing, 6)
 
@@ -271,7 +271,7 @@ struct CommandPalette: View {
 
                         if def.modelCount > 0 {
                             Text("\(def.modelCount) models")
-                                .font(.caption)
+                                .font(.system(size: 10))
                                 .foregroundStyle(.secondary)
                         }
 
@@ -467,14 +467,14 @@ struct CommandPalette: View {
         if bookmarks.isEmpty {
             VStack(spacing: 8) {
                 Image(systemName: "bookmark")
-                    .font(.system(size: 24))
+                    .font(.system(size: 20))
                     .foregroundStyle(.quaternary.opacity(0.4))
                 Text(searchText.isEmpty ? "No bookmarks yet" : "No matching bookmarks")
                     .font(.system(size: 13))
                     .foregroundStyle(.secondary)
                 if searchText.isEmpty {
                     Text("Save one with \u{2318}D")
-                        .font(.system(size: 11))
+                        .font(.system(size: 12))
                         .foregroundStyle(.quaternary.opacity(0.6))
                 }
             }

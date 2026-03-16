@@ -29,7 +29,7 @@ struct ContentView: View {
                                     .font(.system(size: 10))
                                     .foregroundStyle(keyStatus.color)
                                 Text(definition.providerDisplayName)
-                                    .font(.system(size: 11))
+                                    .font(.system(size: 12))
                                     .foregroundStyle(.secondary)
                             }
                         }
