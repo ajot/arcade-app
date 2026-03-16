@@ -25,10 +25,6 @@ final class BookmarkStore {
         persist()
     }
 
-    var recentBookmarks: [Bookmark] {
-        Array(bookmarks.prefix(3))
-    }
-
     // MARK: - Persistence
 
     private func load() {

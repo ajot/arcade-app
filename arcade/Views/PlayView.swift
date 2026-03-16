@@ -493,8 +493,6 @@ struct PlayView: View {
             }
 
             // Generate button
-            let isGenerating = state.generationState != .idle && state.generationState != .completed && state.generationState != .error("")
-
             Button {
                 if isActive(state.generationState) {
                     state.cancelGeneration()
