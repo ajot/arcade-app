@@ -8,39 +8,34 @@ final class DefinitionLoader {
     private(set) var definitions: [String: Definition] = [:]
     private(set) var loadErrors: [String] = []
 
-    /// All definitions sorted by name.
-    var sortedDefinitions: [Definition] {
-        definitions.values.sorted { $0.name < $1.name }
-    }
+    /// Pre-computed derived collections, rebuilt when definitions change.
+    private(set) var sortedDefinitions: [Definition] = []
+    private(set) var providers: [(slug: String, displayName: String)] = []
+    private(set) var definitionsByOutputType: [OutputType: [Definition]] = [:]
+    private(set) var endpointCount: Int = 0
+    private(set) var providerCount: Int = 0
 
-    /// Unique providers with display names.
-    var providers: [(slug: String, displayName: String)] {
+    private func rebuildDerivedCollections() {
+        let sorted = definitions.values.sorted { $0.name < $1.name }
+        sortedDefinitions = sorted
+        definitionsByOutputType = Dictionary(grouping: sorted, by: \.outputType)
+        endpointCount = definitions.count
+        providerCount = Set(sorted.map(\.provider)).count
+
         var seen = Set<String>()
-        var result: [(String, String)] = []
-        for def in sortedDefinitions {
+        var provs: [(String, String)] = []
+        for def in sorted {
             if seen.insert(def.provider).inserted {
-                result.append((def.provider, def.providerDisplayName))
+                provs.append((def.provider, def.providerDisplayName))
             }
         }
-        return result
-    }
-
-    /// Definitions grouped by output type.
-    var definitionsByOutputType: [OutputType: [Definition]] {
-        Dictionary(grouping: sortedDefinitions, by: \.outputType)
-    }
-
-    /// Total endpoint count.
-    var endpointCount: Int { definitions.count }
-
-    /// Total unique provider count.
-    var providerCount: Int {
-        Set(definitions.values.map(\.provider)).count
+        providers = provs
     }
 
     init() {
         seedBundledDefinitionsIfNeeded()
         loadDefinitions()
+        rebuildDerivedCollections()
     }
 
     func definition(for id: String) -> Definition? {
@@ -52,6 +47,7 @@ final class DefinitionLoader {
         definitions.removeAll()
         loadErrors.removeAll()
         loadDefinitions()
+        rebuildDerivedCollections()
     }
 
     /// Opens the definitions directory in Finder.
