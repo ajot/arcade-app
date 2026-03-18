@@ -146,12 +146,7 @@ final class AppState {
 
     func fillExample(_ example: Example) {
         for (key, value) in example.params {
-            if key == "model" {
-                if let s = value.stringValue {
-                    currentModel = s
-                }
-                continue
-            }
+            if key == "model" { continue }
             switch value {
             case .string(let s): formValues[key] = s
             case .int(let i): formValues[key] = "\(i)"
