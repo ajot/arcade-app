@@ -44,6 +44,7 @@ final class AppState {
     var showCommandPalette = false
     var showBookmarkPopover = false
     var showInspector = false
+    var showModelPicker = false
     var zoomedImageValue: String?
     var settingsTab: SettingsTab = .general
 
