@@ -28,6 +28,17 @@ enum DS {
         static let sm: CGFloat = 4    // icons, small elements
         static let md: CGFloat = 6    // buttons, inputs, code blocks
         static let lg: CGFloat = 10   // cards, panels
+        static let xl: CGFloat = 14   // compose box
+    }
+
+    enum Stamp {
+        static let borderWidth: CGFloat = 1.5
+        static let cornerRadius: CGFloat = 4
+        static let fontSize: CGFloat = 10
+        static let valueFontSize: CGFloat = 11
+        static let labelFontSize: CGFloat = 9
+        static let padding: CGFloat = 10
+        static let verticalPadding: CGFloat = 4
     }
 }
 
