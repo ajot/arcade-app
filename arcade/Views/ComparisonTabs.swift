@@ -51,19 +51,11 @@ struct ComparisonTabs: View {
                 Text("\(tab.definition.providerDisplayName) \u{00B7}")
                     .opacity(0.5)
 
-                Button {
-                    state.paletteContext = .tabModelSelect(index)
-                    withAnimation(.easeOut(duration: 0.15)) {
-                        state.showCommandPalette = true
-                    }
-                } label: {
-                    Text(tab.model)
-                        .padding(.horizontal, DS.Spacing.sm)
-                        .padding(.vertical, 1)
-                        .background(isActive ? Color.accentColor.opacity(0.15) : Color.primary.opacity(0.05))
-                        .clipShape(Capsule())
-                }
-                .buttonStyle(.plain)
+                Text(tab.model)
+                    .padding(.horizontal, DS.Spacing.sm)
+                    .padding(.vertical, 1)
+                    .background(isActive ? Color.accentColor.opacity(0.15) : Color.primary.opacity(0.05))
+                    .clipShape(Capsule())
 
                 if state.tabs.count > 1 {
                     Button {
