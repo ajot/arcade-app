@@ -6,8 +6,11 @@ struct ComparisonReportView: View {
 
     @State private var markdownCopied = false
 
-    private var completedTabs: [AppState.Tab] {
-        state.tabs.filter { $0.generationState == .completed }
+    /// Cached on appear / state change to avoid repeated filtering
+    @State private var completedTabs: [AppState.Tab] = []
+
+    private func refreshCompletedTabs() {
+        completedTabs = state.tabs.filter { $0.generationState == .completed }
     }
 
     // MARK: - Winner Computation
@@ -83,6 +86,7 @@ struct ComparisonReportView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
+        .onAppear { refreshCompletedTabs() }
     }
 
     // MARK: - Header (now in sheet toolbar above)

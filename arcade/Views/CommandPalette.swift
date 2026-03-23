@@ -11,6 +11,8 @@ struct CommandPalette: View {
     @FocusState private var isSearchFocused: Bool
 
     @State private var hoveredBookmarkId: UUID?
+    @State private var cachedEndpointItems: [PaletteItem] = []
+    @State private var cachedContextModelItems: [PaletteItem] = []
 
     enum PaletteStep {
         case endpoints
@@ -89,6 +91,7 @@ struct CommandPalette: View {
                     .focused($isSearchFocused)
                     .onChange(of: searchText) {
                         highlightedIndex = 0
+                        rebuildCachedItems()
                     }
                 }
                 .padding(.horizontal, 16)
@@ -177,6 +180,7 @@ struct CommandPalette: View {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                 isSearchFocused = true
             }
+            rebuildCachedItems()
             SoundService.paletteOpen()
         }
         .onKeyPress(.upArrow) {
@@ -233,11 +237,18 @@ struct CommandPalette: View {
         }
     }
 
+    // MARK: - Cache Rebuild
+
+    private func rebuildCachedItems() {
+        cachedEndpointItems = buildFlatEndpointItems()
+        cachedContextModelItems = buildFlatContextModelItems()
+    }
+
     // MARK: - Endpoint List (flattened for stable identities)
 
     private static let outputOrder: [OutputType] = [.text, .image, .audio, .video]
 
-    private var flatEndpointItems: [PaletteItem] {
+    private func buildFlatEndpointItems() -> [PaletteItem] {
         let all = state.definitionLoader.definitionsByOutputType
         let query = searchText.lowercased()
         var items: [PaletteItem] = []
@@ -291,7 +302,7 @@ struct CommandPalette: View {
 
     @ViewBuilder
     private var endpointList: some View {
-        let items = flatEndpointItems
+        let items = cachedEndpointItems
 
         ForEach(items) { item in
             switch item {
@@ -459,7 +470,7 @@ struct CommandPalette: View {
     // MARK: - Filtering
 
     private var totalFilteredCount: Int {
-        flatEndpointItems.reduce(0) { count, item in
+        cachedEndpointItems.reduce(0) { count, item in
             switch item {
             case .endpoint(_, let idx) where idx >= 0: return count + 1
             case .model: return count + 1
@@ -501,7 +512,7 @@ struct CommandPalette: View {
     private func selectHighlighted() {
         switch step {
         case .endpoints:
-            for item in flatEndpointItems {
+            for item in cachedEndpointItems {
                 if case .endpoint(let def, let idx) = item, idx >= 0, idx == highlightedIndex {
                     selectEndpoint(def)
                     return
@@ -734,7 +745,7 @@ struct CommandPalette: View {
 
     // MARK: - Context Model Selection (for .modelSelect / .tabModelSelect)
 
-    private var flatContextModelItems: [PaletteItem] {
+    private func buildFlatContextModelItems() -> [PaletteItem] {
         let query = searchText.lowercased()
         var items: [PaletteItem] = []
         var flatIdx = 0
@@ -785,7 +796,7 @@ struct CommandPalette: View {
     }
 
     private var contextModelSelectableCount: Int {
-        flatContextModelItems.reduce(0) { count, item in
+        cachedContextModelItems.reduce(0) { count, item in
             if case .model = item { return count + 1 }
             return count
         }
@@ -793,7 +804,7 @@ struct CommandPalette: View {
 
     @ViewBuilder
     private var contextModelList: some View {
-        let items = flatContextModelItems
+        let items = cachedContextModelItems
 
         if items.isEmpty {
             VStack(spacing: 8) {
@@ -888,7 +899,7 @@ struct CommandPalette: View {
     }
 
     private func selectHighlightedContextModel() {
-        for item in flatContextModelItems {
+        for item in cachedContextModelItems {
             if case .model(let def, let modelName, let idx) = item, idx == highlightedIndex {
                 selectContextModel(definition: def, model: modelName)
                 return
