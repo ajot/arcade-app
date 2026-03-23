@@ -116,8 +116,8 @@ struct PlayView: View {
             .popover(isPresented: $showCurlPopover) {
                 curlPopoverContent(definition)
             }
-            .popover(isPresented: $showBookmarkPopover) {
-                bookmarkPopoverContent
+            .sheet(isPresented: $showBookmarkPopover) {
+                bookmarkSheetContent
             }
         }
     }
@@ -587,71 +587,51 @@ struct PlayView: View {
         .frame(width: 520)
     }
 
-    // MARK: - Bookmark Popover
+    // MARK: - Bookmark Sheet
 
-    private var bookmarkPopoverContent: some View {
-        VStack(spacing: 12) {
-            HStack {
-                Image(systemName: state.isCompareMode && state.tabs.count > 1 ? "bookmark.fill" : "bookmark.fill")
-                    .font(.system(size: DS.Font.secondary))
-                    .foregroundStyle(Color.accentColor)
-                Text(state.isCompareMode && state.tabs.count > 1 ? "Save Tab Group" : "Save Bookmark")
-                    .font(.system(size: DS.Font.body, weight: .medium))
-                    .foregroundStyle(.primary)
-                Spacer()
-            }
+    private var bookmarkSheetContent: some View {
+        VStack(spacing: 0) {
+            Form {
+                TextField("Label:", text: $bookmarkLabel)
 
-            // Show tab checkboxes when in compare mode
-            if state.isCompareMode && state.tabs.count > 1 {
-                VStack(alignment: .leading, spacing: DS.Spacing.sm) {
-                    Text("Include tabs:")
-                        .font(.system(size: DS.Font.secondary, weight: .medium))
-                        .foregroundStyle(.secondary)
-
-                    ForEach(state.tabs) { tab in
-                        Toggle(isOn: Binding(
-                            get: { bookmarkTabSelection.contains(tab.id) },
-                            set: { selected in
-                                if selected {
-                                    bookmarkTabSelection.insert(tab.id)
-                                } else {
-                                    bookmarkTabSelection.remove(tab.id)
-                                }
-                            }
-                        )) {
-                            Text("\(tab.definition.providerDisplayName) · \(tab.model)")
-                                .font(.system(size: DS.Font.secondary))
-                                .foregroundStyle(.primary)
+                if state.isCompareMode && state.tabs.count > 1 {
+                    Section("Include tabs") {
+                        ForEach(state.tabs) { tab in
+                            Toggle(
+                                "\(tab.definition.providerDisplayName) · \(tab.model)",
+                                isOn: Binding(
+                                    get: { bookmarkTabSelection.contains(tab.id) },
+                                    set: { selected in
+                                        if selected {
+                                            bookmarkTabSelection.insert(tab.id)
+                                        } else {
+                                            bookmarkTabSelection.remove(tab.id)
+                                        }
+                                    }
+                                )
+                            )
                         }
-                        .toggleStyle(.checkbox)
                     }
                 }
             }
-
-            TextField("Label", text: $bookmarkLabel)
-                .textFieldStyle(.roundedBorder)
-                .font(.system(size: DS.Font.body))
+            .formStyle(.grouped)
 
             HStack {
                 Spacer()
-                Button("Cancel") {
+                Button("Cancel", role: .cancel) {
                     showBookmarkPopover = false
                 }
-                .buttonStyle(.bordered)
+                .keyboardShortcut(.escape, modifiers: [])
 
-                Button {
+                Button("Save") {
                     saveBookmark()
-                } label: {
-                    Text("Save")
                 }
+                .keyboardShortcut(.return, modifiers: [])
                 .buttonStyle(.borderedProminent)
             }
+            .padding()
         }
-        .padding(12)
-        .frame(width: 280)
-        .onSubmit {
-            saveBookmark()
-        }
+        .frame(width: 360)
     }
 
     private func saveBookmark() {
