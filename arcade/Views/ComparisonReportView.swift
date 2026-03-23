@@ -400,20 +400,24 @@ struct ComparisonReportView: View {
                 )
                 Text(tab.model)
                     .font(.system(size: DS.Font.body, weight: .medium))
+                    .lineLimit(1)
+                    .truncationMode(.middle)
                 Text(tab.definition.providerDisplayName)
                     .font(.system(size: DS.Font.secondary))
                     .foregroundStyle(.tertiary)
+                    .lineLimit(1)
 
                 Spacer()
 
                 if let metrics = tab.streamingMetrics {
-                    HStack(spacing: DS.Spacing.sm) {
+                    HStack(spacing: DS.Spacing.xs) {
                         if let ttft = metrics.firstTokenTime {
                             miniStamp(label: "TTFT", value: String(format: "%.0fms", ttft * 1000), color: .purple)
                         }
                         miniStamp(label: "Speed", value: String(format: "%.1f tok/s", metrics.tokensPerSecond), color: .green)
                         miniStamp(label: "Total", value: String(format: "%.1fs", metrics.totalDuration), color: .blue)
                     }
+                    .fixedSize()
                 }
             }
             .padding(DS.Spacing.md)
