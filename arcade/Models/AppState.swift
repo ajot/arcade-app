@@ -197,12 +197,19 @@ final class AppState {
 
     func saveBookmark(label: String) {
         guard let definition = currentDefinition else { return }
+
+        // If in compare mode with multiple tabs, save as tab group
+        let tabEntries: [Bookmark.TabEntry]? = isCompareMode && tabs.count > 1
+            ? tabs.map { Bookmark.TabEntry(definitionId: $0.definition.id, model: $0.model) }
+            : nil
+
         let bookmark = Bookmark(
             definitionId: definition.id,
             model: currentModel,
             label: label,
             formValues: formValues,
-            systemPrompt: systemPrompt
+            systemPrompt: systemPrompt,
+            tabGroup: tabEntries
         )
         bookmarkStore.save(bookmark)
         SoundService.bookmark()
@@ -213,6 +220,27 @@ final class AppState {
         selectEndpoint(definition, model: bookmark.model)
         formValues = bookmark.formValues
         systemPrompt = bookmark.systemPrompt
+
+        // Restore tab group if present
+        if let tabEntries = bookmark.tabGroup, tabEntries.count > 1 {
+            var restoredTabs: [Tab] = []
+            for entry in tabEntries {
+                if let def = definitionLoader.sortedDefinitions.first(where: { $0.id == entry.definitionId }) {
+                    restoredTabs.append(Tab(definition: def, model: entry.model))
+                }
+            }
+            if restoredTabs.count > 1 {
+                tabs = restoredTabs
+                activeTabIndex = 0
+                isCompareMode = true
+            }
+        } else {
+            // Single bookmark — exit compare mode if active
+            if isCompareMode {
+                exitCompareMode()
+            }
+        }
+
         SoundService.select()
     }
 

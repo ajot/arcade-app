@@ -615,7 +615,13 @@ struct CommandPalette: View {
                                 .lineLimit(1)
 
                             HStack(spacing: 4) {
-                                if let def = definition {
+                                if bookmark.isTabGroup, let entries = bookmark.tabGroup {
+                                    Image(systemName: "square.split.2x1")
+                                        .font(.system(size: 8))
+                                        .foregroundStyle(.tertiary)
+                                    Text("\(entries.count) models")
+                                        .foregroundStyle(.secondary)
+                                } else if let def = definition {
                                     Text(def.providerDisplayName)
                                         .foregroundStyle(.secondary)
                                     if let model = bookmark.model {

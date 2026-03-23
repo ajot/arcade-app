@@ -8,13 +8,23 @@ struct Bookmark: Codable, Identifiable {
     let formValues: [String: String]
     let systemPrompt: String
     let createdAt: Date
+    let tabGroup: [TabEntry]?
+
+    /// A single tab entry in a tab group bookmark
+    struct TabEntry: Codable {
+        let definitionId: String
+        let model: String
+    }
+
+    var isTabGroup: Bool { tabGroup != nil && (tabGroup?.count ?? 0) > 1 }
 
     init(
         definitionId: String,
         model: String?,
         label: String,
         formValues: [String: String],
-        systemPrompt: String
+        systemPrompt: String,
+        tabGroup: [TabEntry]? = nil
     ) {
         self.id = UUID()
         self.definitionId = definitionId
@@ -23,5 +33,6 @@ struct Bookmark: Codable, Identifiable {
         self.formValues = formValues
         self.systemPrompt = systemPrompt
         self.createdAt = Date()
+        self.tabGroup = tabGroup
     }
 }

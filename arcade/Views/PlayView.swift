@@ -590,13 +590,30 @@ struct PlayView: View {
     private var bookmarkPopoverContent: some View {
         VStack(spacing: 12) {
             HStack {
-                Image(systemName: "bookmark.fill")
+                Image(systemName: state.isCompareMode && state.tabs.count > 1 ? "bookmark.fill" : "bookmark.fill")
                     .font(.system(size: DS.Font.secondary))
                     .foregroundStyle(Color.accentColor)
-                Text("Save Bookmark")
+                Text(state.isCompareMode && state.tabs.count > 1 ? "Save Tab Group" : "Save Bookmark")
                     .font(.system(size: DS.Font.body, weight: .medium))
                     .foregroundStyle(.primary)
                 Spacer()
+            }
+
+            // Show tab group summary when in compare mode
+            if state.isCompareMode && state.tabs.count > 1 {
+                VStack(alignment: .leading, spacing: DS.Spacing.xs) {
+                    ForEach(Array(state.tabs.enumerated()), id: \.element.id) { _, tab in
+                        HStack(spacing: DS.Spacing.xs) {
+                            Image(systemName: "circle.fill")
+                                .font(.system(size: 4))
+                                .foregroundStyle(.tertiary)
+                            Text("\(tab.definition.providerDisplayName) · \(tab.model)")
+                                .font(.system(size: DS.Font.secondary))
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+                .padding(.horizontal, DS.Spacing.xs)
             }
 
             TextField("Label", text: $bookmarkLabel)
@@ -642,6 +659,11 @@ struct PlayView: View {
     }
 
     private func suggestedBookmarkLabel(_ definition: Definition) -> String {
+        if state.isCompareMode && state.tabs.count > 1 {
+            let providers = state.tabs.map { $0.definition.providerDisplayName }
+            let unique = Array(Set(providers)).sorted()
+            return "\(unique.joined(separator: " vs ")) \u{2014} \(state.tabs.count) models"
+        }
         let model = state.currentModel ?? ""
         let shortModel = model.split(separator: "/").last.map(String.init) ?? model
         if shortModel.isEmpty {
