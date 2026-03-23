@@ -16,10 +16,8 @@ struct PlayView: View {
     var body: some View {
         if let definition = state.currentDefinition {
             VStack(spacing: 0) {
-                // Comparison tabs (only in compare mode)
-                if state.isCompareMode {
-                    ComparisonTabs(state: state)
-                }
+                // Tab bar (always visible — shows current model + add button)
+                ComparisonTabs(state: state)
 
                 // Zone 1: Result area (scrollable, grows upward)
                 ScrollView {
