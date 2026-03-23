@@ -95,14 +95,14 @@ struct ComposeArea: View {
 
     private var bottomRow: some View {
         HStack {
+            Spacer()
+
             if isMultiTab {
                 Toggle("Send to all tabs", isOn: $sendToAllTabs)
                     .toggleStyle(.checkbox)
                     .font(.system(size: DS.Font.secondary))
                     .foregroundStyle(.secondary)
             }
-
-            Spacer()
 
             // Keyboard shortcut hint
             Text(isGenerating ? "esc" : "\u{2318}\u{21B5}")
