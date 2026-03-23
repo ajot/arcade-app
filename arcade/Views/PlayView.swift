@@ -9,7 +9,6 @@ struct PlayView: View {
     @State private var curlCopied = false
     @State private var showBookmarkPopover = false
     @State private var bookmarkLabel = ""
-    @State private var bookmarkSaved = false
     @State private var errorShakeCount: Int = 0
     @State private var sendToAllTabs = false
     @State private var bookmarkTabSelection: Set<UUID> = []
@@ -330,15 +329,6 @@ struct PlayView: View {
 
     // MARK: - Form Fields
 
-    private func formFields(_ definition: Definition) -> some View {
-        VStack(alignment: .leading, spacing: 14) {
-            ForEach(Array(definition.regularParams.enumerated()), id: \.element.id) { index, param in
-                paramField(param, isPrimary: param.bodyPath == "_chat_message")
-                    .transition(.opacity.combined(with: .move(edge: .top)))
-            }
-        }
-    }
-
     @ViewBuilder
     private func paramField(_ param: ParamDefinition, isPrimary: Bool = false) -> some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -560,19 +550,6 @@ struct PlayView: View {
         }
     }
 
-    private func patternLabel(_ definition: Definition) -> String {
-        let pattern = definition.interaction.pattern
-        switch pattern {
-        case .polling:
-            let method = definition.interaction.pollMethod?.uppercased() ?? "GET"
-            return "async \u{00B7} \(method) polling"
-        case .streaming:
-            return "streaming"
-        case .sync:
-            return "sync"
-        }
-    }
-
     // MARK: - Curl Popover
 
     private func curlPopoverContent(_ definition: Definition) -> some View {
@@ -697,15 +674,6 @@ struct PlayView: View {
         guard !label.isEmpty else { return }
         state.saveBookmark(label: label, selectedTabIds: state.isCompareMode ? bookmarkTabSelection : nil)
         showBookmarkPopover = false
-        withAnimation(.spring(response: 0.35, dampingFraction: 0.5)) {
-            bookmarkSaved = true
-        }
-        Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(2000))
-            withAnimation(.easeOut(duration: 0.3)) {
-                bookmarkSaved = false
-            }
-        }
     }
 
     private func suggestedBookmarkLabel(_ definition: Definition) -> String {
