@@ -43,7 +43,8 @@ struct ComposeArea: View {
             y: 0
         )
         .onAppear {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(100))
                 isInputFocused = true
             }
         }

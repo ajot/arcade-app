@@ -235,12 +235,6 @@ struct PlayView: View {
 
     private func exampleChips(_ definition: Definition) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Examples")
-                .font(.system(size: DS.Font.secondary, weight: .medium))
-                .foregroundStyle(.secondary)
-                .textCase(.uppercase)
-                .tracking(0.3)
-
             FlowLayout(spacing: 6) {
                 ForEach(Array(definition.examples.enumerated()), id: \.element.id) { index, example in
                     Button(example.label) {
@@ -294,8 +288,6 @@ struct PlayView: View {
                 Text(param.name)
                     .font(.system(size: DS.Font.secondary, weight: .medium))
                     .foregroundStyle(.secondary)
-                    .textCase(.uppercase)
-                    .tracking(0.3)
                 if param.isRequired {
                     Text("*")
                         .font(.system(size: DS.Font.secondary))
@@ -322,9 +314,10 @@ struct PlayView: View {
             set: { state.formValues[param.name] = $0 }
         )
 
-        return TextEditor(text: binding)
+        return TextField(param.name, text: binding, axis: .vertical)
+            .lineLimit(isPrimary ? 3...8 : 2...6)
+            .textFieldStyle(.plain)
             .font(.system(size: DS.Font.body))
-            .scrollContentBackground(.hidden)
             .padding(8)
             .frame(minHeight: isPrimary ? 60 : 40)
             .background(Color(nsColor: .textBackgroundColor))
@@ -420,7 +413,9 @@ struct PlayView: View {
 
             if definition.isChatEndpoint {
                 Section("System Prompt") {
-                    TextEditor(text: $state.systemPrompt)
+                    TextField("Enter system prompt...", text: $state.systemPrompt, axis: .vertical)
+                        .lineLimit(3...8)
+                        .textFieldStyle(.plain)
                         .font(.system(size: DS.Font.secondary))
                         .frame(minHeight: 80)
                 }
@@ -553,7 +548,8 @@ struct PlayView: View {
                         curlCopied = true
                     }
                     SoundService.confirm()
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    Task { @MainActor in
+                        try? await Task.sleep(for: .milliseconds(1500))
                         withAnimation { curlCopied = false }
                     }
                 } label: {
@@ -639,7 +635,8 @@ struct PlayView: View {
         withAnimation(.spring(response: 0.35, dampingFraction: 0.5)) {
             bookmarkSaved = true
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(2000))
             withAnimation(.easeOut(duration: 0.3)) {
                 bookmarkSaved = false
             }
