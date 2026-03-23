@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ComparisonTabs: View {
     @Bindable var state: AppState
+    @State private var pickerTabIndex: Int? = nil
 
     var body: some View {
         HStack(spacing: 2) {
@@ -42,11 +43,31 @@ struct ComparisonTabs: View {
                 Text("\(tab.definition.providerDisplayName) \u{00B7}")
                     .opacity(0.5)
 
-                Text(tab.model)
-                    .padding(.horizontal, DS.Spacing.sm)
-                    .padding(.vertical, 1)
-                    .background(isActive ? Color.accentColor.opacity(0.15) : Color.primary.opacity(0.05))
-                    .clipShape(Capsule())
+                Button {
+                    pickerTabIndex = index
+                } label: {
+                    Text(tab.model)
+                        .padding(.horizontal, DS.Spacing.sm)
+                        .padding(.vertical, 1)
+                        .background(isActive ? Color.accentColor.opacity(0.15) : Color.primary.opacity(0.05))
+                        .clipShape(Capsule())
+                }
+                .buttonStyle(.plain)
+                .popover(isPresented: Binding(
+                    get: { pickerTabIndex == index },
+                    set: { if !$0 { pickerTabIndex = nil } }
+                ), arrowEdge: .bottom) {
+                    ModelPicker(
+                        state: state,
+                        onSelect: { def, model in
+                            state.updateTabModel(at: index, definition: def, model: model)
+                            pickerTabIndex = nil
+                        },
+                        onDismiss: {
+                            pickerTabIndex = nil
+                        }
+                    )
+                }
 
                 if state.tabs.count > 1 {
                     Button {

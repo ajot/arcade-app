@@ -34,7 +34,9 @@ struct PlayView: View {
                         .frame(maxWidth: .infinity)
                 }
                 .defaultScrollAnchor(.bottom)
-                .animation(.spring(response: 0.4, dampingFraction: 0.8), value: state.generationState)
+                .animation(.spring(response: 0.4, dampingFraction: 0.8), value: state.isCompareMode
+                    ? (state.tabs[safe: state.activeTabIndex]?.generationState ?? .idle)
+                    : state.generationState)
 
                 // Secondary params strip (sliders, dropdowns — NOT the chat prompt)
                 let secondaryParams = definition.regularParams.filter {
@@ -49,10 +51,18 @@ struct PlayView: View {
                     ComposeArea(
                         state: state,
                         isMultiTab: state.isCompareMode,
-                        isGenerating: isActive(state.generationState),
+                        isGenerating: state.isCompareMode
+                            ? state.tabs.contains(where: { isActive($0.generationState) })
+                            : isActive(state.generationState),
                         placeholder: composePlaceholder(definition),
                         promptText: promptBinding(definition),
-                        onSend: { state.generate() },
+                        onSend: {
+                            if state.isCompareMode {
+                                state.generateAllTabs()
+                            } else {
+                                state.generate()
+                            }
+                        },
                         onCancel: { state.cancelGeneration() },
                         onModelSelect: { def, model in
                             state.selectEndpoint(def, model: model)
@@ -114,15 +124,25 @@ struct PlayView: View {
 
     @ViewBuilder
     private func resultContent(_ definition: Definition) -> some View {
-        switch state.generationState {
-        case .streaming where !state.streamedText.isEmpty:
+        let genState = state.isCompareMode
+            ? (state.tabs[safe: state.activeTabIndex]?.generationState ?? .idle)
+            : state.generationState
+        let streamText = state.isCompareMode
+            ? (state.tabs[safe: state.activeTabIndex]?.streamedText ?? "")
+            : state.streamedText
+        let metrics = state.isCompareMode
+            ? state.tabs[safe: state.activeTabIndex]?.streamingMetrics
+            : state.streamingMetrics
+
+        switch genState {
+        case .streaming where !streamText.isEmpty:
             ResultCard(state: state)
 
         case .completed:
             ResultCard(state: state)
 
             // Performance stamps (only for streaming results with metrics)
-            if let metrics = state.streamingMetrics {
+            if let metrics {
                 StampsRow(
                     ttft: metrics.firstTokenTime.map { String(format: "%.0fms", $0 * 1000) },
                     speed: String(format: "%.1f tok/s", metrics.tokensPerSecond),

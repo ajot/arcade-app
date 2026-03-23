@@ -11,16 +11,42 @@ struct ResultCard: View {
     @State private var requestJSONCopied = false
     @State private var responseJSONCopied = false
 
+    // MARK: - Compare-aware accessors
+
+    private var effectiveGenerationState: AppState.GenerationState {
+        state.isCompareMode
+            ? (state.tabs[safe: state.activeTabIndex]?.generationState ?? .idle)
+            : state.generationState
+    }
+
+    private var effectiveStreamedText: String {
+        state.isCompareMode
+            ? (state.tabs[safe: state.activeTabIndex]?.streamedText ?? "")
+            : state.streamedText
+    }
+
+    private var effectiveStreamingMetrics: StreamingResult? {
+        state.isCompareMode
+            ? state.tabs[safe: state.activeTabIndex]?.streamingMetrics
+            : state.streamingMetrics
+    }
+
+    private var effectiveGenerationResult: GenerationResult? {
+        state.isCompareMode
+            ? state.tabs[safe: state.activeTabIndex]?.result
+            : state.generationResult
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             // Result toolbar
-            if state.generationState == .completed {
+            if effectiveGenerationState == .completed {
                 HStack {
                     Spacer()
                     if hasImageOutput {
                         saveImageButton
                     }
-                    if !state.streamedText.isEmpty {
+                    if !effectiveStreamedText.isEmpty {
                         copyButton
                     }
                 }
@@ -31,12 +57,12 @@ struct ResultCard: View {
 
             VStack(alignment: .leading, spacing: 12) {
                 // Text output
-                if !state.streamedText.isEmpty {
+                if !effectiveStreamedText.isEmpty {
                     textResult
                 }
 
                 // Media outputs
-                if let result = state.generationResult {
+                if let result = effectiveGenerationResult {
                     ForEach(result.outputs) { output in
                         switch output.type {
                         case .image:
@@ -55,13 +81,13 @@ struct ResultCard: View {
                 metricsBar
 
                 // Request/Response JSON
-                if state.generationState == .completed {
+                if effectiveGenerationState == .completed {
                     requestResponseSection
                 }
             }
             .padding(.horizontal, 16)
             .padding(.bottom, 16)
-            .padding(.top, state.generationState == .completed ? 4 : 16)
+            .padding(.top, effectiveGenerationState == .completed ? 4 : 16)
         }
         .background(.regularMaterial)
         .clipShape(RoundedRectangle(cornerRadius: DS.Radius.lg, style: .continuous))
@@ -75,9 +101,9 @@ struct ResultCard: View {
 
     private var textResult: some View {
         VStack(alignment: .leading, spacing: 0) {
-            MarkdownTextView(text: state.streamedText)
+            MarkdownTextView(text: effectiveStreamedText)
 
-            if state.generationState == .streaming {
+            if effectiveGenerationState == .streaming {
                 StreamingCursor()
             }
         }
@@ -88,7 +114,7 @@ struct ResultCard: View {
     private var copyButton: some View {
         Button {
             NSPasteboard.general.clearContents()
-            NSPasteboard.general.setString(state.streamedText, forType: .string)
+            NSPasteboard.general.setString(effectiveStreamedText, forType: .string)
             withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                 showCopied = true
             }
@@ -115,7 +141,7 @@ struct ResultCard: View {
     // MARK: - Save Image
 
     private var hasImageOutput: Bool {
-        state.generationResult?.outputs.contains(where: { $0.type == .image }) ?? false
+        effectiveGenerationResult?.outputs.contains(where: { $0.type == .image }) ?? false
     }
 
     private var saveImageButton: some View {
@@ -138,7 +164,7 @@ struct ResultCard: View {
     }
 
     private func saveImage() {
-        guard let result = state.generationResult,
+        guard let result = effectiveGenerationResult,
               let imageOutput = result.outputs.first(where: { $0.type == .image }),
               let value = imageOutput.values.first else { return }
 
@@ -249,12 +275,12 @@ struct ResultCard: View {
     @ViewBuilder
     private var metricsBar: some View {
         HStack(spacing: 16) {
-            if let metrics = state.streamingMetrics {
+            if let metrics = effectiveStreamingMetrics {
                 metricPill(label: "TTFT", value: String(format: "%.0fms", (metrics.firstTokenTime ?? 0) * 1000))
                 metricPill(label: "Speed", value: String(format: "%.1f tok/s", metrics.tokensPerSecond))
                 metricPill(label: "Tokens", value: "\(metrics.tokenCount)")
                 metricPill(label: "Total", value: String(format: "%.2fs", metrics.totalDuration))
-            } else if let result = state.generationResult {
+            } else if let result = effectiveGenerationResult {
                 metricPill(label: "Time", value: String(format: "%.2fs", result.duration))
                 if result.pollCount > 0 {
                     metricPill(label: "Polls", value: "\(result.pollCount)")
@@ -262,7 +288,7 @@ struct ResultCard: View {
             }
         }
         .padding(.top, 8)
-        .animation(.easeOut(duration: 0.4), value: state.generationState == .completed)
+        .animation(.easeOut(duration: 0.4), value: effectiveGenerationState == .completed)
     }
 
     private func metricPill(label: String, value: String) -> some View {
@@ -296,7 +322,7 @@ struct ResultCard: View {
             // Response
             if let responseBody = state.lastResponseBody {
                 let statusLabel: String = {
-                    if let result = state.generationResult {
+                    if let result = effectiveGenerationResult {
                         return "\(result.statusCode) \u{00B7} \(String(format: "%.2fs", result.duration))"
                     }
                     return ""
@@ -309,9 +335,9 @@ struct ResultCard: View {
                     isExpanded: $showResponseJSON,
                     isCopied: $responseJSONCopied
                 )
-            } else if state.streamingMetrics != nil {
+            } else if effectiveStreamingMetrics != nil {
                 // Streaming endpoints don't have a single JSON response
-                let metrics = state.streamingMetrics!
+                let metrics = effectiveStreamingMetrics!
                 let streamNote = """
                 // Streamed response (SSE)
                 // \(metrics.tokenCount) tokens in \(String(format: "%.2fs", metrics.totalDuration))

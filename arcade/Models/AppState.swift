@@ -342,6 +342,132 @@ final class AppState {
         }
     }
 
+    // MARK: - Compare Mode Generation
+
+    func generateAllTabs() {
+        for i in tabs.indices {
+            generateTab(at: i)
+        }
+    }
+
+    func generateTab(at index: Int) {
+        guard index < tabs.count else { return }
+        let tab = tabs[index]
+        let definition = tab.definition
+        let model = tab.model
+
+        guard let apiKey = KeychainService.getKey(for: definition.provider) else {
+            tabs[index].generationState = .error("No API key for \(definition.providerDisplayName)")
+            return
+        }
+
+        // Build params including model
+        var params = formValues
+        params["model"] = model
+        if !systemPrompt.isEmpty {
+            params["_system_prompt"] = systemPrompt
+        }
+
+        // Reset tab state
+        tabs[index].streamedText = ""
+        tabs[index].result = nil
+        tabs[index].streamingMetrics = nil
+        SoundService.generate()
+
+        let pattern = definition.interaction.pattern
+
+        switch pattern {
+        case .streaming:
+            tabs[index].generationState = .streaming
+            Task { @MainActor in
+                do {
+                    let metrics = try await networkService.sendStreaming(
+                        definition: definition,
+                        params: params,
+                        apiKey: apiKey
+                    ) { [weak self] token in
+                        Task { @MainActor in
+                            guard let self, index < self.tabs.count else { return }
+                            self.tabs[index].streamedText += token
+                        }
+                    }
+                    guard index < tabs.count else { return }
+                    tabs[index].streamingMetrics = metrics
+                    tabs[index].generationState = .completed
+                    log(.success, "[\(definition.providerDisplayName)] Completed — \(metrics.tokenCount) tokens in \(String(format: "%.2fs", metrics.totalDuration))")
+                    SoundService.complete()
+                } catch is CancellationError {
+                    guard index < tabs.count else { return }
+                    tabs[index].generationState = .idle
+                } catch {
+                    guard index < tabs.count else { return }
+                    tabs[index].generationState = .error(error.localizedDescription)
+                    log(.error, "[\(definition.providerDisplayName)] \(error.localizedDescription)")
+                    SoundService.error()
+                }
+            }
+
+        case .sync:
+            tabs[index].generationState = .generating
+            Task { @MainActor in
+                do {
+                    let result = try await networkService.sendSync(
+                        definition: definition,
+                        params: params,
+                        apiKey: apiKey
+                    )
+                    guard index < tabs.count else { return }
+                    tabs[index].result = result
+                    if let textOutput = result.outputs.first(where: { $0.type == .text }),
+                       let text = textOutput.values.first {
+                        tabs[index].streamedText = text
+                    }
+                    tabs[index].generationState = .completed
+                    log(.response, "[\(definition.providerDisplayName)] \(result.statusCode) — \(String(format: "%.2fs", result.duration))")
+                    SoundService.complete()
+                } catch is CancellationError {
+                    guard index < tabs.count else { return }
+                    tabs[index].generationState = .idle
+                } catch {
+                    guard index < tabs.count else { return }
+                    tabs[index].generationState = .error(error.localizedDescription)
+                    log(.error, "[\(definition.providerDisplayName)] \(error.localizedDescription)")
+                    SoundService.error()
+                }
+            }
+
+        case .polling:
+            tabs[index].generationState = .polling("Submitting...")
+            Task { @MainActor in
+                do {
+                    let result = try await networkService.sendPolling(
+                        definition: definition,
+                        params: params,
+                        apiKey: apiKey
+                    ) { [weak self] status in
+                        Task { @MainActor in
+                            guard let self, index < self.tabs.count else { return }
+                            self.tabs[index].generationState = .polling(status)
+                        }
+                    }
+                    guard index < tabs.count else { return }
+                    tabs[index].result = result
+                    tabs[index].generationState = .completed
+                    log(.success, "[\(definition.providerDisplayName)] Completed — \(result.pollCount) polls, \(String(format: "%.2fs", result.duration))")
+                    SoundService.complete()
+                } catch is CancellationError {
+                    guard index < tabs.count else { return }
+                    tabs[index].generationState = .idle
+                } catch {
+                    guard index < tabs.count else { return }
+                    tabs[index].generationState = .error(error.localizedDescription)
+                    log(.error, "[\(definition.providerDisplayName)] \(error.localizedDescription)")
+                    SoundService.error()
+                }
+            }
+        }
+    }
+
     // MARK: - Compare Mode Actions
 
     func enterCompareMode() {
