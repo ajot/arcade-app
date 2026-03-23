@@ -552,6 +552,8 @@ final class AppState {
             let model = newDef.defaultModel ?? newDef.modelParam?.options?.first ?? ""
             tabs.append(Tab(definition: newDef, model: model))
             activeTabIndex = tabs.count - 1
+            currentDefinition = newDef
+            currentModel = model
         }
     }
 
@@ -559,12 +561,19 @@ final class AppState {
         guard tabs.count > 1 else { return }
         tabs.remove(at: index)
         if activeTabIndex >= tabs.count { activeTabIndex = tabs.count - 1 }
-        if tabs.count == 1 { exitCompareMode() }
+        if tabs.count == 1 {
+            exitCompareMode()
+        } else {
+            currentDefinition = tabs[activeTabIndex].definition
+            currentModel = tabs[activeTabIndex].model
+        }
     }
 
     func selectTab(_ index: Int) {
         guard index >= 0 && index < tabs.count else { return }
         activeTabIndex = index
+        currentDefinition = tabs[index].definition
+        currentModel = tabs[index].model
     }
 
     func updateTabModel(at index: Int, definition: Definition, model: String) {
