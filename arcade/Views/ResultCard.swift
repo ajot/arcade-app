@@ -37,6 +37,18 @@ struct ResultCard: View {
             : state.generationResult
     }
 
+    private var effectiveLastRequestBody: String? {
+        state.isCompareMode
+            ? state.tabs[safe: state.activeTabIndex]?.lastRequestBody
+            : state.lastRequestBody
+    }
+
+    private var effectiveLastResponseBody: String? {
+        state.isCompareMode
+            ? state.tabs[safe: state.activeTabIndex]?.lastResponseBody
+            : state.lastResponseBody
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             // Result toolbar
@@ -309,7 +321,7 @@ struct ResultCard: View {
     private var requestResponseSection: some View {
         VStack(spacing: 0) {
             // Request
-            if let requestBody = state.lastRequestBody, let definition = state.currentDefinition {
+            if let requestBody = effectiveLastRequestBody, let definition = state.currentDefinition {
                 jsonDisclosure(
                     title: "Request",
                     subtitle: "\(definition.request.method) \(definition.request.url)",
@@ -320,7 +332,7 @@ struct ResultCard: View {
             }
 
             // Response
-            if let responseBody = state.lastResponseBody {
+            if let responseBody = effectiveLastResponseBody {
                 let statusLabel: String = {
                     if let result = effectiveGenerationResult {
                         return "\(result.statusCode) \u{00B7} \(String(format: "%.2fs", result.duration))"

@@ -71,6 +71,8 @@ final class AppState {
         var streamedText: String = ""
         var streamingMetrics: StreamingResult?
         var generationState: GenerationState = .idle
+        var lastRequestBody: String?
+        var lastResponseBody: String?
     }
 
     var tabs: [Tab] = []
@@ -427,7 +429,17 @@ final class AppState {
         tabs[index].streamedText = ""
         tabs[index].result = nil
         tabs[index].streamingMetrics = nil
+        tabs[index].lastRequestBody = nil
+        tabs[index].lastResponseBody = nil
         SoundService.generate()
+
+        // Capture request body for display
+        if let built = try? RequestBuilder.buildRequest(definition: definition, params: params, apiKey: apiKey),
+           let body = built.body,
+           let jsonData = try? JSONSerialization.data(withJSONObject: body, options: [.prettyPrinted, .sortedKeys]),
+           let jsonString = String(data: jsonData, encoding: .utf8) {
+            tabs[index].lastRequestBody = jsonString
+        }
 
         let pattern = definition.interaction.pattern
 
@@ -473,6 +485,7 @@ final class AppState {
                     )
                     guard index < tabs.count else { return }
                     tabs[index].result = result
+                    tabs[index].lastResponseBody = self.prettyJSON(result.rawResponse)
                     if let textOutput = result.outputs.first(where: { $0.type == .text }),
                        let text = textOutput.values.first {
                         tabs[index].streamedText = text
@@ -507,6 +520,7 @@ final class AppState {
                     }
                     guard index < tabs.count else { return }
                     tabs[index].result = result
+                    tabs[index].lastResponseBody = self.prettyJSON(result.rawResponse)
                     tabs[index].generationState = .completed
                     log(.success, "[\(definition.providerDisplayName)] Completed — \(result.pollCount) polls, \(String(format: "%.2fs", result.duration))")
                     SoundService.complete()
