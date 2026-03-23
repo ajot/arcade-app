@@ -11,91 +11,60 @@ struct PlayView: View {
     @State private var bookmarkLabel = ""
     @State private var bookmarkSaved = false
     @State private var errorShakeCount: Int = 0
-    @State private var scrollThrottleTask: Task<Void, Never>?
 
     @ViewBuilder
     var body: some View {
         if let definition = state.currentDefinition {
             VStack(spacing: 0) {
-                ScrollViewReader { proxy in
-                    ScrollView {
-                        VStack(alignment: .leading, spacing: 0) {
-                            // Endpoint header
-                            endpointHeader(definition)
-                                .padding(.bottom, 12)
+                // Zone 1: Result area (scrollable, grows upward)
+                ScrollView {
+                    Spacer()
+                        .frame(maxHeight: .infinity)
 
-                            // Examples
-                            if !definition.examples.isEmpty {
-                                exampleChips(definition)
-                                    .padding(.bottom, 12)
-
-                                Divider()
-                                    .padding(.bottom, 12)
-                            }
-
-                            // Model picker
-                            if let modelParam = definition.modelParam, let options = modelParam.options {
-                                VStack(alignment: .leading, spacing: 6) {
-                                    Text("Model")
-                                        .font(.system(size: DS.Font.secondary, weight: .medium))
-                                        .foregroundStyle(.secondary)
-                                        .textCase(.uppercase)
-                                        .tracking(0.3)
-
-                                    Picker("", selection: Binding<String>(
-                                        get: { state.currentModel ?? "" },
-                                        set: { state.selectModel($0) }
-                                    )) {
-                                        ForEach(options, id: \.self) { model in
-                                            Text(model).tag(model)
-                                        }
-                                    }
-                                    .labelsHidden()
-                                    .tint(.primary)
-                                    .fixedSize()
-                                }
-                                .padding(.bottom, 8)
-                            }
-
-                            Divider()
-                                .padding(.bottom, 12)
-
-                            // Form fields
-                            formFields(definition)
-                                .padding(.bottom, 12)
-
-                            // Results
-                            resultArea(definition)
-                                .animation(.spring(response: 0.4, dampingFraction: 0.8), value: state.generationState)
-
-                            Color.clear
-                                .frame(height: 1)
-                                .id("bottom")
-                        }
-                        .padding(.horizontal, 32)
-                        .padding(.top, 16)
-                        .padding(.bottom, 40)
+                    resultContent(definition)
+                        .padding(.horizontal, DS.Spacing.xxl)
+                        .padding(.top, DS.Spacing.lg)
+                        .padding(.bottom, DS.Spacing.lg)
                         .frame(maxWidth: 720)
                         .frame(maxWidth: .infinity)
-                        .contentShape(Rectangle())
-                    }
-                    .onChange(of: state.streamedText) {
-                        guard scrollThrottleTask == nil else { return }
-                        scrollThrottleTask = Task {
-                            withAnimation(.easeOut(duration: 0.15)) {
-                                proxy.scrollTo("bottom", anchor: .bottom)
-                            }
-                            try? await Task.sleep(for: .milliseconds(100))
-                            scrollThrottleTask = nil
-                        }
-                    }
+                }
+                .defaultScrollAnchor(.bottom)
+                .animation(.spring(response: 0.4, dampingFraction: 0.8), value: state.generationState)
+
+                // Secondary params strip (sliders, dropdowns — NOT the chat prompt)
+                let secondaryParams = definition.regularParams.filter {
+                    $0.bodyPath != "_chat_message" && $0.bodyPath != "_system_prompt"
+                }
+                if !secondaryParams.isEmpty {
+                    secondaryParamsStrip(secondaryParams)
                 }
 
-                // Fixed bottom bar
-                generateBar(definition)
-                    .padding(.horizontal, 24)
-                    .padding(.vertical, 12)
-                    .background(.bar)
+                // Zone 2: Compose area (fixed at bottom, never scrolls)
+                if definition.isChatEndpoint {
+                    ComposeArea(
+                        state: state,
+                        isMultiTab: false,
+                        isGenerating: isActive(state.generationState),
+                        placeholder: composePlaceholder(definition),
+                        promptText: promptBinding(definition),
+                        onSend: { state.generate() },
+                        onCancel: { state.cancelGeneration() },
+                        onModelSelect: { def, model in
+                            state.selectEndpoint(def, model: model)
+                        }
+                    )
+                    .padding(.horizontal, DS.Spacing.xxl)
+                    .padding(.bottom, DS.Spacing.lg)
+                }
+
+                // Zone 3: Examples (below compose, fade when typing)
+                if !definition.examples.isEmpty {
+                    exampleChips(definition)
+                        .padding(.horizontal, DS.Spacing.xxl)
+                        .padding(.bottom, DS.Spacing.lg)
+                        .opacity(hasPromptText ? 0.15 : 1.0)
+                        .animation(.easeOut(duration: 0.2), value: hasPromptText)
+                }
             }
             .inspector(isPresented: $state.showInspector) {
                 inspectorContent(definition)
@@ -123,27 +92,101 @@ struct PlayView: View {
         }
     }
 
-    // MARK: - Header
+    // MARK: - Result Content
 
-    private func endpointHeader(_ definition: Definition) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(definition.description)
+    @ViewBuilder
+    private func resultContent(_ definition: Definition) -> some View {
+        switch state.generationState {
+        case .streaming where !state.streamedText.isEmpty:
+            ResultCard(state: state)
+
+        case .completed:
+            ResultCard(state: state)
+
+            // Performance stamps (only for streaming results with metrics)
+            if let metrics = state.streamingMetrics {
+                StampsRow(
+                    ttft: metrics.firstTokenTime.map { String(format: "%.0fms", $0 * 1000) },
+                    speed: String(format: "%.1f tok/s", metrics.tokensPerSecond),
+                    tokens: "\(metrics.tokenCount)",
+                    total: String(format: "%.1fs", metrics.totalDuration),
+                    ttftFast: (metrics.firstTokenTime ?? .infinity) < 0.1,
+                    speedFast: metrics.tokensPerSecond > 100
+                )
+                .padding(.top, DS.Spacing.sm)
+            }
+
+        case .error(let message):
+            errorCard(message: message)
+                .modifier(ShakeEffect(shakes: errorShakeCount))
+                .transition(.scale(scale: 0.97, anchor: .top).combined(with: .opacity))
+                .onAppear {
+                    withAnimation(.linear(duration: 0.4)) {
+                        errorShakeCount += 3
+                    }
+                }
+
+        default:
+            emptyStateView(definition)
+        }
+    }
+
+    // MARK: - Empty State
+
+    private func emptyStateView(_ definition: Definition) -> some View {
+        VStack(spacing: DS.Spacing.md) {
+            Image(systemName: definition.outputType.iconName)
+                .font(.system(size: 32))
+                .foregroundStyle(.tertiary)
+                .opacity(0.4)
+
+            Text("Your response will appear here")
                 .font(.system(size: DS.Font.body))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.tertiary)
 
-            HStack(spacing: 6) {
-                Label(definition.outputType.rawValue, systemImage: definition.outputType.iconName)
-                    .font(.system(size: DS.Font.caption))
-                    .foregroundStyle(.tertiary)
+            Text("\u{2318}\u{21B5} to generate")
+                .font(.system(size: 11, design: .monospaced))
+                .foregroundStyle(.quaternary)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(DS.Spacing.xxl)
+    }
 
-                Text("·")
-                    .foregroundStyle(.tertiary)
+    // MARK: - Helpers
 
-                Text(patternLabel(definition))
-                    .font(.system(size: DS.Font.caption))
-                    .foregroundStyle(.tertiary)
+    private var hasPromptText: Bool {
+        let chatParam = state.currentDefinition?.regularParams.first { $0.bodyPath == "_chat_message" }
+        guard let paramName = chatParam?.name else { return false }
+        return !(state.formValues[paramName]?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? true)
+    }
+
+    private func composePlaceholder(_ definition: Definition) -> String {
+        switch definition.outputType {
+        case .image: return "Describe your image..."
+        case .audio: return "Enter text to speak..."
+        default: return "Ask anything..."
+        }
+    }
+
+    private func promptBinding(_ definition: Definition) -> Binding<String> {
+        let chatParam = definition.regularParams.first { $0.bodyPath == "_chat_message" }
+        let paramName = chatParam?.name ?? ""
+        return Binding(
+            get: { state.formValues[paramName] ?? "" },
+            set: { state.formValues[paramName] = $0 }
+        )
+    }
+
+    // MARK: - Secondary Params Strip
+
+    private func secondaryParamsStrip(_ params: [ParamDefinition]) -> some View {
+        VStack(spacing: DS.Spacing.sm + 2) {
+            ForEach(params, id: \.name) { param in
+                paramField(param, isPrimary: false)
             }
         }
+        .padding(.horizontal, DS.Spacing.xxl)
+        .padding(.vertical, DS.Spacing.lg)
     }
 
     // MARK: - Examples
@@ -179,13 +222,15 @@ struct PlayView: View {
             }
         }
         .onAppear {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+            Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(400))
                 chipsAppeared = true
             }
         }
         .onChange(of: state.currentDefinition?.id) {
             chipsAppeared = false
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+            Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(400))
                 chipsAppeared = true
             }
         }
@@ -415,121 +460,6 @@ struct PlayView: View {
         }
     }
 
-    // MARK: - Generate Bar
-
-    private func generateBar(_ definition: Definition) -> some View {
-        HStack(spacing: 12) {
-            // Log toggle
-            Button {
-                withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-                    state.showLogPanel.toggle()
-                }
-            } label: {
-                HStack(spacing: 4) {
-                    Image(systemName: "rectangle.bottomthird.inset.filled")
-                        .font(.system(size: DS.Font.secondary))
-                    if !state.logEntries.isEmpty && !state.showLogPanel {
-                        Text("\(state.logEntries.count)")
-                            .font(.system(size: DS.Font.caption, design: .monospaced))
-                            .padding(.horizontal, 4)
-                            .padding(.vertical, 1)
-                            .background(.quinary)
-                            .clipShape(Capsule())
-                    }
-                }
-                .foregroundStyle(state.showLogPanel ? Color.accentColor : Color.secondary)
-            }
-            .buttonStyle(.plain)
-            .help("Toggle Log (\u{2318}L)")
-
-            Spacer()
-
-            // Curl preview button
-            Button {
-                showCurlPopover.toggle()
-            } label: {
-                HStack(spacing: 4) {
-                    Image(systemName: "terminal")
-                        .font(.system(size: DS.Font.secondary))
-                    Text("curl")
-                        .font(.system(size: DS.Font.secondary))
-                }
-                .foregroundStyle(.tertiary)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-                .background(.quinary)
-                .clipShape(RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous))
-            }
-            .buttonStyle(.plain)
-            .popover(isPresented: $showCurlPopover, arrowEdge: .bottom) {
-                curlPopoverContent(definition)
-            }
-
-            // Bookmark button
-            Button {
-                bookmarkLabel = suggestedBookmarkLabel(definition)
-                showBookmarkPopover = true
-            } label: {
-                Image(systemName: bookmarkSaved ? "bookmark.fill" : "bookmark")
-                    .font(.system(size: DS.Font.body))
-                    .foregroundStyle(bookmarkSaved ? Color.accentColor : Color.secondary)
-                    .contentTransition(.symbolEffect(.replace))
-                    .frame(width: 32, height: 32)
-                    .background(.quinary)
-                    .clipShape(RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous))
-                    .scaleEffect(bookmarkSaved ? 1.15 : 1.0)
-            }
-            .buttonStyle(.plain)
-            .help("Save Bookmark (\u{2318}D)")
-            .onChange(of: showBookmarkPopover) { _, show in
-                if show {
-                    bookmarkLabel = suggestedBookmarkLabel(definition)
-                }
-            }
-            .popover(isPresented: $showBookmarkPopover, arrowEdge: .bottom) {
-                bookmarkPopoverContent
-            }
-
-            // Generate button
-            Button {
-                if isActive(state.generationState) {
-                    state.cancelGeneration()
-                    state.generationState = .idle
-                } else {
-                    state.generate()
-                }
-            } label: {
-                HStack(spacing: 6) {
-                    if isActive(state.generationState) {
-                        ProgressView()
-                            .controlSize(.small)
-                            .scaleEffect(0.7)
-                        Text(generateButtonText)
-                            .font(.system(size: DS.Font.body, weight: .semibold))
-                    } else {
-                        Image(systemName: "play.fill")
-                            .font(.system(size: DS.Font.secondary))
-                        Text("Generate")
-                            .font(.system(size: DS.Font.body, weight: .semibold))
-                    }
-                }
-            }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
-            .disabled(!state.hasValidKey && !isActive(state.generationState))
-
-        }
-    }
-
-    private var generateButtonText: String {
-        switch state.generationState {
-        case .generating: return "Generating..."
-        case .streaming: return "Streaming..."
-        case .polling(let msg): return msg
-        default: return "Generate"
-        }
-    }
-
     private func isActive(_ genState: AppState.GenerationState) -> Bool {
         switch genState {
         case .generating, .streaming, .polling: return true
@@ -542,7 +472,7 @@ struct PlayView: View {
         switch pattern {
         case .polling:
             let method = definition.interaction.pollMethod?.uppercased() ?? "GET"
-            return "async · \(method) polling"
+            return "async \u{00B7} \(method) polling"
         case .streaming:
             return "streaming"
         case .sync:
@@ -682,44 +612,10 @@ struct PlayView: View {
         if shortModel.isEmpty {
             return definition.name
         }
-        return "\(definition.name) — \(shortModel)"
+        return "\(definition.name) \u{2014} \(shortModel)"
     }
 
-    // MARK: - Results
-
-    @ViewBuilder
-    private func resultArea(_ definition: Definition) -> some View {
-        switch state.generationState {
-        case .streaming where state.streamedText.isEmpty && state.generationResult == nil:
-            EmptyView()
-
-        case .completed, .streaming:
-            ResultCard(state: state)
-
-        case .error(let message):
-            errorCard(message: message)
-                .modifier(ShakeEffect(shakes: errorShakeCount))
-                .transition(.scale(scale: 0.97, anchor: .top).combined(with: .opacity))
-                .onAppear {
-                    withAnimation(.linear(duration: 0.4)) {
-                        errorShakeCount += 3
-                    }
-                }
-
-        default:
-            // Empty state placeholder
-            VStack(spacing: 8) {
-                Image(systemName: definition.outputType.iconName)
-                    .font(.system(size: DS.Font.display))
-                    .foregroundStyle(.tertiary)
-                Text("Your \(definition.outputType.rawValue) will appear here")
-                    .font(.system(size: DS.Font.caption))
-                    .foregroundStyle(.tertiary)
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 40)
-        }
-    }
+    // MARK: - Results (error card)
 
     @State private var errorExpanded = false
 
