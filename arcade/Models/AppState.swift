@@ -163,10 +163,21 @@ final class AppState {
         streamedText = ""
         generationResult = nil
         streamingMetrics = nil
+
+        // Keep active tab in sync
+        syncActiveTab()
+    }
+
+    func syncActiveTab() {
+        guard isCompareMode, activeTabIndex < tabs.count,
+              let def = currentDefinition, let model = currentModel else { return }
+        tabs[activeTabIndex].definition = def
+        tabs[activeTabIndex].model = model
     }
 
     func selectModel(_ model: String) {
         currentModel = model
+        syncActiveTab()
     }
 
     func fillExample(_ example: Example) {
