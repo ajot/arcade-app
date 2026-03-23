@@ -123,31 +123,34 @@ struct ComparisonReportView: View {
             if let tab = fastestResponseTab, let metrics = tab.streamingMetrics {
                 winnerCard(
                     label: "Fastest Response",
-                    icon: "\u{26A1}",
+                    icon: "⏳",
                     tab: tab,
-                    value: String(format: "%.1fs", metrics.totalDuration)
+                    value: String(format: "%.1fs", metrics.totalDuration),
+                    color: .blue
                 )
             }
             if let tab = fastestTTFTTab, let ttft = tab.streamingMetrics?.firstTokenTime {
                 winnerCard(
                     label: "Fastest First Token",
-                    icon: "\u{23F1}",
+                    icon: "⏱",
                     tab: tab,
-                    value: String(format: "%.0fms", ttft * 1000)
+                    value: String(format: "%.0fms", ttft * 1000),
+                    color: .purple
                 )
             }
             if let tab = highestThroughputTab, let metrics = tab.streamingMetrics {
                 winnerCard(
                     label: "Highest Throughput",
-                    icon: "\u{1F680}",
+                    icon: "⚡",
                     tab: tab,
-                    value: String(format: "%.1f tok/s", metrics.tokensPerSecond)
+                    value: String(format: "%.1f tok/s", metrics.tokensPerSecond),
+                    color: .green
                 )
             }
         }
     }
 
-    private func winnerCard(label: String, icon: String, tab: AppState.Tab, value: String) -> some View {
+    private func winnerCard(label: String, icon: String, tab: AppState.Tab, value: String, color: Color) -> some View {
         VStack(alignment: .leading, spacing: DS.Spacing.sm) {
             Text(icon)
                 .font(.system(size: DS.Font.display))
@@ -171,15 +174,15 @@ struct ComparisonReportView: View {
 
             Text(value)
                 .font(.system(size: DS.Font.body, weight: .bold, design: .monospaced))
-                .foregroundStyle(.green)
+                .foregroundStyle(color)
         }
         .padding(DS.Spacing.lg)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.green.opacity(0.06))
+        .background(color.opacity(0.06))
         .clipShape(RoundedRectangle(cornerRadius: DS.Radius.lg, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: DS.Radius.lg, style: .continuous)
-                .strokeBorder(.green.opacity(0.2), lineWidth: 0.5)
+                .strokeBorder(color.opacity(0.2), lineWidth: 0.5)
         )
     }
 
@@ -406,10 +409,10 @@ struct ComparisonReportView: View {
                 if let metrics = tab.streamingMetrics {
                     HStack(spacing: DS.Spacing.sm) {
                         if let ttft = metrics.firstTokenTime {
-                            miniStamp(label: "TTFT", value: String(format: "%.0fms", ttft * 1000))
+                            miniStamp(label: "TTFT", value: String(format: "%.0fms", ttft * 1000), color: .purple)
                         }
-                        miniStamp(label: "Speed", value: String(format: "%.1f tok/s", metrics.tokensPerSecond))
-                        miniStamp(label: "Total", value: String(format: "%.1fs", metrics.totalDuration))
+                        miniStamp(label: "Speed", value: String(format: "%.1f tok/s", metrics.tokensPerSecond), color: .green)
+                        miniStamp(label: "Total", value: String(format: "%.1fs", metrics.totalDuration), color: .blue)
                     }
                 }
             }
@@ -457,19 +460,24 @@ struct ComparisonReportView: View {
         )
     }
 
-    private func miniStamp(label: String, value: String) -> some View {
+    private func miniStamp(label: String, value: String, color: Color) -> some View {
         HStack(spacing: 2) {
             Text(label)
-                .font(.system(size: 8, weight: .semibold))
-                .foregroundStyle(.tertiary)
+                .font(.system(size: 8, weight: .bold))
                 .textCase(.uppercase)
+                .tracking(0.5)
+                .opacity(0.6)
             Text(value)
-                .font(.system(size: DS.Font.caption, weight: .medium, design: .monospaced))
-                .foregroundStyle(.secondary)
+                .font(.system(size: DS.Font.caption, weight: .semibold, design: .monospaced))
         }
+        .foregroundStyle(color)
         .padding(.horizontal, DS.Spacing.xs + 2)
         .padding(.vertical, 2)
-        .background(.quinary)
+        .background(color.opacity(0.08))
+        .overlay(
+            RoundedRectangle(cornerRadius: DS.Radius.sm, style: .continuous)
+                .strokeBorder(color.opacity(0.2), lineWidth: 1)
+        )
         .clipShape(RoundedRectangle(cornerRadius: DS.Radius.sm, style: .continuous))
     }
 
