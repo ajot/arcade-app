@@ -76,6 +76,7 @@ final class AppState {
     var tabs: [Tab] = []
     var activeTabIndex: Int = 0
     var isCompareMode: Bool = false
+    var showReport: Bool = false
 
     // MARK: - Play Mode State
     var currentDefinition: Definition?
@@ -520,6 +521,19 @@ final class AppState {
                 }
             }
         }
+    }
+
+    // MARK: - Compare Mode Report
+
+    func generateReport() {
+        guard isCompareMode else { return }
+        let completedTabs = tabs.filter { $0.generationState == .completed }
+        guard completedTabs.count >= 2 else { return }
+        showReport = true
+    }
+
+    func closeReport() {
+        showReport = false
     }
 
     // MARK: - Compare Mode Actions

@@ -18,6 +18,19 @@ struct ContentView: View {
             .toolbar {
                 ToolbarItemGroup(placement: .primaryAction) {
                     if let definition = state.currentDefinition {
+                        // Report button (compare mode only)
+                        if state.isCompareMode {
+                            Button {
+                                withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                                    state.generateReport()
+                                }
+                            } label: {
+                                Image(systemName: "chart.bar.doc.horizontal")
+                            }
+                            .help("Generate Comparison Report")
+                            .disabled(state.tabs.filter { $0.generationState == .completed }.count < 2)
+                        }
+
                         // Log toggle
                         Button {
                             withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {

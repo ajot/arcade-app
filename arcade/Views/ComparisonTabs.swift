@@ -22,6 +22,41 @@ struct ComparisonTabs: View {
                 singleTabLabel(def)
             }
 
+            // Report tab (when report is shown)
+            if state.showReport {
+                if !state.tabs.isEmpty {
+                    Divider()
+                        .frame(height: 16)
+                        .opacity(0.3)
+                }
+
+                HStack(spacing: DS.Spacing.xs) {
+                    Text("\u{1F4CA}")
+                        .font(.system(size: DS.Font.caption))
+                    Text("Report")
+                        .font(.system(size: DS.Font.secondary, weight: .semibold))
+
+                    Button {
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                            state.closeReport()
+                        }
+                    } label: {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 8, weight: .semibold))
+                            .foregroundStyle(.white.opacity(0.7))
+                            .frame(width: 14, height: 14)
+                    }
+                    .buttonStyle(.plain)
+                }
+                .foregroundStyle(.white)
+                .padding(.horizontal, DS.Spacing.md)
+                .padding(.vertical, DS.Spacing.sm)
+                .background(
+                    Capsule()
+                        .fill(Color.accentColor)
+                )
+            }
+
             // + button — always visible
             Button {
                 if !state.isCompareMode {

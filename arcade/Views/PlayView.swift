@@ -25,12 +25,21 @@ struct PlayView: View {
                     Spacer()
                         .frame(maxHeight: .infinity)
 
-                    resultContent(definition)
-                        .padding(.horizontal, DS.Spacing.xxl)
-                        .padding(.top, DS.Spacing.lg)
-                        .padding(.bottom, DS.Spacing.lg)
-                        .frame(maxWidth: 720)
-                        .frame(maxWidth: .infinity)
+                    if state.showReport {
+                        ComparisonReportView(state: state)
+                            .padding(.horizontal, DS.Spacing.xxl)
+                            .padding(.top, DS.Spacing.lg)
+                            .padding(.bottom, DS.Spacing.lg)
+                            .frame(maxWidth: 900)
+                            .frame(maxWidth: .infinity)
+                    } else {
+                        resultContent(definition)
+                            .padding(.horizontal, DS.Spacing.xxl)
+                            .padding(.top, DS.Spacing.lg)
+                            .padding(.bottom, DS.Spacing.lg)
+                            .frame(maxWidth: 720)
+                            .frame(maxWidth: .infinity)
+                    }
                 }
                 .defaultScrollAnchor(.bottom)
                 .animation(.spring(response: 0.4, dampingFraction: 0.8), value: state.isCompareMode
