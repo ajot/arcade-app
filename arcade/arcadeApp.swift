@@ -96,6 +96,14 @@ struct ArcadeApp: App {
                 .keyboardShortcut("]", modifiers: [.command, .shift])
                 .disabled(!state.isCompareMode || state.activeTabIndex >= state.tabs.count - 1)
 
+                Button("New Tab") {
+                    if state.isCompareMode {
+                        state.addTab()
+                    }
+                }
+                .keyboardShortcut("t", modifiers: .command)
+                .disabled(!state.isCompareMode)
+
                 Button("Close Tab") {
                     if state.isCompareMode && state.tabs.count > 1 {
                         state.removeTab(at: state.activeTabIndex)
