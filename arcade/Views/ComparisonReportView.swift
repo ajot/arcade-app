@@ -89,7 +89,6 @@ struct ComparisonReportView: View {
         .onAppear { refreshCompletedTabs() }
     }
 
-    // MARK: - Header (now in sheet toolbar above)
 
     // MARK: - Prompt
 

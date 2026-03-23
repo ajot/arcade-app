@@ -220,7 +220,7 @@ struct PlayView: View {
     }
 
     private var hasPromptText: Bool {
-        guard let param = primaryPromptParam(state.currentDefinition!) else { return false }
+        guard let def = state.currentDefinition, let param = primaryPromptParam(def) else { return false }
         return !(state.formValues[param.name]?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? true)
     }
 

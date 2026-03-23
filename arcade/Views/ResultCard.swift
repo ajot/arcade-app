@@ -4,8 +4,6 @@ import UniformTypeIdentifiers
 struct ResultCard: View {
     @Bindable var state: AppState
 
-    @State private var showCopied = false
-    @State private var showSaved = false
     @State private var showRequestJSON = false
     @State private var showResponseJSON = false
     @State private var requestJSONCopied = false
@@ -102,107 +100,6 @@ struct ResultCard: View {
         StreamingTextContent(state: state)
     }
 
-    // MARK: - Copy Button
-
-    private var copyButton: some View {
-        Button {
-            NSPasteboard.general.clearContents()
-            NSPasteboard.general.setString(effectiveStreamedText, forType: .string)
-            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                showCopied = true
-            }
-            SoundService.confirm()
-            Task { @MainActor in try? await Task.sleep(for: .milliseconds(1500))
-                withAnimation { showCopied = false }
-            }
-        } label: {
-            HStack(spacing: 4) {
-                Image(systemName: showCopied ? "checkmark" : "doc.on.doc")
-                    .font(.system(size: DS.Font.caption))
-                Text(showCopied ? "Copied" : "Copy")
-                    .font(.system(size: DS.Font.secondary))
-            }
-            .foregroundStyle(showCopied ? Color.green : Color.secondary)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
-            .background(.quinary)
-            .clipShape(RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous))
-        }
-        .buttonStyle(.plain)
-    }
-
-    // MARK: - Save Image
-
-    private var hasImageOutput: Bool {
-        effectiveGenerationResult?.outputs.contains(where: { $0.type == .image }) ?? false
-    }
-
-    private var saveImageButton: some View {
-        Button {
-            saveImage()
-        } label: {
-            HStack(spacing: 4) {
-                Image(systemName: showSaved ? "checkmark" : "arrow.down.circle")
-                    .font(.system(size: DS.Font.caption))
-                Text(showSaved ? "Saved" : "Save")
-                    .font(.system(size: DS.Font.secondary))
-            }
-            .foregroundStyle(showSaved ? Color.green : Color.secondary)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
-            .background(.quinary)
-            .clipShape(RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous))
-        }
-        .buttonStyle(.plain)
-    }
-
-    private func saveImage() {
-        guard let result = effectiveGenerationResult,
-              let imageOutput = result.outputs.first(where: { $0.type == .image }),
-              let value = imageOutput.values.first else { return }
-
-        Task {
-            let imageData = await loadImageData(from: value)
-            guard let data = imageData,
-                  let nsImage = NSImage(data: data),
-                  let tiff = nsImage.tiffRepresentation,
-                  let bitmap = NSBitmapImageRep(data: tiff),
-                  let pngData = bitmap.representation(using: .png, properties: [:]) else {
-                SoundService.error()
-                return
-            }
-
-            await MainActor.run {
-                let panel = NSSavePanel()
-                panel.allowedContentTypes = [.png]
-                panel.nameFieldStringValue = "arcade-image-\(Int(Date().timeIntervalSince1970)).png"
-
-                if panel.runModal() == .OK, let url = panel.url {
-                    do {
-                        try pngData.write(to: url)
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                            showSaved = true
-                        }
-                        SoundService.confirm()
-                        Task { @MainActor in try? await Task.sleep(for: .milliseconds(1500))
-                            withAnimation { showSaved = false }
-                        }
-                    } catch {
-                        SoundService.error()
-                    }
-                }
-            }
-        }
-    }
-
-    private func loadImageData(from value: String) async -> Data? {
-        if value.hasPrefix("data:") {
-            return dataFromDataURL(value)
-        } else if let url = URL(string: value) {
-            return try? await URLSession.shared.data(from: url).0
-        }
-        return nil
-    }
 
     // MARK: - Media Results
 
