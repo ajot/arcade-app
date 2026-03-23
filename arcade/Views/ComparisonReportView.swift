@@ -504,7 +504,24 @@ struct ComparisonReportView: View {
         md += "\n## Responses\n"
         for tab in completedTabs {
             md += "\n### \(tab.model) (\(tab.definition.providerDisplayName))\n"
-            md += tab.streamedText + "\n"
+            if let result = tab.result {
+                let imageOutputs = result.outputs.filter { $0.type == .image }
+                if !imageOutputs.isEmpty {
+                    for output in imageOutputs {
+                        for url in output.values {
+                            md += "![Generated image](\(url))\n\n"
+                        }
+                    }
+                }
+            }
+            if !tab.streamedText.isEmpty {
+                md += tab.streamedText + "\n"
+            } else if let result = tab.result {
+                let textValues = result.outputs.filter { $0.type == .text }.flatMap(\.values)
+                if !textValues.isEmpty {
+                    md += textValues.joined(separator: "\n\n") + "\n"
+                }
+            }
         }
 
         NSPasteboard.general.clearContents()
