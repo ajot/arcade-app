@@ -5,7 +5,7 @@ struct ComparisonTabs: View {
     @State private var pickerTabIndex: Int? = nil
 
     var body: some View {
-        HStack(spacing: 2) {
+        HStack(spacing: DS.Spacing.sm) {
             ForEach(Array(state.tabs.enumerated()), id: \.element.id) { index, tab in
                 tabButton(tab, index: index)
             }
@@ -15,11 +15,16 @@ struct ComparisonTabs: View {
                     state.addTab()
                 }
             } label: {
-                Text("+")
-                    .font(.system(size: 14))
-                    .foregroundStyle(.tertiary)
-                    .padding(.horizontal, DS.Spacing.sm + 2)
-                    .padding(.vertical, DS.Spacing.sm)
+                Image(systemName: "plus")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(.secondary)
+                    .frame(width: 24, height: 24)
+                    .background(Color.primary.opacity(0.04))
+                    .clipShape(RoundedRectangle(cornerRadius: DS.Radius.md))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: DS.Radius.md)
+                            .strokeBorder(Color.primary.opacity(0.08), lineWidth: 1)
+                    )
             }
             .buttonStyle(.plain)
 
@@ -80,20 +85,21 @@ struct ComparisonTabs: View {
                             .foregroundStyle(.tertiary)
                     }
                     .buttonStyle(.plain)
-                    .opacity(isActive ? 1 : 0)
+                    .opacity(isActive ? 0.8 : 0.3)
                 }
             }
             .font(.system(size: DS.Font.secondary))
             .foregroundStyle(isActive ? Color.accentColor : .secondary)
             .padding(.horizontal, DS.Spacing.md)
             .padding(.vertical, DS.Spacing.sm)
-            .overlay(alignment: .bottom) {
-                if isActive {
-                    Rectangle()
-                        .fill(Color.accentColor)
-                        .frame(height: 2)
-                }
-            }
+            .background(
+                RoundedRectangle(cornerRadius: DS.Radius.md)
+                    .fill(isActive ? Color.accentColor.opacity(0.1) : Color.primary.opacity(0.04))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: DS.Radius.md)
+                    .strokeBorder(isActive ? Color.accentColor.opacity(0.3) : Color.primary.opacity(0.08), lineWidth: 1)
+            )
         }
         .buttonStyle(.plain)
     }
