@@ -80,6 +80,32 @@ struct ArcadeApp: App {
 
                 Divider()
 
+                Button("Previous Tab") {
+                    if state.isCompareMode && state.activeTabIndex > 0 {
+                        state.selectTab(state.activeTabIndex - 1)
+                    }
+                }
+                .keyboardShortcut("[", modifiers: [.command, .shift])
+                .disabled(!state.isCompareMode || state.activeTabIndex <= 0)
+
+                Button("Next Tab") {
+                    if state.isCompareMode && state.activeTabIndex < state.tabs.count - 1 {
+                        state.selectTab(state.activeTabIndex + 1)
+                    }
+                }
+                .keyboardShortcut("]", modifiers: [.command, .shift])
+                .disabled(!state.isCompareMode || state.activeTabIndex >= state.tabs.count - 1)
+
+                Button("Close Tab") {
+                    if state.isCompareMode && state.tabs.count > 1 {
+                        state.removeTab(at: state.activeTabIndex)
+                    }
+                }
+                .keyboardShortcut("w", modifiers: .command)
+                .disabled(!state.isCompareMode || state.tabs.count <= 1)
+
+                Divider()
+
                 Button("Save Bookmark") {
                     if state.currentDefinition != nil {
                         state.showBookmarkPopover = true
