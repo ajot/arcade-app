@@ -45,9 +45,16 @@ final class AppState {
     var showBookmarkPopover = false
     var showCurlPopover = false
     var showInspector = false
-    var showModelPicker = false
     var zoomedImageValue: String?
     var settingsTab: SettingsTab = .general
+
+    enum PaletteContext {
+        case general              // Normal Cmd+K
+        case modelSelect          // Picking model for compose area
+        case tabModelSelect(Int)  // Picking model for a specific comparison tab
+    }
+
+    var paletteContext: PaletteContext = .general
 
     enum SettingsTab: Hashable {
         case general

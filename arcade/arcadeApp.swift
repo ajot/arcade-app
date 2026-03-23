@@ -58,7 +58,10 @@ struct ArcadeApp: App {
                 .disabled(state.currentDefinition == nil)
 
                 Button("Switch Model") {
-                    state.showModelPicker = true
+                    state.paletteContext = .modelSelect
+                    withAnimation(.easeOut(duration: 0.15)) {
+                        state.showCommandPalette = true
+                    }
                 }
                 .keyboardShortcut("m", modifiers: [.command, .shift])
                 .disabled(state.currentDefinition == nil)

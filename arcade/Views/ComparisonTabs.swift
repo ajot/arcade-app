@@ -2,8 +2,6 @@ import SwiftUI
 
 struct ComparisonTabs: View {
     @Bindable var state: AppState
-    @State private var pickerTabIndex: Int? = nil
-
     var body: some View {
         HStack(spacing: DS.Spacing.sm) {
             ForEach(Array(state.tabs.enumerated()), id: \.element.id) { index, tab in
@@ -13,6 +11,11 @@ struct ComparisonTabs: View {
             Button {
                 withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                     state.addTab()
+                }
+                // Open palette to pick model for the new tab
+                state.paletteContext = .tabModelSelect(state.tabs.count - 1)
+                withAnimation(.easeOut(duration: 0.15)) {
+                    state.showCommandPalette = true
                 }
             } label: {
                 Image(systemName: "plus")
@@ -49,7 +52,10 @@ struct ComparisonTabs: View {
                     .opacity(0.5)
 
                 Button {
-                    pickerTabIndex = index
+                    state.paletteContext = .tabModelSelect(index)
+                    withAnimation(.easeOut(duration: 0.15)) {
+                        state.showCommandPalette = true
+                    }
                 } label: {
                     Text(tab.model)
                         .padding(.horizontal, DS.Spacing.sm)
@@ -58,21 +64,6 @@ struct ComparisonTabs: View {
                         .clipShape(Capsule())
                 }
                 .buttonStyle(.plain)
-                .popover(isPresented: Binding(
-                    get: { pickerTabIndex == index },
-                    set: { if !$0 { pickerTabIndex = nil } }
-                ), arrowEdge: .bottom) {
-                    ModelPicker(
-                        state: state,
-                        onSelect: { def, model in
-                            state.updateTabModel(at: index, definition: def, model: model)
-                            pickerTabIndex = nil
-                        },
-                        onDismiss: {
-                            pickerTabIndex = nil
-                        }
-                    )
-                }
 
                 if state.tabs.count > 1 {
                     Button {

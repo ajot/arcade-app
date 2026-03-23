@@ -10,7 +10,6 @@ struct ComposeArea: View {
     let onCancel: () -> Void
     let onModelSelect: (Definition, String) -> Void
 
-    @State private var showModelPicker = false
     @State private var sendToAllTabs = false
     @FocusState private var isInputFocused: Bool
 
@@ -48,12 +47,6 @@ struct ComposeArea: View {
                 isInputFocused = true
             }
         }
-        .onChange(of: state.showModelPicker) { _, newValue in
-            if newValue {
-                showModelPicker = true
-                state.showModelPicker = false
-            }
-        }
     }
 
     // MARK: - Model Pill Row
@@ -69,7 +62,10 @@ struct ComposeArea: View {
         let modelName = state.currentModel ?? "Model"
 
         Button {
-            showModelPicker.toggle()
+            state.paletteContext = .modelSelect
+            withAnimation(.easeOut(duration: 0.15)) {
+                state.showCommandPalette = true
+            }
         } label: {
             HStack(spacing: DS.Spacing.xs) {
                 Text(providerName)
@@ -84,31 +80,15 @@ struct ComposeArea: View {
             .font(.system(size: DS.Font.secondary, weight: .medium))
             .padding(.horizontal, DS.Spacing.sm)
             .padding(.vertical, DS.Spacing.xs)
-            .background(
-                showModelPicker
-                    ? Color.accentColor.opacity(0.1)
-                    : Color.clear
-            )
+            .background(Color.clear)
             .clipShape(Capsule())
             .overlay(
                 Capsule()
                     .strokeBorder(lineWidth: 0.5)
-                    .foregroundStyle(showModelPicker ? AnyShapeStyle(Color.accentColor.opacity(0.3)) : AnyShapeStyle(.quaternary))
+                    .foregroundStyle(AnyShapeStyle(.quaternary))
             )
         }
         .buttonStyle(.plain)
-        .popover(isPresented: $showModelPicker, arrowEdge: .bottom) {
-            ModelPicker(
-                state: state,
-                onSelect: { definition, model in
-                    onModelSelect(definition, model)
-                    showModelPicker = false
-                },
-                onDismiss: {
-                    showModelPicker = false
-                }
-            )
-        }
     }
 
     // MARK: - Bottom Row

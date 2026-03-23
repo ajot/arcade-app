@@ -7,6 +7,7 @@ struct CommandPalette: View {
     @State private var step: PaletteStep = .endpoints
     @State private var selectedDefinition: Definition?
     @State private var appeared = false
+    @State private var isContextModelMode = false
     @FocusState private var isSearchFocused: Bool
 
     @State private var hoveredBookmarkId: UUID?
@@ -20,12 +21,14 @@ struct CommandPalette: View {
     // Flattened list item for stable identities
     private enum PaletteItem: Identifiable {
         case header(OutputType)
+        case providerHeader(String) // provider display name
         case endpoint(Definition, Int) // definition + flat index
         case model(Definition, String, Int) // definition + model name + flat index
 
         var id: String {
             switch self {
             case .header(let type): return "header-\(type.rawValue)"
+            case .providerHeader(let name): return "provider-\(name)"
             case .endpoint(let def, _): return def.id
             case .model(let def, let model, _): return "\(def.id)-model-\(model)"
             }
@@ -41,8 +44,8 @@ struct CommandPalette: View {
 
             // Panel
             VStack(spacing: 0) {
-                // Breadcrumb (model step only)
-                if step == .models, let def = selectedDefinition {
+                // Breadcrumb (model step only, not in context mode)
+                if !isContextModelMode, step == .models, let def = selectedDefinition {
                     HStack(spacing: 4) {
                         Button {
                             withAnimation(.easeOut(duration: 0.15)) {
@@ -97,13 +100,17 @@ struct CommandPalette: View {
                 // Results
                 ScrollView {
                     VStack(spacing: 0) {
-                        switch step {
-                        case .endpoints:
-                            endpointList
-                        case .models:
-                            modelList
-                        case .bookmarks:
-                            bookmarkList
+                        if isContextModelMode {
+                            contextModelList
+                        } else {
+                            switch step {
+                            case .endpoints:
+                                endpointList
+                            case .models:
+                                modelList
+                            case .bookmarks:
+                                bookmarkList
+                            }
                         }
                     }
                     .padding(.vertical, 4)
@@ -115,7 +122,7 @@ struct CommandPalette: View {
                     .background(.separator)
 
                 HStack(spacing: 16) {
-                    if step != .models {
+                    if step != .models && !isContextModelMode {
                         // Tab toggle pill
                         HStack(spacing: 0) {
                             tabPill("Endpoints", isActive: step == .endpoints) {
@@ -158,6 +165,12 @@ struct CommandPalette: View {
             .offset(y: appeared ? 0 : -4)
         }
         .onAppear {
+            switch state.paletteContext {
+            case .modelSelect, .tabModelSelect:
+                isContextModelMode = true
+            case .general:
+                isContextModelMode = false
+            }
             withAnimation(.easeOut(duration: 0.15)) {
                 appeared = true
             }
@@ -175,10 +188,17 @@ struct CommandPalette: View {
             return .handled
         }
         .onKeyPress(.return) {
-            selectHighlighted()
+            if isContextModelMode {
+                selectHighlightedContextModel()
+            } else {
+                selectHighlighted()
+            }
             return .handled
         }
         .onKeyPress(.tab) {
+            if isContextModelMode {
+                return .ignored
+            }
             if step == .endpoints {
                 switchToBookmarks()
             } else if step == .bookmarks {
@@ -194,7 +214,9 @@ struct CommandPalette: View {
             return .ignored
         }
         .onKeyPress(.escape) {
-            if step == .models {
+            if isContextModelMode {
+                dismiss()
+            } else if step == .models {
                 withAnimation(.easeOut(duration: 0.15)) {
                     step = .endpoints
                     selectedDefinition = nil
@@ -283,6 +305,9 @@ struct CommandPalette: View {
                     .padding(.horizontal, 16)
                     .padding(.top, 8)
                     .padding(.bottom, 4)
+
+            case .providerHeader:
+                EmptyView()
 
             case .endpoint(let def, let flatIndex):
                 let hasKey = state.keyStatus[def.provider] != .noKey
@@ -460,10 +485,14 @@ struct CommandPalette: View {
 
     private func moveHighlight(_ delta: Int) {
         let count: Int
-        switch step {
-        case .endpoints: count = totalFilteredCount
-        case .models: count = filteredModels.count
-        case .bookmarks: count = filteredBookmarks.count
+        if isContextModelMode {
+            count = contextModelSelectableCount
+        } else {
+            switch step {
+            case .endpoints: count = totalFilteredCount
+            case .models: count = filteredModels.count
+            case .bookmarks: count = filteredBookmarks.count
+            }
         }
         guard count > 0 else { return }
         highlightedIndex = (highlightedIndex + delta + count) % count
@@ -529,6 +558,7 @@ struct CommandPalette: View {
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
             state.showCommandPalette = false
+            state.paletteContext = .general
         }
     }
 
@@ -688,10 +718,175 @@ struct CommandPalette: View {
     }
 
     private var searchPlaceholder: String {
+        if isContextModelMode { return "Search models..." }
         switch step {
         case .endpoints: return "Search endpoints or models..."
         case .models: return "Search models..."
         case .bookmarks: return "Search bookmarks..."
+        }
+    }
+
+    // MARK: - Context Model Selection (for .modelSelect / .tabModelSelect)
+
+    private var flatContextModelItems: [PaletteItem] {
+        let query = searchText.lowercased()
+        var items: [PaletteItem] = []
+        var flatIdx = 0
+
+        // Group definitions by provider, only show providers with valid keys
+        var providerDefs: [(String, [Definition])] = []
+        var seenProviders: [String] = []
+
+        for definition in state.definitionLoader.sortedDefinitions {
+            guard state.keyStatus[definition.provider] == .valid else { continue }
+            guard let models = definition.modelParam?.options, !models.isEmpty else { continue }
+
+            if !seenProviders.contains(definition.provider) {
+                seenProviders.append(definition.provider)
+                providerDefs.append((definition.providerDisplayName, [definition]))
+            } else if let idx = providerDefs.firstIndex(where: { $0.0 == definition.providerDisplayName }) {
+                providerDefs[idx].1.append(definition)
+            }
+        }
+
+        for (providerName, defs) in providerDefs {
+            var sectionItems: [PaletteItem] = []
+
+            for def in defs {
+                let models = def.modelParam?.options ?? []
+                let filtered: [String]
+                if query.isEmpty {
+                    filtered = models
+                } else {
+                    filtered = models.filter {
+                        $0.lowercased().contains(query) ||
+                        def.providerDisplayName.lowercased().contains(query) ||
+                        def.provider.lowercased().contains(query)
+                    }
+                }
+                for model in filtered {
+                    sectionItems.append(.model(def, model, flatIdx))
+                    flatIdx += 1
+                }
+            }
+
+            if !sectionItems.isEmpty {
+                items.append(.providerHeader(providerName))
+                items.append(contentsOf: sectionItems)
+            }
+        }
+        return items
+    }
+
+    private var contextModelSelectableCount: Int {
+        flatContextModelItems.reduce(0) { count, item in
+            if case .model = item { return count + 1 }
+            return count
+        }
+    }
+
+    @ViewBuilder
+    private var contextModelList: some View {
+        let items = flatContextModelItems
+
+        if items.isEmpty {
+            VStack(spacing: 8) {
+                Image(systemName: "cpu")
+                    .font(.system(size: DS.Font.display))
+                    .foregroundStyle(.quaternary.opacity(0.4))
+                Text(searchText.isEmpty ? "No models available" : "No matching models")
+                    .font(.system(size: DS.Font.body))
+                    .foregroundStyle(.secondary)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 32)
+        } else {
+            ForEach(items) { item in
+                switch item {
+                case .providerHeader(let name):
+                    Text(name)
+                        .font(.system(size: DS.Font.caption, weight: .medium))
+                        .foregroundStyle(.secondary)
+                        .textCase(.uppercase)
+                        .tracking(0.5)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, 16)
+                        .padding(.top, 8)
+                        .padding(.bottom, 4)
+
+                case .model(let def, let modelName, let flatIndex):
+                    let isCurrentModel = state.currentDefinition?.id == def.id && state.currentModel == modelName
+
+                    Button {
+                        selectContextModel(definition: def, model: modelName)
+                    } label: {
+                        HStack(spacing: 0) {
+                            Image(systemName: "cpu")
+                                .font(.system(size: DS.Font.caption))
+                                .foregroundStyle(.tertiary)
+                                .frame(width: 14)
+                                .padding(.trailing, 6)
+
+                            Text(modelName)
+                                .font(.system(size: DS.Font.body))
+                                .foregroundStyle(.primary)
+
+                            if modelName == def.defaultModel {
+                                Text("default")
+                                    .font(.system(size: DS.Font.caption))
+                                    .foregroundStyle(.secondary)
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, 2)
+                                    .background(.quinary)
+                                    .clipShape(Capsule())
+                                    .padding(.leading, 4)
+                            }
+
+                            Spacer()
+
+                            if isCurrentModel {
+                                Image(systemName: "checkmark")
+                                    .font(.system(size: DS.Font.secondary, weight: .medium))
+                                    .foregroundStyle(Color.accentColor)
+                            }
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                        .background(
+                            flatIndex == highlightedIndex
+                                ? Color.accentColor.opacity(0.15)
+                                : Color.clear
+                        )
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+
+                default:
+                    EmptyView()
+                }
+            }
+        }
+    }
+
+    private func selectContextModel(definition: Definition, model: String) {
+        switch state.paletteContext {
+        case .modelSelect:
+            state.selectEndpoint(definition, model: model)
+        case .tabModelSelect(let index):
+            state.updateTabModel(at: index, definition: definition, model: model)
+        case .general:
+            break
+        }
+        SoundService.select()
+        dismiss()
+    }
+
+    private func selectHighlightedContextModel() {
+        for item in flatContextModelItems {
+            if case .model(let def, let modelName, let idx) = item, idx == highlightedIndex {
+                selectContextModel(definition: def, model: modelName)
+                return
+            }
         }
     }
 
