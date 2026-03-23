@@ -50,12 +50,12 @@ struct PlayView: View {
                 let secondaryParams = definition.regularParams.filter {
                     $0.bodyPath != "_chat_message" && $0.bodyPath != "_system_prompt"
                 }
-                if !secondaryParams.isEmpty {
+                if !secondaryParams.isEmpty && !state.showReport {
                     secondaryParamsStrip(secondaryParams)
                 }
 
-                // Zone 2: Compose area (fixed at bottom, never scrolls)
-                if definition.isChatEndpoint {
+                // Zone 2: Compose area (fixed at bottom, never scrolls) — hidden when report is showing
+                if definition.isChatEndpoint && !state.showReport {
                     ComposeArea(
                         state: state,
                         isMultiTab: state.isCompareMode,
@@ -82,8 +82,8 @@ struct PlayView: View {
                     .padding(.bottom, DS.Spacing.lg)
                 }
 
-                // Zone 3: Examples (below compose, fade when typing)
-                if !definition.examples.isEmpty {
+                // Zone 3: Examples (below compose, fade when typing) — hidden when report is showing
+                if !definition.examples.isEmpty && !state.showReport {
                     exampleChips(definition)
                         .padding(.horizontal, DS.Spacing.xxl)
                         .padding(.bottom, DS.Spacing.lg)
