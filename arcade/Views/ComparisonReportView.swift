@@ -508,8 +508,12 @@ struct ComparisonReportView: View {
                 let imageOutputs = result.outputs.filter { $0.type == .image }
                 if !imageOutputs.isEmpty {
                     for output in imageOutputs {
-                        for url in output.values {
-                            md += "![Generated image](\(url))\n\n"
+                        for value in output.values {
+                            if value.hasPrefix("data:") {
+                                md += "*[Base64 image — not embeddable in markdown]*\n\n"
+                            } else {
+                                md += "![Generated image](\(value))\n\n"
+                            }
                         }
                     }
                 }
