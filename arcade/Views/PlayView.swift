@@ -37,17 +37,20 @@ struct PlayView: View {
                     ? (state.tabs[safe: state.activeTabIndex]?.generationState ?? .idle)
                     : state.generationState)
 
-                // Secondary params strip (sliders, dropdowns — NOT the chat prompt)
-                let secondaryParams = definition.regularParams.filter {
-                    $0.bodyPath != "_chat_message" && $0.bodyPath != "_system_prompt"
+                // Secondary params strip (everything except the prompt and system prompt)
+                let promptParam = primaryPromptParam(definition)
+                let secondaryParams = definition.regularParams.filter { param in
+                    param.name != promptParam?.name &&
+                    param.bodyPath != "_chat_message" &&
+                    param.bodyPath != "_system_prompt"
                 }
-                if !secondaryParams.isEmpty  {
+                if !secondaryParams.isEmpty && !state.showReport {
                     secondaryParamsStrip(secondaryParams)
                 }
 
-                // Zone 2: Compose area (fixed at bottom, never scrolls) — hidden when report is showing
+                // Zone 2: Compose area (fixed at bottom, never scrolls)
                 if !state.showReport {
-                    if definition.isChatEndpoint {
+                    if promptParam != nil {
                         ComposeArea(
                             state: state,
                             isMultiTab: state.isCompareMode,
@@ -73,7 +76,7 @@ struct PlayView: View {
                         .padding(.horizontal, DS.Spacing.xxl)
                         .padding(.bottom, DS.Spacing.lg)
                     } else {
-                        // Non-chat endpoints: generate bar with send-to-all option
+                        // Endpoints with no prompt field: just a generate bar
                         nonChatGenerateBar
                             .padding(.horizontal, DS.Spacing.xxl)
                             .padding(.bottom, DS.Spacing.lg)
@@ -205,10 +208,20 @@ struct PlayView: View {
 
     // MARK: - Helpers
 
+    /// The primary prompt param — chat message for text endpoints, or the first required textarea for others
+    private func primaryPromptParam(_ definition: Definition) -> ParamDefinition? {
+        // Chat endpoint: use the _chat_message param
+        if let chatParam = definition.regularParams.first(where: { $0.bodyPath == "_chat_message" }) {
+            return chatParam
+        }
+        // Non-chat: find the first required textarea param (e.g., "prompt" for image gen)
+        return definition.regularParams.first(where: { $0.ui == .textarea && $0.isRequired })
+            ?? definition.regularParams.first(where: { $0.ui == .textarea })
+    }
+
     private var hasPromptText: Bool {
-        let chatParam = state.currentDefinition?.regularParams.first { $0.bodyPath == "_chat_message" }
-        guard let paramName = chatParam?.name else { return false }
-        return !(state.formValues[paramName]?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? true)
+        guard let param = primaryPromptParam(state.currentDefinition!) else { return false }
+        return !(state.formValues[param.name]?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? true)
     }
 
     private func composePlaceholder(_ definition: Definition) -> String {
@@ -220,8 +233,7 @@ struct PlayView: View {
     }
 
     private func promptBinding(_ definition: Definition) -> Binding<String> {
-        let chatParam = definition.regularParams.first { $0.bodyPath == "_chat_message" }
-        let paramName = chatParam?.name ?? ""
+        let paramName = primaryPromptParam(definition)?.name ?? ""
         return Binding(
             get: { state.formValues[paramName] ?? "" },
             set: { state.formValues[paramName] = $0 }
