@@ -356,37 +356,10 @@ struct ResultCard: View {
         isExpanded: Binding<Bool>,
         isCopied: Binding<Bool>
     ) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
-            // Header
-            HStack(spacing: 8) {
-                Button {
-                    withAnimation(.easeOut(duration: 0.2)) {
-                        isExpanded.wrappedValue.toggle()
-                    }
-                } label: {
-                    HStack(spacing: 6) {
-                        Image(systemName: "chevron.right")
-                            .font(.system(size: DS.Font.caption, weight: .semibold))
-                            .rotationEffect(.degrees(isExpanded.wrappedValue ? 90 : 0))
-                            .foregroundStyle(.secondary)
-
-                        Text(title)
-                            .font(.system(size: DS.Font.secondary, weight: .medium))
-                            .foregroundStyle(.tertiary)
-
-                        if !subtitle.isEmpty {
-                            Text(subtitle)
-                                .font(.system(size: DS.Font.caption))
-                                .foregroundStyle(.secondary)
-                                .lineLimit(1)
-                        }
-                    }
-                }
-                .buttonStyle(.plain)
-
-                Spacer()
-
-                if isExpanded.wrappedValue {
+        DisclosureGroup(isExpanded: isExpanded) {
+            VStack(alignment: .leading, spacing: DS.Spacing.xs) {
+                HStack {
+                    Spacer()
                     Button {
                         NSPasteboard.general.clearContents()
                         NSPasteboard.general.setString(json, forType: .string)
@@ -400,34 +373,41 @@ struct ResultCard: View {
                     } label: {
                         HStack(spacing: 3) {
                             Image(systemName: isCopied.wrappedValue ? "checkmark" : "doc.on.doc")
-                                .font(.system(size: DS.Font.caption))
                             Text(isCopied.wrappedValue ? "Copied" : "Copy")
-                                .font(.system(size: DS.Font.caption))
                         }
+                        .font(.system(size: DS.Font.caption))
                         .foregroundStyle(isCopied.wrappedValue ? Color.green : Color.secondary)
                     }
                     .buttonStyle(.plain)
-                    .transition(.opacity)
                 }
-            }
-            .padding(.vertical, 8)
 
-            // JSON body
-            if isExpanded.wrappedValue {
                 ScrollView([.horizontal, .vertical]) {
                     Text(json)
                         .font(.system(size: DS.Font.secondary, design: .monospaced))
                         .foregroundStyle(.secondary)
                         .textSelection(.enabled)
                         .lineSpacing(3)
-                        .padding(12)
+                        .padding(DS.Spacing.md)
                 }
                 .frame(maxHeight: 300)
                 .background(.quinary)
                 .clipShape(RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous))
-                .transition(.opacity.combined(with: .move(edge: .top)))
+            }
+        } label: {
+            HStack(spacing: DS.Spacing.xs) {
+                Text(title)
+                    .font(.system(size: DS.Font.secondary, weight: .medium))
+                    .foregroundStyle(.tertiary)
+
+                if !subtitle.isEmpty {
+                    Text(subtitle)
+                        .font(.system(size: DS.Font.caption))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
             }
         }
+        .disclosureGroupStyle(.automatic)
     }
 
     // MARK: - Helpers
