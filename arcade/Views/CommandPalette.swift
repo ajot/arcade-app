@@ -21,11 +21,13 @@ struct CommandPalette: View {
     private enum PaletteItem: Identifiable {
         case header(OutputType)
         case endpoint(Definition, Int) // definition + flat index
+        case model(Definition, String, Int) // definition + model name + flat index
 
         var id: String {
             switch self {
             case .header(let type): return "header-\(type.rawValue)"
             case .endpoint(let def, _): return def.id
+            case .model(let def, let model, _): return "\(def.id)-model-\(model)"
             }
         }
     }
@@ -220,19 +222,46 @@ struct CommandPalette: View {
         var flatIdx = 0
 
         for type in Self.outputOrder {
-            guard var defs = all[type], !defs.isEmpty else { continue }
-            if !query.isEmpty {
-                defs = defs.filter {
-                    $0.name.lowercased().contains(query) ||
-                    $0.provider.lowercased().contains(query) ||
-                    $0.providerDisplayName.lowercased().contains(query)
-                }
-                if defs.isEmpty { continue }
-            }
-            items.append(.header(type))
+            guard let defs = all[type], !defs.isEmpty else { continue }
+            var sectionItems: [PaletteItem] = []
+
             for def in defs {
-                items.append(.endpoint(def, flatIdx))
-                flatIdx += 1
+                if query.isEmpty {
+                    // No search — show all endpoints, no model rows
+                    sectionItems.append(.endpoint(def, flatIdx))
+                    flatIdx += 1
+                } else {
+                    let nameMatch = def.name.lowercased().contains(query) ||
+                        def.provider.lowercased().contains(query) ||
+                        def.providerDisplayName.lowercased().contains(query)
+
+                    // Find matching models for this definition
+                    let matchingModels = (def.modelParam?.options ?? []).filter {
+                        $0.lowercased().contains(query)
+                    }
+
+                    if nameMatch {
+                        // Endpoint name/provider matches — show the endpoint row
+                        sectionItems.append(.endpoint(def, flatIdx))
+                        flatIdx += 1
+                    } else if !matchingModels.isEmpty {
+                        // Only models match — show a non-selectable endpoint header, then model rows
+                        sectionItems.append(.endpoint(def, -1))
+                    }
+
+                    // Show matching model rows for direct selection
+                    if !matchingModels.isEmpty {
+                        for model in matchingModels {
+                            sectionItems.append(.model(def, model, flatIdx))
+                            flatIdx += 1
+                        }
+                    }
+                }
+            }
+
+            if !sectionItems.isEmpty {
+                items.append(.header(type))
+                items.append(contentsOf: sectionItems)
             }
         }
         return items
@@ -257,9 +286,12 @@ struct CommandPalette: View {
 
             case .endpoint(let def, let flatIndex):
                 let hasKey = state.keyStatus[def.provider] != .noKey
+                let isSelectableEndpoint = flatIndex >= 0
 
                 Button {
-                    selectEndpoint(def)
+                    if isSelectableEndpoint {
+                        selectEndpoint(def)
+                    }
                 } label: {
                     HStack(spacing: 0) {
                         Image(systemName: def.outputType.iconName)
@@ -294,6 +326,56 @@ struct CommandPalette: View {
                     }
                     .padding(.horizontal, 16)
                     .padding(.vertical, 8)
+                    .background(
+                        isSelectableEndpoint && flatIndex == highlightedIndex
+                            ? Color.accentColor.opacity(0.15)
+                            : Color.clear
+                    )
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .opacity(hasKey ? 1.0 : (isSelectableEndpoint ? 0.4 : 0.6))
+                .disabled(!isSelectableEndpoint)
+
+            case .model(let def, let modelName, let flatIndex):
+                let hasKey = state.keyStatus[def.provider] != .noKey
+
+                Button {
+                    state.selectEndpoint(def, model: modelName)
+                    SoundService.select()
+                    dismiss()
+                } label: {
+                    HStack(spacing: 0) {
+                        // Indent to align under endpoint text
+                        Color.clear
+                            .frame(width: 20)
+                            .padding(.trailing, 8)
+
+                        Image(systemName: "cpu")
+                            .font(.system(size: DS.Font.caption))
+                            .foregroundStyle(.tertiary)
+                            .frame(width: 14)
+                            .padding(.trailing, 6)
+
+                        Text(modelName)
+                            .font(.system(size: DS.Font.secondary))
+                            .foregroundStyle(hasKey ? .primary : .tertiary)
+
+                        if modelName == def.defaultModel {
+                            Text("default")
+                                .font(.system(size: DS.Font.caption))
+                                .foregroundStyle(.secondary)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(.quinary)
+                                .clipShape(Capsule())
+                                .padding(.leading, 4)
+                        }
+
+                        Spacer()
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 6)
                     .background(
                         flatIndex == highlightedIndex
                             ? Color.accentColor.opacity(0.15)
@@ -353,8 +435,11 @@ struct CommandPalette: View {
 
     private var totalFilteredCount: Int {
         flatEndpointItems.reduce(0) { count, item in
-            if case .endpoint = item { return count + 1 }
-            return count
+            switch item {
+            case .endpoint(_, let idx) where idx >= 0: return count + 1
+            case .model: return count + 1
+            default: return count
+            }
         }
     }
 
@@ -388,8 +473,14 @@ struct CommandPalette: View {
         switch step {
         case .endpoints:
             for item in flatEndpointItems {
-                if case .endpoint(let def, let idx) = item, idx == highlightedIndex {
+                if case .endpoint(let def, let idx) = item, idx >= 0, idx == highlightedIndex {
                     selectEndpoint(def)
+                    return
+                }
+                if case .model(let def, let modelName, let idx) = item, idx == highlightedIndex {
+                    state.selectEndpoint(def, model: modelName)
+                    SoundService.select()
+                    dismiss()
                     return
                 }
             }
@@ -598,7 +689,7 @@ struct CommandPalette: View {
 
     private var searchPlaceholder: String {
         switch step {
-        case .endpoints: return "Search endpoints..."
+        case .endpoints: return "Search endpoints or models..."
         case .models: return "Search models..."
         case .bookmarks: return "Search bookmarks..."
         }
