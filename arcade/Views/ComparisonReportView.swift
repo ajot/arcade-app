@@ -12,10 +12,12 @@ struct ComparisonReportView: View {
 
     // MARK: - Winner Computation
 
+    private func totalTime(for tab: AppState.Tab) -> Double {
+        tab.streamingMetrics?.totalDuration ?? tab.result?.duration ?? .infinity
+    }
+
     private var fastestResponseTab: AppState.Tab? {
-        completedTabs
-            .filter { $0.streamingMetrics != nil }
-            .min(by: { ($0.streamingMetrics?.totalDuration ?? .infinity) < ($1.streamingMetrics?.totalDuration ?? .infinity) })
+        completedTabs.min(by: { totalTime(for: $0) < totalTime(for: $1) })
     }
 
     private var fastestTTFTTab: AppState.Tab? {
@@ -396,10 +398,37 @@ struct ComparisonReportView: View {
 
             Divider()
 
-            // Response body
-            MarkdownTextView(text: tab.streamedText)
+            // Response body — text or media
+            if let result = tab.result, result.outputs.contains(where: { $0.type == .image }) {
+                // Image outputs
+                ForEach(result.outputs.filter { $0.type == .image }) { output in
+                    ForEach(output.values, id: \.self) { value in
+                        AsyncImage(url: URL(string: value)) { image in
+                            image
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(maxHeight: 300)
+                        } placeholder: {
+                            ProgressView()
+                                .frame(height: 200)
+                                .frame(maxWidth: .infinity)
+                        }
+                    }
+                }
                 .padding(DS.Spacing.md)
-                .textSelection(.enabled)
+            } else if !tab.streamedText.isEmpty {
+                MarkdownTextView(text: tab.streamedText)
+                    .padding(DS.Spacing.md)
+                    .textSelection(.enabled)
+            } else if let result = tab.result {
+                // Sync results — show text outputs
+                let textValues = result.outputs.filter { $0.type == .text }.flatMap(\.values)
+                if !textValues.isEmpty {
+                    MarkdownTextView(text: textValues.joined(separator: "\n\n"))
+                        .padding(DS.Spacing.md)
+                        .textSelection(.enabled)
+                }
+            }
         }
         .clipShape(RoundedRectangle(cornerRadius: DS.Radius.lg, style: .continuous))
         .overlay(
