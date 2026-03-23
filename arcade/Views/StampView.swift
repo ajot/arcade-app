@@ -4,47 +4,44 @@ struct StampView: View {
     let icon: String
     let label: String
     let value: String
-    let isFast: Bool
+    let color: Color
     let rotation: Double
 
-    init(icon: String, label: String, value: String, isFast: Bool = false, rotation: Double = 0) {
+    init(icon: String, label: String, value: String, color: Color = .accentColor, rotation: Double = 0) {
         self.icon = icon
         self.label = label
         self.value = value
-        self.isFast = isFast
+        self.color = color
         self.rotation = rotation
     }
 
-    private var stampColor: Color {
-        isFast ? .green : Color.accentColor
-    }
-
     var body: some View {
-        HStack(spacing: 5) {
+        HStack(spacing: 6) {
             Text(icon)
-                .font(.system(size: DS.Stamp.fontSize))
-                .opacity(0.8)
+                .font(.system(size: 14))
 
             VStack(alignment: .leading, spacing: 0) {
-                Text(label)
-                    .font(.system(size: DS.Stamp.labelFontSize, weight: .semibold))
-                    .textCase(.uppercase)
-                    .tracking(0.5)
-                    .opacity(0.6)
-
                 Text(value)
-                    .font(.system(size: DS.Stamp.valueFontSize, weight: .semibold, design: .monospaced))
+                    .font(.system(size: 14, weight: .bold, design: .monospaced))
+                    .tracking(-0.3)
+                    .lineLimit(1)
+
+                Text(label)
+                    .font(.system(size: 8, weight: .bold))
+                    .textCase(.uppercase)
+                    .tracking(1)
+                    .opacity(0.5)
             }
         }
-        .padding(.horizontal, DS.Stamp.padding)
-        .padding(.vertical, DS.Stamp.verticalPadding)
-        .foregroundStyle(stampColor)
-        .background(stampColor.opacity(0.06))
+        .padding(.horizontal, DS.Spacing.md)
+        .padding(.vertical, DS.Spacing.sm)
+        .foregroundStyle(color)
+        .background(color.opacity(0.06))
         .overlay(
-            RoundedRectangle(cornerRadius: DS.Stamp.cornerRadius)
-                .strokeBorder(stampColor, style: StrokeStyle(lineWidth: DS.Stamp.borderWidth, dash: [4, 3]))
+            RoundedRectangle(cornerRadius: DS.Radius.sm + 4, style: .continuous)
+                .strokeBorder(color.opacity(0.3), lineWidth: 1.5)
         )
-        .clipShape(RoundedRectangle(cornerRadius: DS.Stamp.cornerRadius))
+        .clipShape(RoundedRectangle(cornerRadius: DS.Radius.sm + 4, style: .continuous))
         .rotationEffect(.degrees(rotation))
     }
 }
@@ -68,21 +65,21 @@ struct StampsRow: View {
     }
 
     var body: some View {
-        HStack(spacing: DS.Spacing.sm + 2) {
+        HStack(spacing: DS.Spacing.md) {
             if let ttft {
-                StampView(icon: "⏱", label: "TTFT", value: ttft, isFast: ttftFast, rotation: -1.5)
+                StampView(icon: "⏱", label: "TTFT", value: ttft, color: .purple, rotation: -1)
                     .stampAppear(delay: 0)
             }
             if let speed {
-                StampView(icon: "⚡", label: "Speed", value: speed, isFast: speedFast, rotation: 1.0)
+                StampView(icon: "⚡", label: "Speed", value: speed, color: .green, rotation: 0.5)
                     .stampAppear(delay: 0.08)
             }
             if let tokens {
-                StampView(icon: "🎯", label: "Tokens", value: tokens, rotation: -0.8)
+                StampView(icon: "#", label: "Tokens", value: tokens, color: .orange, rotation: -0.5)
                     .stampAppear(delay: 0.16)
             }
             if let total {
-                StampView(icon: "⏲", label: "Total", value: total, rotation: 1.8)
+                StampView(icon: "⏳", label: "Total", value: total, color: .blue, rotation: 1)
                     .stampAppear(delay: 0.24)
             }
         }
@@ -101,6 +98,9 @@ struct StampAppearModifier: ViewModifier {
                 withAnimation(.spring(response: 0.3, dampingFraction: 0.6).delay(delay)) {
                     appeared = true
                 }
+            }
+            .onDisappear {
+                appeared = false
             }
     }
 }
