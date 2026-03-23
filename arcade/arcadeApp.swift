@@ -49,6 +49,30 @@ struct ArcadeApp: App {
 
                 Divider()
 
+                Button("Generate") {
+                    if state.currentDefinition != nil {
+                        state.generate()
+                    }
+                }
+                .keyboardShortcut(.return, modifiers: .command)
+                .disabled(state.currentDefinition == nil)
+
+                Button("Switch Model") {
+                    state.showModelPicker = true
+                }
+                .keyboardShortcut("m", modifiers: [.command, .shift])
+                .disabled(state.currentDefinition == nil)
+
+                Button("Copy cURL") {
+                    if state.currentDefinition != nil {
+                        state.showCurlPopover = true
+                    }
+                }
+                .keyboardShortcut("e", modifiers: [.command, .shift])
+                .disabled(state.currentDefinition == nil)
+
+                Divider()
+
                 Button("Save Bookmark") {
                     if state.currentDefinition != nil {
                         state.showBookmarkPopover = true
