@@ -11,6 +11,7 @@ struct PlayView: View {
     @State private var bookmarkLabel = ""
     @State private var bookmarkSaved = false
     @State private var errorShakeCount: Int = 0
+    @State private var bookmarkTabSelection: Set<UUID> = []
 
     @ViewBuilder
     var body: some View {
@@ -101,6 +102,7 @@ struct PlayView: View {
             .onChange(of: state.showBookmarkPopover) { _, show in
                 if show {
                     bookmarkLabel = suggestedBookmarkLabel(definition)
+                    bookmarkTabSelection = Set(state.tabs.map(\.id))
                     showBookmarkPopover = true
                     state.showBookmarkPopover = false
                 }
@@ -599,21 +601,31 @@ struct PlayView: View {
                 Spacer()
             }
 
-            // Show tab group summary when in compare mode
+            // Show tab checkboxes when in compare mode
             if state.isCompareMode && state.tabs.count > 1 {
-                VStack(alignment: .leading, spacing: DS.Spacing.xs) {
-                    ForEach(Array(state.tabs.enumerated()), id: \.element.id) { _, tab in
-                        HStack(spacing: DS.Spacing.xs) {
-                            Image(systemName: "circle.fill")
-                                .font(.system(size: 4))
-                                .foregroundStyle(.tertiary)
+                VStack(alignment: .leading, spacing: DS.Spacing.sm) {
+                    Text("Include tabs:")
+                        .font(.system(size: DS.Font.secondary, weight: .medium))
+                        .foregroundStyle(.secondary)
+
+                    ForEach(state.tabs) { tab in
+                        Toggle(isOn: Binding(
+                            get: { bookmarkTabSelection.contains(tab.id) },
+                            set: { selected in
+                                if selected {
+                                    bookmarkTabSelection.insert(tab.id)
+                                } else {
+                                    bookmarkTabSelection.remove(tab.id)
+                                }
+                            }
+                        )) {
                             Text("\(tab.definition.providerDisplayName) · \(tab.model)")
                                 .font(.system(size: DS.Font.secondary))
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(.primary)
                         }
+                        .toggleStyle(.checkbox)
                     }
                 }
-                .padding(.horizontal, DS.Spacing.xs)
             }
 
             TextField("Label", text: $bookmarkLabel)
@@ -645,7 +657,7 @@ struct PlayView: View {
     private func saveBookmark() {
         let label = bookmarkLabel.trimmingCharacters(in: .whitespaces)
         guard !label.isEmpty else { return }
-        state.saveBookmark(label: label)
+        state.saveBookmark(label: label, selectedTabIds: state.isCompareMode ? bookmarkTabSelection : nil)
         showBookmarkPopover = false
         withAnimation(.spring(response: 0.35, dampingFraction: 0.5)) {
             bookmarkSaved = true

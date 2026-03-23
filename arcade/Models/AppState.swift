@@ -206,13 +206,21 @@ final class AppState {
 
     // MARK: - Bookmarks
 
-    func saveBookmark(label: String) {
+    func saveBookmark(label: String, selectedTabIds: Set<UUID>? = nil) {
         guard let definition = currentDefinition else { return }
 
-        // If in compare mode with multiple tabs, save as tab group
-        let tabEntries: [Bookmark.TabEntry]? = isCompareMode && tabs.count > 1
-            ? tabs.map { Bookmark.TabEntry(definitionId: $0.definition.id, model: $0.model) }
-            : nil
+        // If in compare mode, save selected tabs as group
+        let tabEntries: [Bookmark.TabEntry]?
+        if isCompareMode && tabs.count > 1 {
+            let selectedTabs = selectedTabIds.map { ids in
+                tabs.filter { ids.contains($0.id) }
+            } ?? tabs
+            tabEntries = selectedTabs.count > 1
+                ? selectedTabs.map { Bookmark.TabEntry(definitionId: $0.definition.id, model: $0.model) }
+                : nil
+        } else {
+            tabEntries = nil
+        }
 
         let bookmark = Bookmark(
             definitionId: definition.id,
