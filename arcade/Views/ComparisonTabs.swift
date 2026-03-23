@@ -92,6 +92,9 @@ struct ComparisonTabs: View {
                 Text(tab.model)
                     .foregroundStyle(isActive ? Color.primary : .secondary)
 
+                // Status dot
+                tabStatusDot(tab.generationState)
+
                 if state.tabs.count > 1 {
                     Button {
                         withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
@@ -116,5 +119,43 @@ struct ComparisonTabs: View {
             )
         }
         .buttonStyle(.plain)
+    }
+
+    @ViewBuilder
+    private func tabStatusDot(_ genState: AppState.GenerationState) -> some View {
+        switch genState {
+        case .streaming, .generating, .polling:
+            Circle()
+                .fill(Color.accentColor)
+                .frame(width: 6, height: 6)
+                .modifier(PulseModifier())
+
+        case .completed:
+            Circle()
+                .fill(Color.green)
+                .frame(width: 6, height: 6)
+
+        case .error:
+            Circle()
+                .fill(Color.red)
+                .frame(width: 6, height: 6)
+
+        case .idle:
+            EmptyView()
+        }
+    }
+}
+
+private struct PulseModifier: ViewModifier {
+    @State private var pulsing = false
+
+    func body(content: Content) -> some View {
+        content
+            .opacity(pulsing ? 0.3 : 1.0)
+            .onAppear {
+                withAnimation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true)) {
+                    pulsing = true
+                }
+            }
     }
 }
