@@ -51,27 +51,14 @@ struct ResultCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Result toolbar
+            // Result toolbar — only shows when completed (low-frequency state change)
             if effectiveGenerationState == .completed {
-                HStack {
-                    Spacer()
-                    if hasImageOutput {
-                        saveImageButton
-                    }
-                    if !effectiveStreamedText.isEmpty {
-                        copyButton
-                    }
-                }
-                .padding(.horizontal, 12)
-                .padding(.top, 12)
-                .padding(.bottom, 4)
+                ResultToolbar(state: state)
             }
 
             VStack(alignment: .leading, spacing: 12) {
-                // Text output
-                if !effectiveStreamedText.isEmpty {
-                    textResult
-                }
+                // Text output (isolated view — only it re-renders per token)
+                textResult
 
                 // Media outputs
                 if let result = effectiveGenerationResult {
@@ -109,16 +96,10 @@ struct ResultCard: View {
         ))
     }
 
-    // MARK: - Text Result
+    // MARK: - Text Result (isolated to avoid invalidation storms during streaming)
 
     private var textResult: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            MarkdownTextView(text: effectiveStreamedText)
-
-            if effectiveGenerationState == .streaming {
-                StreamingCursor()
-            }
-        }
+        StreamingTextContent(state: state)
     }
 
     // MARK: - Copy Button
@@ -455,6 +436,93 @@ struct ResultCard: View {
         guard let commaIndex = dataURL.firstIndex(of: ",") else { return nil }
         let base64 = String(dataURL[dataURL.index(after: commaIndex)...])
         return Data(base64Encoded: base64)
+    }
+}
+
+// MARK: - Streaming Text (isolated to avoid invalidation storms)
+
+/// Only this view re-renders per token during streaming.
+/// Prevents the entire ResultCard from re-evaluating on every incoming token.
+private struct StreamingTextContent: View {
+    @Bindable var state: AppState
+
+    private var text: String {
+        state.isCompareMode
+            ? (state.tabs[safe: state.activeTabIndex]?.streamedText ?? "")
+            : state.streamedText
+    }
+
+    private var isStreaming: Bool {
+        let genState = state.isCompareMode
+            ? (state.tabs[safe: state.activeTabIndex]?.generationState ?? .idle)
+            : state.generationState
+        if case .streaming = genState { return true }
+        return false
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            if !text.isEmpty {
+                MarkdownTextView(text: text)
+            }
+
+            if isStreaming {
+                StreamingCursor()
+            }
+        }
+    }
+}
+
+// MARK: - Result Toolbar (isolated — reads streamedText only when completed)
+
+private struct ResultToolbar: View {
+    @Bindable var state: AppState
+    @State private var showCopied = false
+
+    private var text: String {
+        state.isCompareMode
+            ? (state.tabs[safe: state.activeTabIndex]?.streamedText ?? "")
+            : state.streamedText
+    }
+
+    private var result: GenerationResult? {
+        state.isCompareMode
+            ? state.tabs[safe: state.activeTabIndex]?.result
+            : state.generationResult
+    }
+
+    private var hasImageOutput: Bool {
+        result?.outputs.contains { $0.type == .image } ?? false
+    }
+
+    var body: some View {
+        HStack {
+            Spacer()
+            if !text.isEmpty {
+                Button {
+                    NSPasteboard.general.clearContents()
+                    NSPasteboard.general.setString(text, forType: .string)
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                        showCopied = true
+                    }
+                    SoundService.confirm()
+                    Task { @MainActor in try? await Task.sleep(for: .milliseconds(1500))
+                        withAnimation { showCopied = false }
+                    }
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: showCopied ? "checkmark" : "doc.on.doc")
+                        Text(showCopied ? "Copied" : "Copy")
+                    }
+                    .font(.system(size: DS.Font.secondary))
+                    .foregroundStyle(showCopied ? .green : .secondary)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.top, 12)
+        .padding(.bottom, 4)
     }
 }
 
