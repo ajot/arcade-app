@@ -11,6 +11,7 @@ struct PlayView: View {
     @State private var bookmarkLabel = ""
     @State private var bookmarkSaved = false
     @State private var errorShakeCount: Int = 0
+    @State private var sendToAllTabs = false
     @State private var bookmarkTabSelection: Set<UUID> = []
 
     @ViewBuilder
@@ -55,31 +56,38 @@ struct PlayView: View {
                 }
 
                 // Zone 2: Compose area (fixed at bottom, never scrolls) — hidden when report is showing
-                if definition.isChatEndpoint && !state.showReport {
-                    ComposeArea(
-                        state: state,
-                        isMultiTab: state.isCompareMode,
-                        isGenerating: state.isCompareMode
-                            ? state.tabs.contains(where: { isActive($0.generationState) })
-                            : isActive(state.generationState),
-                        placeholder: composePlaceholder(definition),
-                        promptText: promptBinding(definition),
-                        onSend: { sendToAll in
-                            if state.isCompareMode && sendToAll {
-                                state.generateAllTabs()
-                            } else if state.isCompareMode {
-                                state.generateTab(at: state.activeTabIndex)
-                            } else {
-                                state.generate()
+                if !state.showReport {
+                    if definition.isChatEndpoint {
+                        ComposeArea(
+                            state: state,
+                            isMultiTab: state.isCompareMode,
+                            isGenerating: state.isCompareMode
+                                ? state.tabs.contains(where: { isActive($0.generationState) })
+                                : isActive(state.generationState),
+                            placeholder: composePlaceholder(definition),
+                            promptText: promptBinding(definition),
+                            onSend: { sendToAll in
+                                if state.isCompareMode && sendToAll {
+                                    state.generateAllTabs()
+                                } else if state.isCompareMode {
+                                    state.generateTab(at: state.activeTabIndex)
+                                } else {
+                                    state.generate()
+                                }
+                            },
+                            onCancel: { state.cancelGeneration() },
+                            onModelSelect: { def, model in
+                                state.selectEndpoint(def, model: model)
                             }
-                        },
-                        onCancel: { state.cancelGeneration() },
-                        onModelSelect: { def, model in
-                            state.selectEndpoint(def, model: model)
-                        }
-                    )
-                    .padding(.horizontal, DS.Spacing.xxl)
-                    .padding(.bottom, DS.Spacing.lg)
+                        )
+                        .padding(.horizontal, DS.Spacing.xxl)
+                        .padding(.bottom, DS.Spacing.lg)
+                    } else {
+                        // Non-chat endpoints: generate bar with send-to-all option
+                        nonChatGenerateBar
+                            .padding(.horizontal, DS.Spacing.xxl)
+                            .padding(.bottom, DS.Spacing.lg)
+                    }
                 }
 
                 // Zone 3: Examples (below compose, fade when typing) — hidden when report is showing
@@ -224,6 +232,52 @@ struct PlayView: View {
             get: { state.formValues[paramName] ?? "" },
             set: { state.formValues[paramName] = $0 }
         )
+    }
+
+    // MARK: - Non-Chat Generate Bar
+
+    private var nonChatGenerateBar: some View {
+        let isGenerating = state.isCompareMode
+            ? state.tabs.contains(where: { isActive($0.generationState) })
+            : isActive(state.generationState)
+
+        return HStack {
+            if state.isCompareMode {
+                Toggle("Send to all tabs", isOn: $sendToAllTabs)
+                    .toggleStyle(.checkbox)
+                    .font(.system(size: DS.Font.secondary))
+                    .foregroundStyle(.secondary)
+            }
+
+            Spacer()
+
+            if isGenerating {
+                Button {
+                    state.cancelGeneration()
+                } label: {
+                    HStack(spacing: DS.Spacing.xs) {
+                        ProgressView()
+                            .controlSize(.small)
+                        Text("Cancel")
+                    }
+                }
+                .buttonStyle(.bordered)
+            } else {
+                Button {
+                    if state.isCompareMode && sendToAllTabs {
+                        state.generateAllTabs()
+                    } else if state.isCompareMode {
+                        state.generateTab(at: state.activeTabIndex)
+                    } else {
+                        state.generate()
+                    }
+                } label: {
+                    Text("Generate")
+                }
+                .buttonStyle(.borderedProminent)
+                .keyboardShortcut(.return, modifiers: .command)
+            }
+        }
     }
 
     // MARK: - Secondary Params Strip
