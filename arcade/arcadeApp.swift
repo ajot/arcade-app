@@ -9,6 +9,10 @@ struct ArcadeApp: App {
             ContentView(state: state)
                 .preferredColorScheme(state.preferredColorScheme)
                 .tint(state.accentColor)
+                .onAppear {
+                    // Disable native macOS tab bar — we use custom comparison tabs instead
+                    NSWindow.allowsAutomaticWindowTabbing = false
+                }
         }
         .windowToolbarStyle(.unified)
         .defaultSize(width: 1000, height: 700)
