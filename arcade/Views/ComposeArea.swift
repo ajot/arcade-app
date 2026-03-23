@@ -6,11 +6,12 @@ struct ComposeArea: View {
     let isGenerating: Bool
     let placeholder: String
     @Binding var promptText: String
-    let onSend: () -> Void
+    let onSend: (_ sendToAll: Bool) -> Void
     let onCancel: () -> Void
     let onModelSelect: (Definition, String) -> Void
 
     @State private var showModelPicker = false
+    @State private var sendToAllTabs = false
     @FocusState private var isInputFocused: Bool
 
     var body: some View {
@@ -58,14 +59,7 @@ struct ComposeArea: View {
 
     @ViewBuilder
     private var modelPillRow: some View {
-        if isMultiTab {
-            Text("Sends to all tabs")
-                .font(.system(size: DS.Font.secondary))
-                .italic()
-                .foregroundStyle(.secondary)
-        } else {
-            modelPill
-        }
+        modelPill
     }
 
     @ViewBuilder
@@ -120,6 +114,13 @@ struct ComposeArea: View {
 
     private var bottomRow: some View {
         HStack {
+            if isMultiTab {
+                Toggle("Send to all tabs", isOn: $sendToAllTabs)
+                    .toggleStyle(.checkbox)
+                    .font(.system(size: DS.Font.secondary))
+                    .foregroundStyle(.secondary)
+            }
+
             Spacer()
 
             // Keyboard shortcut hint
@@ -133,7 +134,7 @@ struct ComposeArea: View {
                 if isGenerating {
                     onCancel()
                 } else {
-                    onSend()
+                    onSend(isMultiTab && sendToAllTabs)
                 }
             } label: {
                 Image(systemName: isGenerating ? "stop.fill" : "play.fill")

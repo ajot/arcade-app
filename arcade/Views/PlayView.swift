@@ -56,9 +56,11 @@ struct PlayView: View {
                             : isActive(state.generationState),
                         placeholder: composePlaceholder(definition),
                         promptText: promptBinding(definition),
-                        onSend: {
-                            if state.isCompareMode {
+                        onSend: { sendToAll in
+                            if state.isCompareMode && sendToAll {
                                 state.generateAllTabs()
+                            } else if state.isCompareMode {
+                                state.generateTab(at: state.activeTabIndex)
                             } else {
                                 state.generate()
                             }
