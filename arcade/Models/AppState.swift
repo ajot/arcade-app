@@ -584,6 +584,12 @@ final class AppState {
         tabs[index].streamedText = ""
         tabs[index].streamingMetrics = nil
         tabs[index].generationState = .idle
+
+        // Sync if this is the active tab
+        if index == activeTabIndex {
+            currentDefinition = definition
+            currentModel = model
+        }
     }
 
     func cancelGeneration() {
