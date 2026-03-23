@@ -54,6 +54,22 @@ final class AppState {
         case apiKeys
     }
 
+    // MARK: - Compare Mode
+
+    struct Tab: Identifiable {
+        let id = UUID()
+        var definition: Definition
+        var model: String
+        var result: GenerationResult?
+        var streamedText: String = ""
+        var streamingMetrics: StreamingResult?
+        var generationState: GenerationState = .idle
+    }
+
+    var tabs: [Tab] = []
+    var activeTabIndex: Int = 0
+    var isCompareMode: Bool = false
+
     // MARK: - Play Mode State
     var currentDefinition: Definition?
     var currentModel: String?
@@ -326,6 +342,61 @@ final class AppState {
         }
     }
 
+    // MARK: - Compare Mode Actions
+
+    func enterCompareMode() {
+        guard let def = currentDefinition, let model = currentModel else { return }
+        if tabs.isEmpty {
+            tabs = [Tab(definition: def, model: model)]
+        }
+        isCompareMode = true
+        addTab()
+    }
+
+    func exitCompareMode() {
+        isCompareMode = false
+        if let activeTab = tabs[safe: activeTabIndex] {
+            selectEndpoint(activeTab.definition, model: activeTab.model)
+        }
+        tabs = []
+        activeTabIndex = 0
+    }
+
+    func addTab() {
+        let usedDefIds = Set(tabs.map { $0.definition.id })
+        if let newDef = definitionLoader.sortedDefinitions.first(where: { def in
+            !usedDefIds.contains(def.id) &&
+            def.outputType == currentDefinition?.outputType &&
+            keyStatus[def.provider] == .valid
+        }) {
+            let model = newDef.defaultModel ?? newDef.modelParam?.options?.first ?? ""
+            tabs.append(Tab(definition: newDef, model: model))
+            activeTabIndex = tabs.count - 1
+        }
+    }
+
+    func removeTab(at index: Int) {
+        guard tabs.count > 1 else { return }
+        tabs.remove(at: index)
+        if activeTabIndex >= tabs.count { activeTabIndex = tabs.count - 1 }
+        if tabs.count == 1 { exitCompareMode() }
+    }
+
+    func selectTab(_ index: Int) {
+        guard index >= 0 && index < tabs.count else { return }
+        activeTabIndex = index
+    }
+
+    func updateTabModel(at index: Int, definition: Definition, model: String) {
+        guard index >= 0 && index < tabs.count else { return }
+        tabs[index].definition = definition
+        tabs[index].model = model
+        tabs[index].result = nil
+        tabs[index].streamedText = ""
+        tabs[index].streamingMetrics = nil
+        tabs[index].generationState = .idle
+    }
+
     func cancelGeneration() {
         currentTask?.cancel()
         currentTask = nil
@@ -423,5 +494,11 @@ final class AppState {
     var hasValidKey: Bool {
         guard let provider = currentDefinition?.provider else { return false }
         return KeychainService.getKey(for: provider) != nil
+    }
+}
+
+extension Array {
+    subscript(safe index: Int) -> Element? {
+        indices.contains(index) ? self[index] : nil
     }
 }

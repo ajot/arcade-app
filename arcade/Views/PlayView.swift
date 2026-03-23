@@ -16,6 +16,11 @@ struct PlayView: View {
     var body: some View {
         if let definition = state.currentDefinition {
             VStack(spacing: 0) {
+                // Comparison tabs (only in compare mode)
+                if state.isCompareMode {
+                    ComparisonTabs(state: state)
+                }
+
                 // Zone 1: Result area (scrollable, grows upward)
                 ScrollView {
                     Spacer()
@@ -43,7 +48,7 @@ struct PlayView: View {
                 if definition.isChatEndpoint {
                     ComposeArea(
                         state: state,
-                        isMultiTab: false,
+                        isMultiTab: state.isCompareMode,
                         isGenerating: isActive(state.generationState),
                         placeholder: composePlaceholder(definition),
                         promptText: promptBinding(definition),

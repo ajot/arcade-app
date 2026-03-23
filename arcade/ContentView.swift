@@ -18,6 +18,21 @@ struct ContentView: View {
             .toolbar {
                 ToolbarItemGroup(placement: .primaryAction) {
                     if let definition = state.currentDefinition {
+                        // Compare toggle
+                        Button {
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                                if state.isCompareMode {
+                                    state.exitCompareMode()
+                                } else {
+                                    state.enterCompareMode()
+                                }
+                            }
+                        } label: {
+                            Image(systemName: state.isCompareMode ? "square.split.2x1.fill" : "square.split.2x1")
+                        }
+                        .help("Compare Models")
+                        .disabled(state.currentDefinition == nil)
+
                         // Log toggle
                         Button {
                             withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
