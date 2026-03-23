@@ -34,50 +34,58 @@ struct ComparisonReportView: View {
 
     // MARK: - Body
 
+    private var hasStreamingMetrics: Bool {
+        completedTabs.contains { $0.streamingMetrics != nil }
+    }
+
     var body: some View {
-        VStack(alignment: .leading, spacing: DS.Spacing.xl) {
-            headerSection
-            promptSection
-            winnerCards
-            performanceTable
-            barCharts
-            responsesSection
-        }
-        .padding(DS.Spacing.xxl)
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
-    // MARK: - Header
-
-    private var headerSection: some View {
-        HStack {
-            HStack(spacing: DS.Spacing.sm) {
-                Text("\u{1F4CA}")
-                    .font(.system(size: DS.Font.display))
-                Text("Comparison Report")
+        VStack(spacing: 0) {
+            // Toolbar
+            HStack {
+                Text("\u{1F4CA} Comparison Report")
                     .font(.system(size: DS.Font.display, weight: .semibold))
-            }
-
-            Spacer()
-
-            Button {
-                copyMarkdown()
-            } label: {
-                HStack(spacing: DS.Spacing.xs) {
-                    Image(systemName: markdownCopied ? "checkmark" : "doc.on.doc")
-                        .font(.system(size: DS.Font.caption))
-                    Text(markdownCopied ? "Copied" : "Copy as Markdown")
-                        .font(.system(size: DS.Font.secondary, weight: .medium))
+                Spacer()
+                Button {
+                    copyMarkdown()
+                } label: {
+                    HStack(spacing: DS.Spacing.xs) {
+                        Image(systemName: markdownCopied ? "checkmark" : "doc.on.doc")
+                        Text(markdownCopied ? "Copied" : "Copy as Markdown")
+                    }
+                    .font(.system(size: DS.Font.secondary))
                 }
-                .foregroundStyle(markdownCopied ? .green : .secondary)
-                .padding(.horizontal, DS.Spacing.md)
-                .padding(.vertical, DS.Spacing.xs + 2)
-                .background(.quinary)
-                .clipShape(RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous))
+                .buttonStyle(.bordered)
+
+                Button("Done") {
+                    state.closeReport()
+                }
+                .buttonStyle(.borderedProminent)
+                .keyboardShortcut(.escape, modifiers: [])
             }
-            .buttonStyle(.plain)
+            .padding()
+
+            Divider()
+
+            // Content
+            ScrollView {
+                VStack(alignment: .leading, spacing: DS.Spacing.xl) {
+                    promptSection
+                    if hasStreamingMetrics {
+                        winnerCards
+                    }
+                    performanceTable
+                    if hasStreamingMetrics {
+                        barCharts
+                    }
+                    responsesSection
+                }
+                .padding(DS.Spacing.xxl)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
         }
     }
+
+    // MARK: - Header (now in sheet toolbar above)
 
     // MARK: - Prompt
 
@@ -181,18 +189,20 @@ struct ComparisonReportView: View {
             let bestTTFT = completedTabs.compactMap { $0.streamingMetrics?.firstTokenTime }.min()
             let bestSpeed = completedTabs.compactMap { $0.streamingMetrics?.tokensPerSecond }.max()
             let bestTokens = completedTabs.compactMap { $0.streamingMetrics?.tokenCount }.max()
-            let bestTotal = completedTabs.compactMap { $0.streamingMetrics?.totalDuration }.min()
+            let bestTotal = completedTabs.map { totalTime(for: $0) }.filter { $0 < .infinity }.min()
 
             // Header
             HStack(spacing: 0) {
                 Text("Model")
                     .frame(maxWidth: .infinity, alignment: .leading)
-                Text("TTFT")
-                    .frame(width: 80, alignment: .trailing)
-                Text("Speed")
-                    .frame(width: 90, alignment: .trailing)
-                Text("Tokens")
-                    .frame(width: 70, alignment: .trailing)
+                if hasStreamingMetrics {
+                    Text("TTFT")
+                        .frame(width: 80, alignment: .trailing)
+                    Text("Speed")
+                        .frame(width: 90, alignment: .trailing)
+                    Text("Tokens")
+                        .frame(width: 70, alignment: .trailing)
+                }
                 Text("Total")
                     .frame(width: 70, alignment: .trailing)
             }
@@ -205,6 +215,7 @@ struct ComparisonReportView: View {
 
             ForEach(completedTabs) { tab in
                 let metrics = tab.streamingMetrics
+                let tabTotal = totalTime(for: tab)
                 HStack(spacing: 0) {
                     // Model column
                     HStack(spacing: DS.Spacing.xs) {
@@ -226,31 +237,29 @@ struct ComparisonReportView: View {
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
 
-                    // TTFT
-                    tableCell(
-                        value: metrics?.firstTokenTime.map { String(format: "%.0fms", $0 * 1000) } ?? "-",
-                        isBest: metrics?.firstTokenTime != nil && metrics?.firstTokenTime == bestTTFT
-                    )
-                    .frame(width: 80, alignment: .trailing)
+                    if hasStreamingMetrics {
+                        tableCell(
+                            value: metrics?.firstTokenTime.map { String(format: "%.0fms", $0 * 1000) } ?? "\u{2014}",
+                            isBest: metrics?.firstTokenTime != nil && metrics?.firstTokenTime == bestTTFT
+                        )
+                        .frame(width: 80, alignment: .trailing)
 
-                    // Speed
-                    tableCell(
-                        value: metrics.map { String(format: "%.1f tok/s", $0.tokensPerSecond) } ?? "-",
-                        isBest: metrics?.tokensPerSecond != nil && metrics?.tokensPerSecond == bestSpeed
-                    )
-                    .frame(width: 90, alignment: .trailing)
+                        tableCell(
+                            value: metrics.map { String(format: "%.1f tok/s", $0.tokensPerSecond) } ?? "\u{2014}",
+                            isBest: metrics?.tokensPerSecond != nil && metrics?.tokensPerSecond == bestSpeed
+                        )
+                        .frame(width: 90, alignment: .trailing)
 
-                    // Tokens
-                    tableCell(
-                        value: metrics.map { "\($0.tokenCount)" } ?? "-",
-                        isBest: metrics?.tokenCount != nil && metrics?.tokenCount == bestTokens
-                    )
-                    .frame(width: 70, alignment: .trailing)
+                        tableCell(
+                            value: metrics.map { "\($0.tokenCount)" } ?? "\u{2014}",
+                            isBest: metrics?.tokenCount != nil && metrics?.tokenCount == bestTokens
+                        )
+                        .frame(width: 70, alignment: .trailing)
+                    }
 
-                    // Total
                     tableCell(
-                        value: metrics.map { String(format: "%.1fs", $0.totalDuration) } ?? "-",
-                        isBest: metrics?.totalDuration != nil && metrics?.totalDuration == bestTotal
+                        value: tabTotal < .infinity ? String(format: "%.1fs", tabTotal) : "\u{2014}",
+                        isBest: tabTotal < .infinity && tabTotal == bestTotal
                     )
                     .frame(width: 70, alignment: .trailing)
                 }
@@ -261,6 +270,13 @@ struct ComparisonReportView: View {
                     Divider().padding(.horizontal, DS.Spacing.md)
                 }
             }
+
+            // Methodology note
+            Text("Metrics are measured client-side (wall-clock time including network latency), not reported by the API.")
+                .font(.system(size: DS.Font.caption))
+                .foregroundStyle(.tertiary)
+                .padding(.horizontal, DS.Spacing.md)
+                .padding(.top, DS.Spacing.xs)
         }
         .padding(DS.Spacing.lg)
         .background(.ultraThinMaterial)

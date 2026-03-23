@@ -26,21 +26,12 @@ struct PlayView: View {
                     Spacer()
                         .frame(maxHeight: .infinity)
 
-                    if state.showReport {
-                        ComparisonReportView(state: state)
-                            .padding(.horizontal, DS.Spacing.xxl)
-                            .padding(.top, DS.Spacing.lg)
-                            .padding(.bottom, DS.Spacing.lg)
-                            .frame(maxWidth: 900)
-                            .frame(maxWidth: .infinity)
-                    } else {
-                        resultContent(definition)
-                            .padding(.horizontal, DS.Spacing.xxl)
-                            .padding(.top, DS.Spacing.lg)
-                            .padding(.bottom, DS.Spacing.lg)
-                            .frame(maxWidth: 720)
-                            .frame(maxWidth: .infinity)
-                    }
+                    resultContent(definition)
+                        .padding(.horizontal, DS.Spacing.xxl)
+                        .padding(.top, DS.Spacing.lg)
+                        .padding(.bottom, DS.Spacing.lg)
+                        .frame(maxWidth: 720)
+                        .frame(maxWidth: .infinity)
                 }
                 .defaultScrollAnchor(.bottom)
                 .animation(.spring(response: 0.4, dampingFraction: 0.8), value: state.isCompareMode
@@ -51,7 +42,7 @@ struct PlayView: View {
                 let secondaryParams = definition.regularParams.filter {
                     $0.bodyPath != "_chat_message" && $0.bodyPath != "_system_prompt"
                 }
-                if !secondaryParams.isEmpty && !state.showReport {
+                if !secondaryParams.isEmpty  {
                     secondaryParamsStrip(secondaryParams)
                 }
 
@@ -91,7 +82,7 @@ struct PlayView: View {
                 }
 
                 // Zone 3: Examples (below compose, fade when typing) — hidden when report is showing
-                if !definition.examples.isEmpty && !state.showReport {
+                if !definition.examples.isEmpty  {
                     exampleChips(definition)
                         .padding(.horizontal, DS.Spacing.xxl)
                         .padding(.bottom, DS.Spacing.lg)
@@ -135,6 +126,10 @@ struct PlayView: View {
             }
             .sheet(isPresented: $showBookmarkPopover) {
                 bookmarkSheetContent
+            }
+            .sheet(isPresented: $state.showReport) {
+                ComparisonReportView(state: state)
+                    .frame(minWidth: 700, idealWidth: 800, minHeight: 500, idealHeight: 600)
             }
         }
     }
