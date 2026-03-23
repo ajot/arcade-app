@@ -43,6 +43,7 @@ final class AppState {
     var showSidebar = true
     var showCommandPalette = false
     var showBookmarkPopover = false
+    var showCurlPopover = false
     var showInspector = false
     var showModelPicker = false
     var zoomedImageValue: String?

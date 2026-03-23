@@ -18,6 +18,42 @@ struct ContentView: View {
             .toolbar {
                 ToolbarItemGroup(placement: .primaryAction) {
                     if let definition = state.currentDefinition {
+                        // Log toggle
+                        Button {
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                                state.showLogPanel.toggle()
+                            }
+                        } label: {
+                            Image(systemName: state.showLogPanel ? "list.bullet.rectangle.fill" : "list.bullet.rectangle")
+                        }
+                        .help("Toggle Log (\u{2318}L)")
+
+                        // Curl button
+                        Button {
+                            state.showCurlPopover.toggle()
+                        } label: {
+                            Image(systemName: "terminal")
+                        }
+                        .help("Show cURL Command")
+
+                        // Bookmark button
+                        Button {
+                            state.showBookmarkPopover.toggle()
+                        } label: {
+                            Image(systemName: "bookmark")
+                        }
+                        .help("Bookmark (\u{2318}D)")
+
+                        // Inspector toggle
+                        Button {
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                                state.showInspector.toggle()
+                            }
+                        } label: {
+                            Image(systemName: "sidebar.trailing")
+                        }
+                        .help("Toggle Inspector (\u{2318}I)")
+
                         // Key status — click opens Settings
                         let keyStatus = state.keyStatus[definition.provider] ?? .noKey
                         Button {
@@ -34,16 +70,6 @@ struct ContentView: View {
                             }
                         }
                         .help("Open API Key Settings")
-
-                        // Inspector toggle
-                        Button {
-                            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-                                state.showInspector.toggle()
-                            }
-                        } label: {
-                            Image(systemName: "sidebar.trailing")
-                        }
-                        .help("Toggle Inspector (\u{2318}I)")
                     }
                 }
             }

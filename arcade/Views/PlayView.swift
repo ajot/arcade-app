@@ -85,9 +85,22 @@ struct PlayView: View {
             }
             .onChange(of: state.showBookmarkPopover) { _, show in
                 if show {
+                    bookmarkLabel = suggestedBookmarkLabel(definition)
                     showBookmarkPopover = true
                     state.showBookmarkPopover = false
                 }
+            }
+            .onChange(of: state.showCurlPopover) { _, show in
+                if show {
+                    showCurlPopover = true
+                    state.showCurlPopover = false
+                }
+            }
+            .popover(isPresented: $showCurlPopover) {
+                curlPopoverContent(definition)
+            }
+            .popover(isPresented: $showBookmarkPopover) {
+                bookmarkPopoverContent
             }
         }
     }
