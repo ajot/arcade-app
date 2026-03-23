@@ -7,6 +7,8 @@ struct ModelPicker: View {
 
     @State private var searchText = ""
     @State private var highlightedIndex = 0
+    @State private var cachedItems: [PickerItem] = []
+    @State private var cachedSelectableCount: Int = 0
     @FocusState private var isSearchFocused: Bool
 
     // MARK: - Flattened Items
@@ -23,7 +25,7 @@ struct ModelPicker: View {
         }
     }
 
-    private var flatItems: [PickerItem] {
+    private func rebuildItems() {
         let query = searchText.lowercased()
         var items: [PickerItem] = []
         var flatIdx = 0
@@ -49,14 +51,8 @@ struct ModelPicker: View {
                 flatIdx += 1
             }
         }
-        return items
-    }
-
-    private var selectableCount: Int {
-        flatItems.reduce(0) { count, item in
-            if case .model = item { return count + 1 }
-            return count
-        }
+        cachedItems = items
+        cachedSelectableCount = flatIdx
     }
 
     // MARK: - Body
@@ -86,7 +82,7 @@ struct ModelPicker: View {
             // Model list
             ScrollView {
                 VStack(spacing: 0) {
-                    let items = flatItems
+                    let items = cachedItems
                     if items.isEmpty {
                         Text("No matching models")
                             .font(.system(size: DS.Font.body))
@@ -130,9 +126,14 @@ struct ModelPicker: View {
         .shadow(color: .black.opacity(0.3), radius: 20, y: 8)
         .frame(width: 300)
         .onAppear {
+            rebuildItems()
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                 isSearchFocused = true
             }
+        }
+        .onChange(of: searchText) {
+            rebuildItems()
+            highlightedIndex = 0
         }
         .onKeyPress(.upArrow) {
             moveHighlight(-1)
@@ -234,13 +235,13 @@ struct ModelPicker: View {
     }
 
     private func moveHighlight(_ delta: Int) {
-        let count = selectableCount
+        let count = cachedSelectableCount
         guard count > 0 else { return }
         highlightedIndex = (highlightedIndex + delta + count) % count
     }
 
     private func selectHighlighted() {
-        for item in flatItems {
+        for item in cachedItems {
             if case .model(let def, let model, let idx) = item, idx == highlightedIndex {
                 if hasValidKey(for: def) {
                     onSelect(def, model)
